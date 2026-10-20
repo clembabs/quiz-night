@@ -61,6 +61,15 @@ void run(List<String> args) async {
         // If building the Flutter app with WASM, set the below parameter to
         // true and add the --wasm flag to the flutter build command.
         enableWasmHeaders: false,
+        // Let the CDN (Serverpod Cloud) keep the web build at the edge for a
+        // day, so phones on mobile data load it from nearby; every deploy
+        // clears it. Browsers re-check after a minute because Flutter's file
+        // names are not content-hashed. index.html is always no-cache.
+        cacheControlFactory: (_, _) => CacheControlHeader(
+          publicCache: true,
+          maxAge: 60,
+          sMaxAge: 86400,
+        ),
       ),
       '/',
     );

@@ -17,7 +17,9 @@ const buzzAnswerWindow = Duration(seconds: 8);
 /// Points for a correct buzzer-final answer.
 const finalPointsPerQuestion = 1000;
 
-const _codeAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/// Digits only: phones open the number keypad and codes read well on a
+/// projector.
+const _codeAlphabet = '0123456789';
 final _random = Random.secure();
 
 String _randomToken() =>
@@ -119,6 +121,7 @@ class RoomService {
           tiebreakMode: config.tiebreakMode,
           finalQuestionCount: config.finalQuestionCount,
           timeLimitSeconds: config.timeLimitSeconds,
+          showQuestionOnPhones: config.showQuestionOnPhones,
         ),
       );
       return CreateRoomResult(roomCode: code, hostToken: hostToken);
@@ -1002,6 +1005,10 @@ class RoomService {
       for (final b in buzzes)
         if (b.lockedOut) b.playerId,
     };
+    final buzzWinnerId = buzzes
+        .where((b) => b.wasCorrect ?? false)
+        .map((b) => b.playerId)
+        .firstOrNull;
 
     List<int>? counts;
     if (question != null && !open && !question.isFinal) {
@@ -1044,6 +1051,8 @@ class RoomService {
       finalQuestionsPlayed: room.finalQuestionsPlayed,
       eliminationRule: room.eliminationRule,
       wildcardUsed: room.wildcardUsed,
+      showQuestionOnPhones: room.showQuestionOnPhones,
+      projectedSurvivors: _projectedSurvivors(room, question, players),
       question: question == null
           ? null
           : QuestionView(
@@ -1064,6 +1073,34 @@ class RoomService {
       players: views,
       lastElimination: room.lastElimination,
       buzzerHolderId: room.buzzerHolderId,
+      buzzWinnerId: buzzWinnerId,
+    );
+  }
+
+  /// Where the danger line sits: the survivors the end-of-round cut would
+  /// keep right now. Uses the same function as the cut, so they agree.
+  static int? _projectedSurvivors(
+    Room room,
+    Question? question,
+    List<Player> players,
+  ) {
+    final inRound =
+        room.status == RoomStatus.question || room.status == RoomStatus.reveal;
+    if (!inRound ||
+        question == null ||
+        question.isFinal ||
+        room.eliminationRule == EliminationRule.suddenDeath) {
+      return null;
+    }
+    final active = players.where((p) => p.status == PlayerStatus.active).length;
+    return survivorsAfterRound(
+      activeCount: active,
+      rule: room.eliminationRule,
+      eliminationPercent: room.eliminationPercent,
+      finalistTarget: room.finalistTarget,
+      startingPlayers: room.startingPlayerCount ?? active,
+      roundsBeforeFinal: room.roundsBeforeFinal,
+      round: room.currentRound,
     );
   }
 

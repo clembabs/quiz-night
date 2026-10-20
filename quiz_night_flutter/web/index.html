@@ -1,46 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    $FLUTTER_BASE_HREF is replaced by the `--base-href` argument of
+    `flutter build`. It must start and end with a slash.
   -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Live elimination quiz: survive the round, or go home.">
+  <meta name="theme-color" content="#0F1A15">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="quiz_night_flutter">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quiz Night">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>quiz_night_flutter</title>
+  <title>Quiz Night</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    The design system's "Loading" component, shown instantly while Flutter
+    downloads. Plain HTML and CSS (no fonts or images), so it costs almost
+    nothing. flutter_bootstrap.js fades it out once the app has painted.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #0F1A15; }
+    #loading {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      background-color: #0F1A15;
+      background-image: radial-gradient(rgba(242,240,230,.035) 1px, transparent 1.2px);
+      background-size: 7px 7px;
+      color: #F2F0E6; font: 600 14px/1.4 system-ui, -apple-system, sans-serif;
+      transition: opacity 250ms cubic-bezier(.2,0,0,1);
+    }
+    #loading .crest {
+      width: 64px; height: 76px; box-sizing: border-box;
+      background: #1A3A2C; border: 3px solid #E0B53A;
+      border-radius: 8px 8px 50% 50% / 8px 8px 46% 46%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      font: 800 24px/1 system-ui, -apple-system, sans-serif; letter-spacing: -0.02em;
+    }
+    #loading .crest i { width: 28px; height: 2px; background: #E0B53A; }
+    #loading .bar {
+      width: 140px; height: 4px; border-radius: 2px; overflow: hidden;
+      background: rgba(242,240,230,.12);
+    }
+    #loading .bar i {
+      display: block; width: 100%; height: 100%; background: #E0B53A;
+      transform-origin: left; animation: qnFill 1.6s cubic-bezier(.2,0,0,1) infinite;
+    }
+    #loading p { margin: 0; color: #AEB9B1; }
+    #loading.done { opacity: 0; pointer-events: none; }
+    @keyframes qnFill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      #loading .bar i { animation: none; }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div id="loading" role="status" aria-live="polite">
+    <div class="crest" aria-hidden="true">QN<i></i></div>
+    <div class="bar" aria-hidden="true"><i></i></div>
+    <p>Loading Quiz Night…</p>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

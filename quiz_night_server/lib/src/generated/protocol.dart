@@ -604,6 +604,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'int',
         ),
         _isp.ColumnDefinition(
+          name: 'showQuestionOnPhones',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
           name: 'wildcardUsed',
           columnType: _isp.ColumnType.boolean,
           isNullable: false,

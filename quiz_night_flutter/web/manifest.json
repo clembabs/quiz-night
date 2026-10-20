@@ -1,12 +1,12 @@
 {
-    "name": "quiz_night_flutter",
-    "short_name": "quiz_night_flutter",
+    "name": "Quiz Night",
+    "short_name": "Quiz Night",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0F1A15",
+    "theme_color": "#0F1A15",
+    "description": "Live elimination quiz: survive the round, or go home.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

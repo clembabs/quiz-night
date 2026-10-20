@@ -11,8 +11,9 @@ abstract interface class LobbyRepository {
   /// Joins a room in the lobby and returns the player's seat.
   Future<Seat> joinRoom(String code, String nickname);
 
-  /// Checks a saved seat is still valid on the server.
-  Future<bool> isSeatValid(Seat seat);
+  /// Whether a saved seat is still in a game that has not finished.
+  /// Offline counts as live, so the room screen can retry.
+  Future<bool> isSeatLive(Seat seat);
 }
 
 /// Playing in a room: the live state stream and actions.
@@ -20,7 +21,29 @@ abstract interface class GameRepository {
   /// Live room state. The first event is always a full snapshot.
   Stream<RoomState> watchRoom(String code);
 
+  // Host actions; [host] must be the host's seat.
   Future<void> startGame(Seat host);
+  Future<void> nextQuestion(Seat host);
+  Future<void> reveal(Seat host);
+
+  /// Runs the elimination cut. Safe to call twice.
+  Future<void> endRound(Seat host);
+
+  /// Rescues one eliminated player; once per game, before the final.
+  Future<void> useWildcard(Seat host, int playerId);
+
+  /// Answers [questionId] for [player]. Eliminated players' answers count
+  /// as shadow score only.
+  Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
+
+  /// A spectator picks the finalist they think will win.
+  Future<void> backFinalist(Seat spectator, int finalistId);
+
+  /// A finalist tries to claim the buzzer; the server decides who was first.
+  Future<BuzzResult> buzz(Seat finalist, int questionId);
+
+  /// The buzzer holder answers. Returns whether it was correct.
+  Future<bool> submitBuzzAnswer(Seat finalist, int questionId, int choiceIndex);
 }
 
 /// Both repositories over the generated Serverpod [Client].
@@ -37,7 +60,16 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
 
   @override
   Future<Seat> joinRoom(String code, String nickname) => _guard(() async {
-    final r = await _client.room.joinRoom(code, nickname);
+    final JoinResult r;
+    try {
+      r = await _client.room.joinRoom(code, nickname);
+    } on QuizException catch (e) {
+      // Joining is the one call where "invalid state" means "too late".
+      if (e.code == QuizErrorCode.invalidState) {
+        throw AppFailure(e.message, kind: FailureKind.gameStarted);
+      }
+      rethrow;
+    }
     return Seat(
       role: SeatRole.player,
       code: r.roomCode,
@@ -46,20 +78,22 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     );
   });
 
+  /// How long to wait for the server before assuming we are offline.
+  static const seatCheckTimeout = Duration(seconds: 5);
+
   @override
-  Future<bool> isSeatValid(Seat seat) async {
+  Future<bool> isSeatLive(Seat seat) async {
     try {
-      if (seat.isHost) {
-        // Watching fails fast if the room is gone.
-        await _client.room.watchRoom(seat.code).first;
-      } else {
-        await _client.room.rejoin(seat.code, seat.token);
-      }
-      return true;
+      if (!seat.isHost) await _client.room.rejoin(seat.code, seat.token);
+      final snapshot = await _client.room
+          .watchRoom(seat.code)
+          .first
+          .timeout(seatCheckTimeout);
+      return snapshot.status != RoomStatus.finished;
     } on QuizException {
+      // Room gone or token unknown: the seat is dead.
       return false;
     } catch (_) {
-      // Offline: keep the seat and let the room screen retry.
       return true;
     }
   }
@@ -75,6 +109,52 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   Future<void> startGame(Seat host) =>
       _guard(() => _client.room.startGame(host.code, host.token));
 
+  @override
+  Future<void> nextQuestion(Seat host) =>
+      _guard(() => _client.room.nextQuestion(host.code, host.token));
+
+  @override
+  Future<void> reveal(Seat host) =>
+      _guard(() => _client.room.reveal(host.code, host.token));
+
+  @override
+  Future<void> endRound(Seat host) =>
+      _guard(() => _client.room.endRound(host.code, host.token));
+
+  @override
+  Future<void> useWildcard(Seat host, int playerId) => _guard(
+    () => _client.room.useWildcard(host.code, host.token, playerId),
+  );
+
+  @override
+  Future<BuzzResult> buzz(Seat finalist, int questionId) =>
+      _guard(() => _client.buzzer.buzz(finalist.token, questionId));
+
+  @override
+  Future<bool> submitBuzzAnswer(
+    Seat finalist,
+    int questionId,
+    int choiceIndex,
+  ) => _guard(
+    () => _client.buzzer.submitBuzzAnswer(
+      finalist.token,
+      questionId,
+      choiceIndex,
+    ),
+  );
+
+  @override
+  Future<void> backFinalist(Seat spectator, int finalistId) => _guard(
+    () => _client.buzzer.backFinalist(spectator.token, finalistId),
+  );
+
+  @override
+  Future<void> submitAnswer(Seat player, int questionId, int choiceIndex) =>
+      _guard(
+        () =>
+            _client.answer.submitAnswer(player.token, questionId, choiceIndex),
+      );
+
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
@@ -87,11 +167,16 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   static AppFailure toFailure(Object e) {
     if (e is AppFailure) return e;
     if (e is QuizException) {
-      return AppFailure(
-        e.message,
-        roomGone: e.code == QuizErrorCode.roomNotFound,
-      );
+      return AppFailure(e.message, kind: _kindOf(e.code));
     }
     return AppFailure.connection;
   }
+
+  static FailureKind _kindOf(QuizErrorCode code) => switch (code) {
+    QuizErrorCode.roomNotFound => FailureKind.roomGone,
+    QuizErrorCode.alreadyAnswered => FailureKind.alreadyAnswered,
+    QuizErrorCode.tooLate => FailureKind.tooLate,
+    QuizErrorCode.nicknameTaken => FailureKind.nicknameTaken,
+    _ => FailureKind.other,
+  };
 }
