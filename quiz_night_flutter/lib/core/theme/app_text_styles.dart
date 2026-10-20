@@ -122,6 +122,30 @@ abstract final class AppTextStyles {
     color: AppColors.success,
   );
 
+  // ---- elimination
+  static const revealIntro = TextStyle(
+    fontSize: 48,
+    fontWeight: FontWeight.w900,
+    height: 1.1,
+    color: AppColors.gold,
+  );
+  static const revealName = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w900,
+    color: AppColors.text,
+  );
+  static const bubbleTag = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 1,
+    color: AppColors.gold,
+  );
+  static const banner = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+    color: AppColors.text,
+  );
+
   static const chip = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
   static const chipLarge = TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
 }

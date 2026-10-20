@@ -13,6 +13,9 @@ abstract final class AppColors {
   static const qrBackground = Colors.white;
   static const onOption = Colors.white;
 
+  /// Background of an eliminated name in the cut reveal.
+  static const eliminated = Color(0xFF4A1F3D);
+
   /// Overlay that fades options that are not the answer after reveal.
   static const dimmed = Color(0x99000000);
 
