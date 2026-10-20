@@ -28,9 +28,15 @@ abstract interface class GameRepository {
   /// Runs the elimination cut. Safe to call twice.
   Future<void> endRound(Seat host);
 
+  /// Rescues one eliminated player; once per game, before the final.
+  Future<void> useWildcard(Seat host, int playerId);
+
   /// Answers [questionId] for [player]. Eliminated players' answers count
   /// as shadow score only.
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
+
+  /// A spectator picks the finalist they think will win.
+  Future<void> backFinalist(Seat spectator, int finalistId);
 }
 
 /// Both repositories over the generated Serverpod [Client].
@@ -96,6 +102,16 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   @override
   Future<void> endRound(Seat host) =>
       _guard(() => _client.room.endRound(host.code, host.token));
+
+  @override
+  Future<void> useWildcard(Seat host, int playerId) => _guard(
+    () => _client.room.useWildcard(host.code, host.token, playerId),
+  );
+
+  @override
+  Future<void> backFinalist(Seat spectator, int finalistId) => _guard(
+    () => _client.buzzer.backFinalist(spectator.token, finalistId),
+  );
 
   @override
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex) =>
