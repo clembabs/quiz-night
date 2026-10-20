@@ -36,104 +36,99 @@ class HostPodium extends StatelessWidget {
         .where((p) => p.status == PlayerStatus.eliminated)
         .length;
     final shadow = shadowChampion(room);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          flex: 15,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final s in _slots)
-                if (s.place <= standings.length) ...[
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: PodiumBlock(
-                        place: s.place,
-                        nickname: standings[s.place - 1].nickname,
-                        score: formatScore(standings[s.place - 1].finalScore),
-                        height: s.height,
-                        delay: s.delay,
-                      ),
-                    ),
+    final portrait = HostLayout.isPortrait(context);
+    return HostSplit(
+      firstFlex: 15,
+      secondFlex: 10,
+      first: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final s in _slots)
+            if (s.place <= standings.length) ...[
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: PodiumBlock(
+                    place: s.place,
+                    nickname: standings[s.place - 1].nickname,
+                    score: formatScore(standings[s.place - 1].finalScore),
+                    height: s.height,
+                    delay: s.delay,
                   ),
-                ],
+                ),
+              ),
+            ],
+        ],
+      ),
+      second: _FadeInLate(
+        child: Container(
+          padding: EdgeInsets.all(portrait ? 36 : 48),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            mainAxisSize: portrait ? MainAxisSize.min : MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'WHO BACKED THE WINNER',
+                style: AppProjectorText.label.copyWith(letterSpacing: 2.8),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                spectators == 0
+                    ? 'Everyone made the final'
+                    : '${backers.length} of $spectators',
+                key: const Key('podium.backers'),
+                style: AppTextStyles.displayXl.copyWith(
+                  fontSize: spectators == 0 ? 56 : 72,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                spectators == 0
+                    ? 'Nobody was knocked out, so there was no one left '
+                          'to back a finalist.'
+                    : winner == null
+                    ? 'No winner'
+                    : '${spectators == 1 ? 'spectator' : 'spectators'} '
+                          'backed ${winner.nickname}',
+                style: AppProjectorText.bodySoft,
+              ),
+              const SizedBox(height: 28),
+              Flexible(
+                fit: portrait ? FlexFit.loose : FlexFit.tight,
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final b in backers)
+                        PlayerChip(nickname: b.nickname, height: 64),
+                    ],
+                  ),
+                ),
+              ),
+              if (shadow != null) ...[
+                Text(
+                  'Shadow champion: ${shadow.nickname} '
+                  '(${formatScore(shadow.shadowScore)})',
+                  style: AppProjectorText.caption.copyWith(fontSize: 28),
+                ),
+                const SizedBox(height: 20),
+              ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: HostTextButton(
+                  label: 'End and leave',
+                  onPressed: context.read<RoomCubit>().leave,
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(width: 64),
-        Expanded(
-          flex: 10,
-          child: _FadeInLate(
-            child: Container(
-              padding: const EdgeInsets.all(48),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WHO BACKED THE WINNER',
-                    style: AppProjectorText.label.copyWith(letterSpacing: 2.8),
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    spectators == 0
-                        ? 'Everyone made the final'
-                        : '${backers.length} of $spectators',
-                    key: const Key('podium.backers'),
-                    style: AppTextStyles.displayXl.copyWith(
-                      fontSize: spectators == 0 ? 56 : 72,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    spectators == 0
-                        ? 'Nobody was knocked out, so there was no one left '
-                              'to back a finalist.'
-                        : winner == null
-                        ? 'No winner'
-                        : '${spectators == 1 ? 'spectator' : 'spectators'} '
-                              'backed ${winner.nickname}',
-                    style: AppProjectorText.bodySoft,
-                  ),
-                  const SizedBox(height: 28),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          for (final b in backers)
-                            PlayerChip(nickname: b.nickname, height: 64),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (shadow != null) ...[
-                    Text(
-                      'Shadow champion: ${shadow.nickname} '
-                      '(${formatScore(shadow.shadowScore)})',
-                      style: AppProjectorText.caption.copyWith(fontSize: 28),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: HostTextButton(
-                      label: 'End and leave',
-                      onPressed: context.read<RoomCubit>().leave,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

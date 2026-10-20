@@ -7,6 +7,7 @@ import '../../../widgets/brand/option_shape.dart';
 import '../../../widgets/qn/answer_button.dart';
 import '../../../widgets/qn/countdown.dart';
 import '../final/final_logic.dart';
+import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import 'host_cut.dart';
 
@@ -23,6 +24,16 @@ class HostFinal extends StatelessWidget {
     final q = room.question!;
     final revealed = q.correctIndex != null;
     final endsAt = room.questionEndsAt;
+    final portrait = HostLayout.isPortrait(context);
+    final strips = [
+      for (var i = 0; i < q.options.length; i++)
+        _OptionStrip(index: i, text: q.options[i], q: q),
+    ];
+    final status = Text(
+      finalStatusLine(room),
+      key: const Key('final.status'),
+      style: AppTextStyles.headline.copyWith(fontSize: portrait ? 40 : 48),
+    );
     return Column(
       children: [
         Row(
@@ -46,7 +57,7 @@ class HostFinal extends StatelessWidget {
                     q.text,
                     textAlign: TextAlign.center,
                     style: AppProjectorText.title.copyWith(
-                      fontSize: 80,
+                      fontSize: portrait ? 52 : 80,
                       height: 1.1,
                     ),
                   ),
@@ -54,43 +65,60 @@ class HostFinal extends StatelessWidget {
               ),
             ),
             if (!revealed && endsAt != null) ...[
-              const SizedBox(width: 40),
+              SizedBox(width: portrait ? 24 : 40),
               CountdownBuilder(
                 endsAt: endsAt,
                 totalSeconds: q.timeLimitSeconds,
                 clockOffset: clockOffset,
                 builder: (context, frame) =>
-                    CountdownRing(frame: frame, size: 180),
+                    CountdownRing(frame: frame, size: portrait ? 130 : 180),
               ),
             ],
           ],
         ),
         const SizedBox(height: 32),
-        Row(
-          children: [
-            for (var i = 0; i < q.options.length; i++) ...[
-              if (i > 0) const SizedBox(width: 20),
-              Expanded(
-                child: _OptionStrip(index: i, text: q.options[i], q: q),
-              ),
+        // Four strips in a row on the projector, 2×2 on a phone.
+        if (portrait)
+          for (var r = 0; r < strips.length; r += 2) ...[
+            if (r > 0) const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: strips[r]),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: r + 1 < strips.length
+                      ? strips[r + 1]
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ]
+        else
+          Row(
+            children: [
+              for (var i = 0; i < strips.length; i++) ...[
+                if (i > 0) const SizedBox(width: 20),
+                Expanded(child: strips[i]),
+              ],
             ],
-          ],
-        ),
+          ),
         const SizedBox(height: 40),
         Expanded(child: FinalistDesks(room: room)),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                finalStatusLine(room),
-                key: const Key('final.status'),
-                style: AppTextStyles.headline.copyWith(fontSize: 48),
-              ),
-            ),
-            HostStepButton(room: room),
-          ],
-        ),
+        if (portrait) ...[
+          Align(alignment: Alignment.centerLeft, child: status),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: HostStepButton(room: room),
+          ),
+        ] else
+          Row(
+            children: [
+              Expanded(child: status),
+              HostStepButton(room: room),
+            ],
+          ),
       ],
     );
   }

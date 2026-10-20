@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/option_shape.dart';
+import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import '../round_logic.dart';
 
@@ -22,6 +23,7 @@ class HostReveal extends StatelessWidget {
     final q = room.question!;
     final counts = q.answerCounts ?? List.filled(q.options.length, 0);
     final most = counts.isEmpty ? 0 : counts.reduce(max);
+    final portrait = HostLayout.isPortrait(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -35,14 +37,21 @@ class HostReveal extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(q.text, style: AppProjectorText.title),
+        Text(
+          q.text,
+          style: portrait
+              ? AppProjectorText.title.copyWith(fontSize: 48)
+              : AppProjectorText.title,
+        ),
         const SizedBox(height: 40),
         Expanded(
-          child: Row(
+          child: Flex(
+            // Projector: a bar chart of columns. Phone: one bar per row.
+            direction: portrait ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var i = 0; i < q.options.length; i++) ...[
-                if (i > 0) const SizedBox(width: 32),
+                if (i > 0) SizedBox(width: 32, height: portrait ? 28 : 32),
                 Expanded(
                   child: _Column(
                     index: i,
@@ -52,6 +61,7 @@ class HostReveal extends StatelessWidget {
                         ? 0
                         : (i < counts.length ? counts[i] : 0) / most,
                     correct: i == q.correctIndex,
+                    horizontal: portrait,
                   ),
                 ),
               ],
@@ -88,12 +98,17 @@ class _Column extends StatelessWidget {
   final double share;
   final bool correct;
 
+  /// A bar growing left to right with its label above (portrait phone),
+  /// instead of a column growing upwards.
+  final bool horizontal;
+
   const _Column({
     required this.index,
     required this.text,
     required this.count,
     required this.share,
     required this.correct,
+    this.horizontal = false,
   });
 
   @override
@@ -117,6 +132,12 @@ class _Column extends StatelessWidget {
         final dim = correct
             ? 1.0
             : 1 - 0.55 * ((t - 0.6) / 0.4).clamp(0.0, 1.0);
+        if (horizontal) {
+          return Opacity(
+            opacity: dim,
+            child: _row(grow, bg, ink, labelBg, labelFg),
+          );
+        }
         return Opacity(
           opacity: dim,
           child: Column(
@@ -207,4 +228,107 @@ class _Column extends StatelessWidget {
       },
     );
   }
+
+  Widget _row(
+    double grow,
+    Color bg,
+    Color ink,
+    Color labelBg,
+    Color labelFg,
+  ) =>
+      // Short phones: the row shrinks to fit rather than overflowing.
+      LayoutBuilder(
+        builder: (context, c) => FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: c.maxWidth,
+            child: Row(
+              children: [
+                Container(
+                  width: 96,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: labelBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: correct
+                        ? Border.all(color: AppColors.chalk, width: 4)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        optionLetter(index),
+                        style: AppTextStyles.headline.copyWith(
+                          fontSize: 44,
+                          color: labelFg,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      OptionShape(index: index, color: labelFg, size: 24),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              text,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppProjectorText.title.copyWith(
+                                fontSize: 36,
+                                decoration: correct
+                                    ? null
+                                    : TextDecoration.lineThrough,
+                                decorationColor: AppColors.chalk,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            correct ? '✓ $count' : '$count',
+                            style: AppProjectorText.numeric.copyWith(
+                              fontSize: 48,
+                              color: correct
+                                  ? AppColors.correct
+                                  : AppColors.chalk,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: max(share * grow, 0.03),
+                          heightFactor: 1,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: bg,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }

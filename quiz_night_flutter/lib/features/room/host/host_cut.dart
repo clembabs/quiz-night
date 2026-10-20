@@ -50,15 +50,18 @@ class HostCut extends StatelessWidget {
             finalists ? 'Meet your finalists' : 'Round ${room.round} is over',
         };
         final showDesks = seq.isDone && finalists;
+        final portrait = HostLayout.isPortrait(context);
         return Column(
           children: [
             Text(
               title.toUpperCase(),
               key: const Key('cut.title'),
               textAlign: TextAlign.center,
-              style: AppTextStyles.displayXl.copyWith(fontSize: 96),
+              style: AppTextStyles.displayXl.copyWith(
+                fontSize: portrait ? 72 : 96,
+              ),
             ),
-            const SizedBox(height: 56),
+            SizedBox(height: portrait ? 40 : 56),
             Expanded(
               child: showDesks
                   ? _Desks(room: room)
@@ -114,8 +117,11 @@ class _Cards extends StatelessWidget {
         ),
       );
     }
-    final cols = players.length <= 5 ? 5 : (players.length <= 10 ? 5 : 8);
-    final height = players.length <= 5 ? 300.0 : 220.0;
+    final portrait = HostLayout.isPortrait(context);
+    final cols = portrait
+        ? (players.length <= 6 ? 2 : 3)
+        : (players.length <= 10 ? 5 : 8);
+    final height = players.length <= (portrait ? 4 : 5) ? 300.0 : 220.0;
     return LayoutBuilder(
       builder: (context, c) {
         const gap = 28.0;
@@ -294,23 +300,30 @@ class _Survive extends StatelessWidget {
       opacity: ((s - 0.7) / 0.3).clamp(0.0, 1.0),
       child: Transform.scale(scale: s, child: child),
     ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          '$count',
-          key: const Key('cut.survivors'),
-          style: AppTextStyles.displayXl.copyWith(
-            fontSize: 180,
-            height: 0.9,
-            color: AppColors.mint,
+    // Shrinks rather than overflows on a narrow phone.
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            '$count',
+            key: const Key('cut.survivors'),
+            style: AppTextStyles.displayXl.copyWith(
+              fontSize: 180,
+              height: 0.9,
+              color: AppColors.mint,
+            ),
           ),
-        ),
-        const SizedBox(width: 24),
-        Text('SURVIVE', style: AppTextStyles.displayXl.copyWith(fontSize: 80)),
-      ],
+          const SizedBox(width: 24),
+          Text(
+            'SURVIVE',
+            style: AppTextStyles.displayXl.copyWith(fontSize: 80),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -354,6 +367,9 @@ class FinalistDesks extends StatelessWidget {
               nickname: finalists[i].nickname,
               score: formatScore(finalists[i].finalScore),
               state: deskStateFor(room, finalists[i]),
+              layoutWidth: HostLayout.isPortrait(context)
+                  ? FinalistDesk.compactWidth
+                  : FinalistDesk.designWidth,
             ),
           ),
         ],
