@@ -12,7 +12,7 @@ before starting the next.
 | 4 | **Flutter: playing a round**: question + countdown, answer buttons, reveal, leaderboard | `flutter test` → 74 tests pass; then play one round end to end from a host tab + 2 player tabs | 🟡 Built + tested; live check pending |
 | 5 | **Flutter: elimination + spectator**: one-by-one reveal, "eliminated" banner, shadow answers, back a finalist | `flutter test` → 96 tests pass; then play to a cut: names reveal one by one, knocked-out phones switch to spectating, back a finalist, host can use the wildcard | 🟡 Built + tested; live check pending |
 | 6 | **Flutter: buzzer final + podium** | `flutter test` → 136 tests pass, `dart test` (server) → 52; then play to the end: finalists buzz head to head, podium shows who backed the winner | 🟡 Built + tested; live check pending |
-| 7 | **Reconnect + phone polish**: survives tab sleep/refresh, mobile layouts, light loading screen | Refresh a player's phone mid-game and they come back in the same state | ⏳ |
+| 7 | **Reconnect + phone polish**: survives tab sleep/refresh, mobile layouts, light loading screen | `flutter test` → 148 tests pass (incl. 360px phone-layout checks); then refresh a phone mid-game: it reopens straight into the room | 🟡 Built + tested; live check pending |
 | 8 | **Deploy**: public HTTPS URL, QR points to it | Scan the QR on your phone over mobile data and play | ⏳ |
 | 9 | **Stretch**: AI-generated quizzes, tiebreaker rounds, game history | — | ⏳ |
 
@@ -23,6 +23,13 @@ before starting the next.
   browser-storage implementations are passed in at the app root, so tests use mocks.
 - **Design tokens:** `AppColors`, `AppTextStyles`, `AppSpacing`/`AppRadii`/`AppIconSizes`, `AppTheme` in `lib/core/theme/`.
 - **Tests:** `test/cubits/` (bloc_test + mocktail) and `test/widgets/`.
+
+## Load size (measured in Milestone 7)
+First visit downloads about 3 MB gzipped. Roughly three-quarters is Flutter's rendering engine
+(CanvasKit: 2.2 MB on Chrome, 2.9 MB on Safari) from Google's CDN, which is fast and often already cached.
+Our app (`main.dart.js`) is 0.85 MB, mostly the Flutter framework. Removing the unused sign-in UI saved only
+26 KB, so it stays for the game-history stretch. What helps: an instant HTML loading screen, keeping the
+engine on the CDN, and (Milestone 8) serving gzip without source maps.
 
 ## Decisions made so far (tell me if you disagree)
 - **No sign-up for players or host.** Joining gives each player a secret token, and creating a room gives the
