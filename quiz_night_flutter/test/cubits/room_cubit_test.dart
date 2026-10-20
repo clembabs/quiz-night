@@ -199,6 +199,7 @@ void main() {
         seats,
         playerSeat,
         backoff: (_) => Duration.zero,
+        answerRetryDelay: Duration.zero,
       )..start();
       streams.last.add(
         roomState(
@@ -249,6 +250,58 @@ void main() {
       expect(cubit.state.myChoice, isNull);
       expect(cubit.state.actionError, 'Time is up');
     });
+
+    test('when the connection blips then the answer is resent once', () async {
+      var calls = 0;
+      when(() => game.submitAnswer(playerSeat, 10, 2)).thenAnswer((_) async {
+        if (calls++ == 0) throw AppFailure.connection;
+      });
+      cubit = await openQuestion();
+
+      await cubit.submitAnswer(2);
+
+      expect(calls, 2);
+      expect(cubit.state.myChoice, 2);
+      expect(cubit.state.errorSeq, 0);
+    });
+
+    test(
+      'when the first attempt did arrive then the retry keeps the pick',
+      () async {
+        var calls = 0;
+        when(() => game.submitAnswer(any(), any(), any())).thenAnswer((
+          _,
+        ) async {
+          if (calls++ == 0) throw AppFailure.connection;
+          throw const AppFailure(
+            'Already answered',
+            kind: FailureKind.alreadyAnswered,
+          );
+        });
+        cubit = await openQuestion();
+
+        await cubit.submitAnswer(2);
+
+        expect(cubit.state.myChoice, 2);
+        expect(cubit.state.errorSeq, 0);
+      },
+    );
+
+    test(
+      'when still offline after the retry then the pick is undone',
+      () async {
+        when(
+          () => game.submitAnswer(any(), any(), any()),
+        ).thenThrow(AppFailure.connection);
+        cubit = await openQuestion();
+
+        await cubit.submitAnswer(2);
+
+        verify(() => game.submitAnswer(playerSeat, 10, 2)).called(2);
+        expect(cubit.state.myChoice, isNull);
+        expect(cubit.state.actionError, AppFailure.connection.message);
+      },
+    );
 
     test('when the server already has an answer then the pick stays', () async {
       when(() => game.submitAnswer(any(), any(), any())).thenThrow(
