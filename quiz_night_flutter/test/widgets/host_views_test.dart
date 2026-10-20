@@ -58,7 +58,9 @@ void main() {
     setUp(() {
       setup = MockSetupCubit();
       when(() => setup.state).thenReturn(const HostSetupState());
-      when(() => setup.summary).thenReturn('Bottom 30% elimination…');
+      when(
+        () => setup.summary,
+      ).thenReturn(const [SummaryItem('Bottom 30%', 'Lowest 30% go home.')]);
       when(() => setup.create()).thenAnswer((_) async {});
     });
 

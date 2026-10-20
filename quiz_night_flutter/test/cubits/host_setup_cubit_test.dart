@@ -92,19 +92,31 @@ void main() {
             verify(() => lobby.createRoom(captureAny())).captured.single
                 as RoomConfig;
         expect(config.showQuestionOnPhones, isFalse);
-        expect(c.summary, contains('only on the big screen'));
+        expect(
+          c.summary.map((i) => i.title),
+          contains('Question on the big screen only'),
+        );
       },
     );
 
-    test('when summarising the defaults then it reads like the prototype', () {
+    test('when summarising the defaults then each choice is explained', () {
       final c = HostSetupCubit(lobby, seats);
-      expect(
-        c.summary,
-        startsWith(
-          'Bottom 30% elimination, 5 questions per round, 3 finalists in a '
-          'buzzer final.',
-        ),
-      );
+      expect(c.summary.map((i) => i.title), [
+        'Bottom 30%',
+        '5 questions a round, 20s each',
+        'Top 3 go to the buzzer final',
+        'Question on phones',
+        'Knocked out? Keep playing',
+      ]);
+      c.close();
+    });
+
+    test('when auto-scaled is picked then the summary names the target', () {
+      final c = HostSetupCubit(lobby, seats)
+        ..setRule(EliminationRule.autoScaled)
+        ..setFinalists(4);
+      expect(c.summary.first.detail, contains('4 finalists in 3 rounds'));
+      expect(c.summary[2].title, 'Top 4 go to the buzzer final');
       c.close();
     });
   });
