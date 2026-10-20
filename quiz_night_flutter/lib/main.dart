@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app/quiz_night_app.dart';
+import 'core/platform/screen_wake_lock.dart';
 import 'client.dart';
 import 'data/room_repositories.dart';
 import 'data/seat_repository.dart';
@@ -15,6 +16,7 @@ void main() async {
       lobby: rooms,
       game: rooms,
       seats: PrefsSeatRepository(),
+      wakeLock: createScreenWakeLock(),
       initialCode: (code == null || code.isEmpty) ? null : code,
     ),
   );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
+import '../../core/platform/screen_wake_lock.dart';
 import '../../widgets/common.dart';
 import 'final/host_final_view.dart';
 import 'final/player_final_view.dart';
@@ -25,15 +26,19 @@ class RoomScreen extends StatefulWidget {
 
 /// Stateful only to observe the app lifecycle.
 class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
+  late final ScreenWakeLock _wakeLock = context.read<ScreenWakeLock>();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _wakeLock.keepOn();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _wakeLock.release();
     super.dispose();
   }
 
@@ -42,6 +47,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     // Phone browsers freeze background tabs; get a fresh snapshot on return.
     if (state == AppLifecycleState.resumed) {
       context.read<RoomCubit>().reconnect();
+      // Browsers drop the wake lock whenever the tab is hidden.
+      _wakeLock.keepOn();
     }
   }
 
