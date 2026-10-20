@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
 import '../../widgets/common.dart';
+import 'final/host_final_view.dart';
+import 'final/player_final_view.dart';
+import 'final/podium_view.dart';
 import 'host_lobby_view.dart';
 import 'player_lobby_view.dart';
 import 'room_cubit.dart';
@@ -124,7 +127,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       RoomStatus.question || RoomStatus.reveal when q != null && !q.isFinal =>
         HostQuestionView(room: room, clockOffset: state.clockOffset),
       RoomStatus.elimination => HostCutView(room: room),
-      _ => _comingSoon(room),
+      RoomStatus.buzzerFinal || RoomStatus.reveal when q != null && q.isFinal =>
+        HostFinalView(room: room, clockOffset: state.clockOffset),
+      RoomStatus.finished => PodiumView(room: room),
+      _ => _waiting(),
     };
   }
 
@@ -149,16 +155,24 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         me: me,
         myBackedId: state.myBackedId,
       ),
-      _ => _comingSoon(room),
+      RoomStatus.buzzerFinal ||
+      RoomStatus.reveal when q != null && q.isFinal => PlayerFinalView(
+        room: room,
+        me: me,
+        myChoice: state.myChoice,
+        myBackedId: state.myBackedId,
+        buzzing: state.buzzing,
+        clockOffset: state.clockOffset,
+      ),
+      RoomStatus.finished => PodiumView(room: room, me: me),
+      _ => _waiting(),
     };
   }
 
-  // The buzzer final and podium arrive in Milestone 6.
-  Widget _comingSoon(RoomState room) => MessageView(
-    icon: Icons.construction_rounded,
-    text:
-        'Game in progress (${room.status.name}).\n'
-        'This screen arrives in a later milestone.',
+  // Only reachable in states the server does not use yet (tiebreak rounds).
+  Widget _waiting() => const MessageView(
+    icon: Icons.hourglass_top_rounded,
+    text: 'Hang tight, the host is setting up…',
   );
 }
 
