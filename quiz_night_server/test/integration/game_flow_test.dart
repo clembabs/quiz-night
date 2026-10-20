@@ -126,6 +126,10 @@ void main() {
       );
       expect(correct, isTrue);
       expect((await playerOf(sb, g.players[0])).finalScore, 1000);
+      final revealed = await endpoints.room.watchRoom(sb, g.code).first;
+      expect(revealed.status, RoomStatus.reveal);
+      expect(revealed.buzzWinnerId, g.players[0].playerId);
+      expect(revealed.question!.correctIndex, fq.correctIndex);
 
       // Last final question done -> podium.
       await endpoints.room.nextQuestion(sb, g.code, g.hostToken);
@@ -479,6 +483,8 @@ void main() {
             );
           }
           expect((await roomOf(sb, g.code)).status, RoomStatus.reveal);
+          final state = await endpoints.room.watchRoom(sb, g.code).first;
+          expect(state.buzzWinnerId, isNull);
         },
       );
     },
