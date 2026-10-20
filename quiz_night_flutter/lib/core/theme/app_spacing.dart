@@ -26,6 +26,12 @@ abstract final class AppSpacing {
 
   /// Height of a player's answer button: big enough to hit without looking.
   static const answerButtonHeight = 76.0;
+
+  /// Diameter of the finalist's buzz button.
+  static const buzzerSize = 220.0;
+
+  /// Podium block heights for 1st, 2nd and 3rd.
+  static const podiumHeights = [180.0, 130.0, 100.0];
 }
 
 /// Corner radii.

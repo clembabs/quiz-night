@@ -146,6 +146,41 @@ abstract final class AppTextStyles {
     color: AppColors.text,
   );
 
+  // ---- buzzer final and podium
+  static const buzzLabel = TextStyle(
+    fontSize: 44,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 2,
+    color: AppColors.onOption,
+  );
+  static const finalistName = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+    color: AppColors.text,
+  );
+  static const finalScore = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w900,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: AppColors.gold,
+  );
+  static const statusTag = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 1.2,
+    color: AppColors.background,
+  );
+  static const podiumPlace = TextStyle(
+    fontSize: 40,
+    fontWeight: FontWeight.w900,
+    color: AppColors.background,
+  );
+  static const podiumName = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+    color: AppColors.text,
+  );
+
   static const chip = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
   static const chipLarge = TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
 }

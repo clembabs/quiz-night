@@ -16,6 +16,12 @@ abstract final class AppColors {
   /// Background of an eliminated name in the cut reveal.
   static const eliminated = Color(0xFF4A1F3D);
 
+  // ---- buzzer final and podium
+  static const buzzer = Color(0xFFE5484D);
+  static const buzzerRim = Color(0xFF8E1F2B);
+  static const silver = Color(0xFFC9CDD6);
+  static const bronze = Color(0xFFD08A4E);
+
   /// Overlay that fades options that are not the answer after reveal.
   static const dimmed = Color(0x99000000);
 
