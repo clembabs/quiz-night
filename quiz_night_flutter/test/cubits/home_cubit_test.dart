@@ -39,19 +39,25 @@ void main() {
     setUp(() => when(() => seats.load()).thenAnswer((_) async => playerSeat));
 
     blocTest<HomeCubit, HomeState>(
-      'when it is still valid then offers to rejoin',
+      'when its game is still live then goes straight back in',
       setUp: () => when(
-        () => lobby.isSeatValid(playerSeat),
+        () => lobby.isSeatLive(playerSeat),
       ).thenAnswer((_) async => true),
       build: () => HomeCubit(lobby, seats),
       act: (c) => c.restore(),
-      expect: () => [const HomeState(loading: false, savedSeat: playerSeat)],
+      expect: () => [
+        const HomeState(
+          loading: false,
+          savedSeat: playerSeat,
+          route: RoomRoute(playerSeat),
+        ),
+      ],
     );
 
     blocTest<HomeCubit, HomeState>(
-      'when it is no longer valid then forgets it',
+      'when its game is over or gone then forgets it',
       setUp: () => when(
-        () => lobby.isSeatValid(playerSeat),
+        () => lobby.isSeatLive(playerSeat),
       ).thenAnswer((_) async => false),
       build: () => HomeCubit(lobby, seats),
       act: (c) => c.restore(),
@@ -62,7 +68,7 @@ void main() {
     blocTest<HomeCubit, HomeState>(
       'when the QR is for the same room then goes straight back in',
       setUp: () => when(
-        () => lobby.isSeatValid(playerSeat),
+        () => lobby.isSeatLive(playerSeat),
       ).thenAnswer((_) async => true),
       build: () => HomeCubit(lobby, seats, initialCode: 'ABCD'),
       act: (c) => c.restore(),
@@ -80,7 +86,7 @@ void main() {
       build: () => HomeCubit(lobby, seats, initialCode: 'WXYZ'),
       act: (c) => c.restore(),
       expect: () => [const HomeState(loading: false, route: JoinRoute('WXYZ'))],
-      verify: (_) => verifyNever(() => lobby.isSeatValid(any())),
+      verify: (_) => verifyNever(() => lobby.isSeatLive(any())),
     );
   });
 }

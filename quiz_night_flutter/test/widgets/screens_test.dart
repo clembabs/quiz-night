@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/app/quiz_night_app.dart';
+import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
 import 'package:quiz_night_flutter/features/join/join_screen.dart';
@@ -16,6 +20,17 @@ import '../fakes/fakes.dart';
 class MockRoomCubit extends MockCubit<RoomViewState> implements RoomCubit {}
 
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
+
+class CountingWakeLock implements ScreenWakeLock {
+  int keepOnCalls = 0;
+  int releaseCalls = 0;
+
+  @override
+  Future<void> keepOn() async => keepOnCalls++;
+
+  @override
+  Future<void> release() async => releaseCalls++;
+}
 
 Widget wrap(Widget child) => MaterialApp(
   theme: AppTheme.dark(),
@@ -50,17 +65,30 @@ void main() {
       expect(find.textContaining('Rejoin'), findsNothing);
     });
 
-    testWidgets('when a valid seat is saved then offers to rejoin it', (
-      tester,
-    ) async {
+    testWidgets('when a live seat is saved then reopens straight into the '
+        'room', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => playerSeat);
-      when(() => lobby.isSeatValid(playerSeat)).thenAnswer((_) async => true);
+      when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
+      // A live room stream stays open; one that closes means a dropped
+      // connection and the cubit would keep reconnecting.
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Ada')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      final wakeLock = CountingWakeLock();
       await tester.pumpWidget(
-        QuizNightApp(lobby: lobby, game: game, seats: seats),
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          wakeLock: wakeLock,
+        ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Rejoin room ABCD'), findsOneWidget);
+      expect(find.text('Room ABCD'), findsOneWidget);
+      expect(find.text("You're in, Ada!"), findsOneWidget);
+      expect(wakeLock.keepOnCalls, 1, reason: 'screen kept on in a room');
     });
 
     testWidgets('when opened from a QR link then the join form has the code', (
