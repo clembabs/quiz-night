@@ -49,11 +49,16 @@ class FinalistDesk extends StatelessWidget {
   final String score;
   final DeskState state;
 
+  /// Width the desk is laid out at before scaling; narrower on a phone,
+  /// where three desks share 800 px, so they scale down less.
+  final double layoutWidth;
+
   const FinalistDesk({
     super.key,
     required this.nickname,
     required this.score,
     required this.state,
+    this.layoutWidth = designWidth,
   });
 
   @override
@@ -64,12 +69,15 @@ class FinalistDesk extends StatelessWidget {
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.bottomCenter,
-      child: SizedBox(width: designWidth, child: _desk(c)),
+      child: SizedBox(width: layoutWidth, child: _desk(c)),
     );
   }
 
   /// Width the desk is designed at on the 1920 canvas.
   static const designWidth = 520.0;
+
+  /// The narrowest that still fits the "BUZZED FIRST" pill.
+  static const compactWidth = 360.0;
 
   Widget _desk(({Color pillBg, Color pillFg, Color ring, Color desk}) c) {
     return AnimatedOpacity(
