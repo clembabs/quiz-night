@@ -20,7 +20,17 @@ abstract interface class GameRepository {
   /// Live room state. The first event is always a full snapshot.
   Stream<RoomState> watchRoom(String code);
 
+  // Host actions; [host] must be the host's seat.
   Future<void> startGame(Seat host);
+  Future<void> nextQuestion(Seat host);
+  Future<void> reveal(Seat host);
+
+  /// Runs the elimination cut. Safe to call twice.
+  Future<void> endRound(Seat host);
+
+  /// Answers [questionId] for [player]. Eliminated players' answers count
+  /// as shadow score only.
+  Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
 }
 
 /// Both repositories over the generated Serverpod [Client].
@@ -75,6 +85,25 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   Future<void> startGame(Seat host) =>
       _guard(() => _client.room.startGame(host.code, host.token));
 
+  @override
+  Future<void> nextQuestion(Seat host) =>
+      _guard(() => _client.room.nextQuestion(host.code, host.token));
+
+  @override
+  Future<void> reveal(Seat host) =>
+      _guard(() => _client.room.reveal(host.code, host.token));
+
+  @override
+  Future<void> endRound(Seat host) =>
+      _guard(() => _client.room.endRound(host.code, host.token));
+
+  @override
+  Future<void> submitAnswer(Seat player, int questionId, int choiceIndex) =>
+      _guard(
+        () =>
+            _client.answer.submitAnswer(player.token, questionId, choiceIndex),
+      );
+
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
@@ -87,11 +116,15 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   static AppFailure toFailure(Object e) {
     if (e is AppFailure) return e;
     if (e is QuizException) {
-      return AppFailure(
-        e.message,
-        roomGone: e.code == QuizErrorCode.roomNotFound,
-      );
+      return AppFailure(e.message, kind: _kindOf(e.code));
     }
     return AppFailure.connection;
   }
+
+  static FailureKind _kindOf(QuizErrorCode code) => switch (code) {
+    QuizErrorCode.roomNotFound => FailureKind.roomGone,
+    QuizErrorCode.alreadyAnswered => FailureKind.alreadyAnswered,
+    QuizErrorCode.tooLate => FailureKind.tooLate,
+    _ => FailureKind.other,
+  };
 }
