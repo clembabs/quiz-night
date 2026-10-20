@@ -1,0 +1,50 @@
+import 'package:flutter/material.dart';
+
+import 'app_colors.dart';
+
+/// Every text style in the app. Widgets pick from here instead of building
+/// their own `TextStyle`s.
+abstract final class AppTextStyles {
+  static const title = TextStyle(
+    fontSize: 44,
+    fontWeight: FontWeight.w900,
+    letterSpacing: -1,
+    color: AppColors.text,
+  );
+  static const tagline = TextStyle(fontSize: 16, color: AppColors.muted);
+  static const heading = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    color: AppColors.text,
+  );
+  static const label = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    color: AppColors.text,
+  );
+  static const body = TextStyle(fontSize: 16, color: AppColors.text);
+  static const bodyMuted = TextStyle(fontSize: 18, color: AppColors.muted);
+  static const caption = TextStyle(fontSize: 14, color: AppColors.muted);
+  static const error = TextStyle(fontSize: 14, color: AppColors.danger);
+  static const button = TextStyle(fontSize: 18, fontWeight: FontWeight.w700);
+  static const input = TextStyle(fontSize: 20, color: AppColors.text);
+  static const codeInput = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 8,
+    color: AppColors.text,
+  );
+  static const roomCode = TextStyle(
+    fontSize: 72,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 12,
+    color: AppColors.gold,
+  );
+  static const stepperValue = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w800,
+    color: AppColors.text,
+  );
+  static const chip = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
+  static const chipLarge = TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
+}
