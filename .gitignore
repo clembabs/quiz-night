@@ -17,3 +17,30 @@ pubspec_overrides.yaml
 
 # Serverpod Cloud CLI
 .scloud/
+
+# ---- Secrets: never commit ----
+# Environment files (keep a committed .env.example with placeholder values)
+.env
+.env.*
+!.env.example
+*.env
+# Serverpod secrets (DB passwords, JWT keys, service secret) in any package
+**/config/passwords.yaml
+# API keys / credentials (e.g. LLM key for AI quizzes, cloud service accounts)
+**/secrets/
+**/*secret*.json
+**/*service_account*.json
+**/*credentials*.json
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+key.properties
+google-services.json
+GoogleService-Info.plist
+# Local DB data
+**/.serverpod/
+
+# OS / editor noise
+.DS_Store
