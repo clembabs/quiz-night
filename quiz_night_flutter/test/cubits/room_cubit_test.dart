@@ -289,4 +289,70 @@ void main() {
       await cubit.close();
     });
   });
+
+  group('Given a spectator backing a finalist', () {
+    const spectator = playerSeat;
+
+    test('when backing then the pick shows at once and is sent', () async {
+      when(() => game.backFinalist(spectator, 5)).thenAnswer((_) async {});
+      final cubit = RoomCubit(game, seats, spectator);
+
+      await cubit.backFinalist(5);
+
+      expect(cubit.state.myBackedId, 5);
+      verify(() => game.backFinalist(spectator, 5)).called(1);
+      await cubit.close();
+    });
+
+    test(
+      'when changing their mind then the new pick replaces the old',
+      () async {
+        when(() => game.backFinalist(any(), any())).thenAnswer((_) async {});
+        final cubit = RoomCubit(game, seats, spectator);
+
+        await cubit.backFinalist(5);
+        await cubit.backFinalist(6);
+
+        expect(cubit.state.myBackedId, 6);
+        await cubit.close();
+      },
+    );
+
+    test('when the server refuses then the previous pick comes back', () async {
+      final cubit = RoomCubit(game, seats, spectator);
+      when(() => game.backFinalist(spectator, 5)).thenAnswer((_) async {});
+      await cubit.backFinalist(5);
+      when(
+        () => game.backFinalist(spectator, 6),
+      ).thenThrow(const AppFailure('The final has started'));
+
+      await cubit.backFinalist(6);
+
+      expect(cubit.state.myBackedId, 5);
+      expect(cubit.state.actionError, 'The final has started');
+      await cubit.close();
+    });
+  });
+
+  group('Given the host uses the wildcard', () {
+    test('when rescuing a player then the server is asked', () async {
+      when(() => game.useWildcard(hostSeat, 3)).thenAnswer((_) async {});
+      final cubit = build();
+
+      await cubit.useWildcard(3);
+
+      verify(() => game.useWildcard(hostSeat, 3)).called(1);
+      await cubit.close();
+    });
+
+    test(
+      'when the host tries to back a finalist then nothing is sent',
+      () async {
+        final cubit = build();
+        await cubit.backFinalist(5);
+        verifyNever(() => game.backFinalist(any(), any()));
+        await cubit.close();
+      },
+    );
+  });
 }
