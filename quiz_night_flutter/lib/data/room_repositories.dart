@@ -11,8 +11,9 @@ abstract interface class LobbyRepository {
   /// Joins a room in the lobby and returns the player's seat.
   Future<Seat> joinRoom(String code, String nickname);
 
-  /// Checks a saved seat is still valid on the server.
-  Future<bool> isSeatValid(Seat seat);
+  /// Whether a saved seat is still in a game that has not finished.
+  /// Offline counts as live, so the room screen can retry.
+  Future<bool> isSeatLive(Seat seat);
 }
 
 /// Playing in a room: the live state stream and actions.
@@ -68,20 +69,22 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     );
   });
 
+  /// How long to wait for the server before assuming we are offline.
+  static const seatCheckTimeout = Duration(seconds: 5);
+
   @override
-  Future<bool> isSeatValid(Seat seat) async {
+  Future<bool> isSeatLive(Seat seat) async {
     try {
-      if (seat.isHost) {
-        // Watching fails fast if the room is gone.
-        await _client.room.watchRoom(seat.code).first;
-      } else {
-        await _client.room.rejoin(seat.code, seat.token);
-      }
-      return true;
+      if (!seat.isHost) await _client.room.rejoin(seat.code, seat.token);
+      final snapshot = await _client.room
+          .watchRoom(seat.code)
+          .first
+          .timeout(seatCheckTimeout);
+      return snapshot.status != RoomStatus.finished;
     } on QuizException {
+      // Room gone or token unknown: the seat is dead.
       return false;
     } catch (_) {
-      // Offline: keep the seat and let the room screen retry.
       return true;
     }
   }

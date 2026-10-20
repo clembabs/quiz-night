@@ -66,19 +66,13 @@ class HomeCubit extends Cubit<HomeState> {
       emit(const HomeState(loading: false));
       return;
     }
-    if (!await _lobby.isSeatValid(saved)) {
+    if (!await _lobby.isSeatLive(saved)) {
       await _seats.clear();
       emit(const HomeState(loading: false));
       return;
     }
-    emit(
-      HomeState(
-        loading: false,
-        savedSeat: saved,
-        // Rescanning the QR of the room you're in: go straight back in.
-        route: code != null ? RoomRoute(saved) : null,
-      ),
-    );
+    // A reload, a rescanned QR or a phone waking up: straight back in.
+    emit(HomeState(loading: false, savedSeat: saved, route: RoomRoute(saved)));
   }
 
   void routeHandled() =>
