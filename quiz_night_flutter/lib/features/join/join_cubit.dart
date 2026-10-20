@@ -6,17 +6,32 @@ import '../../data/room_repositories.dart';
 import '../../data/seat.dart';
 import '../../data/seat_repository.dart';
 
+/// Which field an error belongs to, so the form can show it in place.
+enum JoinError {
+  missingFields,
+  roomNotFound,
+  gameStarted,
+  nicknameTaken,
+  other,
+}
+
 class JoinState extends Equatable {
   final bool submitting;
   final String? error;
+  final JoinError? errorKind;
 
   /// Set once joined; the screen moves into the room.
   final Seat? seat;
 
-  const JoinState({this.submitting = false, this.error, this.seat});
+  const JoinState({
+    this.submitting = false,
+    this.error,
+    this.errorKind,
+    this.seat,
+  });
 
   @override
-  List<Object?> get props => [submitting, error, seat];
+  List<Object?> get props => [submitting, error, errorKind, seat];
 }
 
 class JoinCubit extends Cubit<JoinState> {
@@ -29,7 +44,12 @@ class JoinCubit extends Cubit<JoinState> {
     final cleanCode = code.trim().toUpperCase();
     final cleanName = nickname.trim();
     if (cleanCode.isEmpty || cleanName.isEmpty) {
-      emit(const JoinState(error: 'Enter the room code and a nickname'));
+      emit(
+        const JoinState(
+          error: 'Enter the room code and a nickname',
+          errorKind: JoinError.missingFields,
+        ),
+      );
       return;
     }
     emit(const JoinState(submitting: true));
@@ -38,7 +58,22 @@ class JoinCubit extends Cubit<JoinState> {
       await _seats.save(seat);
       emit(JoinState(seat: seat));
     } on AppFailure catch (f) {
-      emit(JoinState(error: f.message));
+      emit(JoinState(error: _messageFor(f), errorKind: _kindFor(f)));
     }
   }
+
+  static JoinError _kindFor(AppFailure f) => switch (f.kind) {
+    FailureKind.roomGone => JoinError.roomNotFound,
+    FailureKind.gameStarted => JoinError.gameStarted,
+    FailureKind.nicknameTaken => JoinError.nicknameTaken,
+    _ => JoinError.other,
+  };
+
+  /// The design system's wording for the errors players actually hit.
+  static String _messageFor(AppFailure f) => switch (f.kind) {
+    FailureKind.roomGone => 'Room not found. Check the code on the big screen.',
+    FailureKind.gameStarted =>
+      'This game already started. Ask the host to open a new room.',
+    _ => f.message,
+  };
 }

@@ -12,6 +12,12 @@ enum FailureKind {
   /// The question closed before the answer arrived.
   tooLate,
 
+  /// Joining a room whose game is already under way.
+  gameStarted,
+
+  /// Someone in the room already has this nickname.
+  nicknameTaken,
+
   /// Anything else; just show the message.
   other,
 }

@@ -9,6 +9,11 @@ import '../../data/seat_repository.dart';
 
 /// Allowed ranges for the host's settings.
 abstract final class HostSetupLimits {
+  /// The quick-pick values shown on the create screen.
+  static const questionsChoices = [3, 5, 8, 10];
+  static const finalistChoices = [2, 3, 4];
+  static const secondsChoices = [15, 20, 30];
+
   static const questionsPerRound = (min: 1, max: 10);
   static const finalists = (min: 2, max: 5);
   static const rounds = (min: 1, max: 6);
@@ -21,6 +26,9 @@ class HostSetupState extends Equatable {
   final int finalists;
   final int roundsBeforeFinal;
   final int secondsPerQuestion;
+
+  /// Whether phones show the question text, or only the projector.
+  final bool showQuestionOnPhones;
   final bool submitting;
   final String? error;
 
@@ -33,6 +41,7 @@ class HostSetupState extends Equatable {
     this.finalists = 3,
     this.roundsBeforeFinal = 3,
     this.secondsPerQuestion = 20,
+    this.showQuestionOnPhones = true,
     this.submitting = false,
     this.error,
     this.seat,
@@ -44,12 +53,14 @@ class HostSetupState extends Equatable {
     int? finalists,
     int? roundsBeforeFinal,
     int? secondsPerQuestion,
+    bool? showQuestionOnPhones,
   }) => HostSetupState(
     rule: rule ?? this.rule,
     questionsPerRound: questionsPerRound ?? this.questionsPerRound,
     finalists: finalists ?? this.finalists,
     roundsBeforeFinal: roundsBeforeFinal ?? this.roundsBeforeFinal,
     secondsPerQuestion: secondsPerQuestion ?? this.secondsPerQuestion,
+    showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
   );
 
   HostSetupState withStatus({
@@ -62,6 +73,7 @@ class HostSetupState extends Equatable {
     finalists: finalists,
     roundsBeforeFinal: roundsBeforeFinal,
     secondsPerQuestion: secondsPerQuestion,
+    showQuestionOnPhones: showQuestionOnPhones,
     submitting: submitting,
     error: error,
     seat: seat,
@@ -73,6 +85,7 @@ class HostSetupState extends Equatable {
     finalistTarget: finalists,
     roundsBeforeFinal: roundsBeforeFinal,
     timeLimitSeconds: secondsPerQuestion,
+    showQuestionOnPhones: showQuestionOnPhones,
   );
 
   @override
@@ -82,6 +95,7 @@ class HostSetupState extends Equatable {
     finalists,
     roundsBeforeFinal,
     secondsPerQuestion,
+    showQuestionOnPhones,
     submitting,
     error,
     seat,
@@ -114,6 +128,24 @@ class HostSetupCubit extends Cubit<HostSetupState> {
   void setSecondsPerQuestion(int v) {
     final l = HostSetupLimits.seconds;
     emit(state.copyWith(secondsPerQuestion: v.clamp(l.min, l.max)));
+  }
+
+  void setShowQuestionOnPhones(bool show) =>
+      emit(state.copyWith(showQuestionOnPhones: show));
+
+  /// One line describing the game, for the summary panel.
+  String get summary {
+    final s = state;
+    final rule = switch (s.rule) {
+      EliminationRule.bottomPercent => 'Bottom 30%',
+      EliminationRule.autoScaled => 'Auto-scaled',
+      EliminationRule.suddenDeath => 'Sudden death',
+    };
+    return '$rule elimination, ${s.questionsPerRound} questions per round, '
+        '${s.finalists} finalists in a buzzer final. '
+        '${s.secondsPerQuestion}s per question; questions '
+        '${s.showQuestionOnPhones ? 'on phones and' : 'only on'} the big '
+        'screen.';
   }
 
   Future<void> create() async {

@@ -60,7 +60,16 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
 
   @override
   Future<Seat> joinRoom(String code, String nickname) => _guard(() async {
-    final r = await _client.room.joinRoom(code, nickname);
+    final JoinResult r;
+    try {
+      r = await _client.room.joinRoom(code, nickname);
+    } on QuizException catch (e) {
+      // Joining is the one call where "invalid state" means "too late".
+      if (e.code == QuizErrorCode.invalidState) {
+        throw AppFailure(e.message, kind: FailureKind.gameStarted);
+      }
+      rethrow;
+    }
     return Seat(
       role: SeatRole.player,
       code: r.roomCode,
@@ -167,6 +176,7 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     QuizErrorCode.roomNotFound => FailureKind.roomGone,
     QuizErrorCode.alreadyAnswered => FailureKind.alreadyAnswered,
     QuizErrorCode.tooLate => FailureKind.tooLate,
+    QuizErrorCode.nicknameTaken => FailureKind.nicknameTaken,
     _ => FailureKind.other,
   };
 }
