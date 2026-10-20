@@ -37,6 +37,7 @@ dependencies:
   serverpod_auth_idp_flutter: 4.0.4
   serverpod_flutter: 4.0.4
   shared_preferences: ^2.5.6
+  web: ^1.1.1
 
 dev_dependencies:
   # Used for agents to drive the app through the Dart MCP
