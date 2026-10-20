@@ -8,6 +8,7 @@ enum HostStep {
   endRound,
   nextRound,
   startFinal,
+  showPodium,
   none,
 }
 
@@ -22,7 +23,11 @@ HostStep hostStepFor(RoomState room) {
     case RoomStatus.reveal:
       final q = room.question;
       if (q == null) return HostStep.none;
-      if (q.isFinal) return HostStep.nextQuestion;
+      if (q.isFinal) {
+        return room.finalQuestionsPlayed >= room.finalQuestionCount
+            ? HostStep.showPodium
+            : HostStep.nextQuestion;
+      }
       final roundOver = q.indexInRound >= room.questionsPerRound;
       return roundOver || _suddenDeathDecided(room)
           ? HostStep.endRound

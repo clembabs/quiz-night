@@ -18,13 +18,14 @@ class HostStepButton extends StatelessWidget {
     HostStep.endRound => 'End round',
     HostStep.nextRound => 'Next round',
     HostStep.startFinal => 'Start the final',
+    HostStep.showPodium => 'Show the podium',
     HostStep.none => '',
   };
 
   static IconData iconFor(HostStep step) => switch (step) {
     HostStep.reveal => Icons.visibility_rounded,
     HostStep.endRound => Icons.content_cut_rounded,
-    HostStep.startFinal => Icons.emoji_events_rounded,
+    HostStep.startFinal || HostStep.showPodium => Icons.emoji_events_rounded,
     _ => Icons.arrow_forward_rounded,
   };
 
@@ -40,7 +41,8 @@ class HostStepButton extends StatelessWidget {
       // The server knows whether "next" means a question, a round or the final.
       HostStep.nextQuestion ||
       HostStep.nextRound ||
-      HostStep.startFinal => cubit.nextQuestion,
+      HostStep.startFinal ||
+      HostStep.showPodium => cubit.nextQuestion,
       HostStep.none => () async {},
     };
     return FilledButton.icon(
