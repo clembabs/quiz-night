@@ -11,7 +11,7 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Live elimination quiz: survive the round, or go home.">
-  <meta name="theme-color" content="#14123A">
+  <meta name="theme-color" content="#0F1A15">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -24,39 +24,50 @@
   <link rel="manifest" href="manifest.json">
 
   <!--
-    Shown instantly while Flutter downloads (~3 MB on first visit, mostly the
-    rendering engine). Plain HTML and CSS only, so it costs almost nothing.
-    flutter_bootstrap.js removes it once the app has painted.
+    The design system's "Loading" component, shown instantly while Flutter
+    downloads. Plain HTML and CSS (no fonts or images), so it costs almost
+    nothing. flutter_bootstrap.js fades it out once the app has painted.
   -->
   <style>
-    html, body { margin: 0; height: 100%; background: #14123A; }
+    html, body { margin: 0; height: 100%; background: #0F1A15; }
     #loading {
       position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 18px;
-      color: #F4F2FF; font: 600 16px/1.4 system-ui, -apple-system, sans-serif;
-      transition: opacity 250ms ease;
+      align-items: center; justify-content: center; gap: 20px;
+      background-color: #0F1A15;
+      background-image: radial-gradient(rgba(242,240,230,.035) 1px, transparent 1.2px);
+      background-size: 7px 7px;
+      color: #F2F0E6; font: 600 14px/1.4 system-ui, -apple-system, sans-serif;
+      transition: opacity 250ms cubic-bezier(.2,0,0,1);
     }
-    #loading h1 {
-      margin: 0; font-size: 40px; font-weight: 900; letter-spacing: -1px;
+    #loading .crest {
+      width: 64px; height: 76px; box-sizing: border-box;
+      background: #1A3A2C; border: 3px solid #E0B53A;
+      border-radius: 8px 8px 50% 50% / 8px 8px 46% 46%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      font: 800 24px/1 system-ui, -apple-system, sans-serif; letter-spacing: -0.02em;
     }
-    #loading p { margin: 0; color: #A9A4D6; }
-    #loading .spinner {
-      width: 44px; height: 44px; border-radius: 50%;
-      border: 5px solid #2E2A6B; border-top-color: #FFC233;
-      animation: spin 0.9s linear infinite;
+    #loading .crest i { width: 28px; height: 2px; background: #E0B53A; }
+    #loading .bar {
+      width: 140px; height: 4px; border-radius: 2px; overflow: hidden;
+      background: rgba(242,240,230,.12);
     }
+    #loading .bar i {
+      display: block; width: 100%; height: 100%; background: #E0B53A;
+      transform-origin: left; animation: qnFill 1.6s cubic-bezier(.2,0,0,1) infinite;
+    }
+    #loading p { margin: 0; color: #AEB9B1; }
     #loading.done { opacity: 0; pointer-events: none; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes qnFill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
     @media (prefers-reduced-motion: reduce) {
-      #loading .spinner { animation-duration: 3s; }
+      #loading .bar i { animation: none; }
     }
   </style>
 </head>
 <body>
   <div id="loading" role="status" aria-live="polite">
-    <h1>Quiz Night</h1>
-    <div class="spinner" aria-hidden="true"></div>
-    <p>Loading the stage…</p>
+    <div class="crest" aria-hidden="true">QN<i></i></div>
+    <div class="bar" aria-hidden="true"><i></i></div>
+    <p>Loading Quiz Night…</p>
   </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
