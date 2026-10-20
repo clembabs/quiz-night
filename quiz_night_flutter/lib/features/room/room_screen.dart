@@ -144,7 +144,11 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         me: me,
         myChoice: state.myChoice,
       ),
-      RoomStatus.elimination => PlayerCutView(room: room, me: me),
+      RoomStatus.elimination => PlayerCutView(
+        room: room,
+        me: me,
+        myBackedId: state.myBackedId,
+      ),
       _ => _comingSoon(room),
     };
   }
