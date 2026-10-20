@@ -14,13 +14,27 @@ import 'home_cubit.dart';
 
 /// The landing page is the join form (prototype "Join"): crest lockup, room
 /// code, nickname, JOIN GAME. Hosts on a laptop use the link underneath.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> _open(BuildContext context, Route<void> route) async {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+/// Stateful only to start a fresh form each time you come back from a room.
+class _HomeScreenState extends State<HomeScreen> {
+  /// Bumped on return from a room; a new key gives the form empty fields.
+  int _formGeneration = 0;
+
+  Future<void> _open(Route<void> route) async {
     final home = context.read<HomeCubit>();
+    final join = context.read<JoinCubit>();
     await Navigator.of(context).push(route);
     await home.refresh();
+    if (!mounted) return;
+    // Old code, nickname and errors belong to the game you just left.
+    join.reset();
+    setState(() => _formGeneration++);
   }
 
   @override
@@ -33,20 +47,25 @@ class HomeScreen extends StatelessWidget {
             final route = state.route!;
             context.read<HomeCubit>().routeHandled();
             // A QR link only pre-fills the code; a live seat goes straight in.
-            if (route is RoomRoute) _open(context, AppRoutes.room(route.seat));
+            if (route is RoomRoute) {
+              _open(AppRoutes.room(route.seat));
+            }
           },
         ),
         BlocListener<JoinCubit, JoinState>(
           listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
-          listener: (context, state) =>
-              _open(context, AppRoutes.room(state.seat!)),
+          listener: (context, state) => _open(AppRoutes.room(state.seat!)),
         ),
       ],
       child: Scaffold(
         body: PhoneFrame(
           child: JoinForm(
-            initialCode: context.read<HomeCubit>().initialCode,
-            onHost: () => _open(context, AppRoutes.hostSetup()),
+            key: ValueKey(_formGeneration),
+            // The QR's code is for the first visit only.
+            initialCode: _formGeneration == 0
+                ? context.read<HomeCubit>().initialCode
+                : null,
+            onHost: () => _open(AppRoutes.hostSetup()),
           ),
         ),
       ),
@@ -98,10 +117,9 @@ class _JoinFormState extends State<JoinForm> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: QuizNightLockup(
+                      padding: EdgeInsets.only(top: 32),
+                      child: Center(
+                        child: QuizNightStackedMark(
                           subtitle: 'Survive the round, or go home.',
                         ),
                       ),

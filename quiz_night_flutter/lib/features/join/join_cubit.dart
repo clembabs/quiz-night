@@ -40,6 +40,9 @@ class JoinCubit extends Cubit<JoinState> {
 
   JoinCubit(this._lobby, this._seats) : super(const JoinState());
 
+  /// Back to an empty form, e.g. after returning from a finished game.
+  void reset() => emit(const JoinState());
+
   Future<void> join(String code, String nickname) async {
     final cleanCode = code.trim().toUpperCase();
     final cleanName = nickname.trim();
@@ -71,7 +74,8 @@ class JoinCubit extends Cubit<JoinState> {
 
   /// The design system's wording for the errors players actually hit.
   static String _messageFor(AppFailure f) => switch (f.kind) {
-    FailureKind.roomGone => 'Room not found. Check the code on the big screen.',
+    FailureKind.roomGone =>
+      "This game session doesn't exist. Check the code on the big screen.",
     FailureKind.gameStarted =>
       'This game already started. Ask the host to open a new room.',
     _ => f.message,
