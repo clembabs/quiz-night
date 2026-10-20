@@ -6,6 +6,11 @@ import '../../widgets/common.dart';
 import 'host_lobby_view.dart';
 import 'player_lobby_view.dart';
 import 'room_cubit.dart';
+import 'round/host_cut_view.dart';
+import 'round/host_question_view.dart';
+import 'round/player_cut_view.dart';
+import 'round/player_question_view.dart';
+import 'round/player_reveal_view.dart';
 
 /// The in-room screen for both roles. Picks a view from the live status.
 class RoomScreen extends StatefulWidget {
@@ -107,19 +112,50 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     }
     final room = state.room;
     if (room == null) return const Center(child: CircularProgressIndicator());
-    if (room.status == RoomStatus.lobby) {
-      return state.seat.isHost
-          ? HostLobbyView(room: room)
-          : PlayerLobbyView(room: room, me: state.me);
-    }
-    // Rounds, cuts and the final arrive in milestones 4-6.
-    return MessageView(
-      icon: Icons.construction_rounded,
-      text:
-          'Game in progress (${room.status.name}).\n'
-          'This screen arrives in the next milestone.',
-    );
+    return state.seat.isHost
+        ? _hostStage(room, state)
+        : _playerStage(room, state);
   }
+
+  Widget _hostStage(RoomState room, RoomViewState state) {
+    final q = room.question;
+    return switch (room.status) {
+      RoomStatus.lobby => HostLobbyView(room: room),
+      RoomStatus.question || RoomStatus.reveal when q != null && !q.isFinal =>
+        HostQuestionView(room: room, clockOffset: state.clockOffset),
+      RoomStatus.elimination => HostCutView(room: room),
+      _ => _comingSoon(room),
+    };
+  }
+
+  Widget _playerStage(RoomState room, RoomViewState state) {
+    final q = room.question;
+    final me = state.me;
+    return switch (room.status) {
+      RoomStatus.lobby => PlayerLobbyView(room: room, me: me),
+      RoomStatus.question when q != null && !q.isFinal => PlayerQuestionView(
+        room: room,
+        me: me,
+        myChoice: state.myChoice,
+        clockOffset: state.clockOffset,
+      ),
+      RoomStatus.reveal when q != null && !q.isFinal => PlayerRevealView(
+        room: room,
+        me: me,
+        myChoice: state.myChoice,
+      ),
+      RoomStatus.elimination => PlayerCutView(room: room, me: me),
+      _ => _comingSoon(room),
+    };
+  }
+
+  // The buzzer final and podium arrive in Milestone 6.
+  Widget _comingSoon(RoomState room) => MessageView(
+    icon: Icons.construction_rounded,
+    text:
+        'Game in progress (${room.status.name}).\n'
+        'This screen arrives in a later milestone.',
+  );
 }
 
 class _ReconnectingChip extends StatelessWidget {
