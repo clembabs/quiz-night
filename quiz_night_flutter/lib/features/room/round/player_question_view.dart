@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/answer_option.dart';
 import '../../../widgets/countdown_bar.dart';
+import '../../../widgets/spectator_banner.dart';
 import '../room_cubit.dart';
 import 'question_header.dart';
 
@@ -36,6 +37,10 @@ class PlayerQuestionView extends StatelessWidget {
     return ListView(
       padding: AppSpacing.screenPadding,
       children: [
+        if (SpectatorBanner.appliesTo(me)) ...[
+          SpectatorBanner(me: me!),
+          const SizedBox(height: AppSpacing.md),
+        ],
         QuestionHeader(room: room),
         const SizedBox(height: AppSpacing.sm),
         Text(q.text, style: AppTextStyles.questionPlayer),

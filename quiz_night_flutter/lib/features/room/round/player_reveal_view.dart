@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/answer_option.dart';
+import '../../../widgets/spectator_banner.dart';
 import '../round_logic.dart';
 import 'question_header.dart';
 
@@ -37,6 +38,7 @@ class PlayerRevealView extends StatelessWidget {
     final verdict = verdictFor(me: me, myChoice: myChoice);
     final rank = me == null ? null : rankOf(room, me.id);
     final correct = q.correctIndex;
+    final spectator = SpectatorBanner.appliesTo(me);
 
     final (icon, color, text) = switch (verdict) {
       PlayerVerdict.correct => (
@@ -55,6 +57,10 @@ class PlayerRevealView extends StatelessWidget {
     return ListView(
       padding: AppSpacing.screenPadding,
       children: [
+        if (spectator) ...[
+          SpectatorBanner(me: me!),
+          const SizedBox(height: AppSpacing.md),
+        ],
         QuestionHeader(room: room),
         const SizedBox(height: AppSpacing.xl),
         Icon(icon, size: AppIconSizes.hero, color: color),
@@ -62,12 +68,15 @@ class PlayerRevealView extends StatelessWidget {
         Text(text, textAlign: TextAlign.center, style: AppTextStyles.verdict),
         if (verdict == PlayerVerdict.correct)
           Text(
-            '+${me?.lastPoints ?? 0}',
+            spectator
+                ? '+${me?.lastPoints ?? 0} shadow'
+                : '+${me?.lastPoints ?? 0}',
             textAlign: TextAlign.center,
             style: AppTextStyles.points,
           ),
         const SizedBox(height: AppSpacing.md),
-        if (me != null)
+        // Spectators have no rank; their banner shows the shadow score.
+        if (me != null && !spectator)
           Text(
             rank == null ? '${me.score} pts' : '#$rank · ${me.score} pts',
             textAlign: TextAlign.center,
