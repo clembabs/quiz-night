@@ -6,7 +6,7 @@ export PATH := $(PATH):$(HOME)/.pub-cache/bin
 
 .DEFAULT_GOAL := help
 .PHONY: help setup start phone phone-build build-web test test-server \
-        test-flutter analyze format check generate migration fonts \
+        test-flutter analyze format check generate migration icons fonts \
         deploy-login deploy-launch deploy clean
 
 help: ## List the commands
@@ -59,6 +59,9 @@ generate: ## Regenerate Serverpod server + client code after model/endpoint chan
 
 migration: generate ## Create a database migration after changing a model with a table
 	cd $(SERVER) && serverpod create-migration
+
+icons: ## Re-render the favicon and home-screen icons from the crest
+	cd $(FLUTTER) && flutter test tool/generate_icons_test.dart
 
 fonts: ## Rebuild the bundled font subsets (needs fonttools; see tool/make_fonts.py)
 	@echo "Download the source fonts listed in $(FLUTTER)/tool/make_fonts.py into SRC, then:"
