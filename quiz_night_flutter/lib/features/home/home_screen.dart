@@ -1,88 +1,212 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../data/seat.dart';
-import '../../widgets/common.dart';
+import '../../widgets/brand/crest.dart';
+import '../../widgets/qn/notices.dart';
+import '../../widgets/qn/phone_frame.dart';
+import '../join/join_cubit.dart';
 import 'home_cubit.dart';
 
+/// The landing page is the join form (prototype "Join"): crest lockup, room
+/// code, nickname, JOIN GAME. Hosts on a laptop use the link underneath.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   Future<void> _open(BuildContext context, Route<void> route) async {
-    final cubit = context.read<HomeCubit>();
+    final home = context.read<HomeCubit>();
     await Navigator.of(context).push(route);
-    await cubit.refresh();
+    await home.refresh();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeCubit, HomeState>(
-      listenWhen: (a, b) => b.route != null && a.route != b.route,
-      listener: (context, state) {
-        final route = state.route!;
-        context.read<HomeCubit>().routeHandled();
-        _open(
-          context,
-          switch (route) {
-            JoinRoute(:final code) => AppRoutes.join(code: code),
-            RoomRoute(:final seat) => AppRoutes.room(seat),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<HomeCubit, HomeState>(
+          listenWhen: (a, b) => b.route != null && a.route != b.route,
+          listener: (context, state) {
+            final route = state.route!;
+            context.read<HomeCubit>().routeHandled();
+            // A QR link only pre-fills the code; a live seat goes straight in.
+            if (route is RoomRoute) _open(context, AppRoutes.room(route.seat));
           },
-        );
-      },
+        ),
+        BlocListener<JoinCubit, JoinState>(
+          listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
+          listener: (context, state) =>
+              _open(context, AppRoutes.room(state.seat!)),
+        ),
+      ],
+      child: Scaffold(
+        body: PhoneFrame(
+          child: JoinForm(
+            initialCode: context.read<HomeCubit>().initialCode,
+            onHost: () => _open(context, AppRoutes.hostSetup()),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Room code + nickname + JOIN GAME.
+class JoinForm extends StatefulWidget {
+  final String? initialCode;
+  final VoidCallback onHost;
+
+  const JoinForm({super.key, this.initialCode, required this.onHost});
+
+  @override
+  State<JoinForm> createState() => _JoinFormState();
+}
+
+/// Stateful only to own the text controllers.
+class _JoinFormState extends State<JoinForm> {
+  late final _code = TextEditingController(text: widget.initialCode ?? '');
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _code.dispose();
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() => context.read<JoinCubit>().join(_code.text, _name.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<JoinCubit, JoinState>(
       builder: (context, state) {
-        final saved = state.savedSeat;
-        return Scaffold(
-          body: SafeArea(
-            child: CenteredContent(
-              child: Padding(
-                padding: AppSpacing.screenPadding,
+        final notFound = state.errorKind == JoinError.roomNotFound;
+        final started = state.errorKind == JoinError.gameStarted;
+        final fieldError = !notFound && !started ? state.error : null;
+        return LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 36).clamp(0, 9999),
+              ),
+              child: IntrinsicHeight(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.emoji_events_rounded,
-                      size: AppIconSizes.hero,
-                      color: AppColors.gold,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    const Text(
-                      'Quiz Night',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.title,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Survive the round, or go home.',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.tagline,
-                    ),
-                    const SizedBox(height: AppSpacing.xxxl),
-                    if (saved != null) ...[
-                      FilledButton.icon(
-                        onPressed: () => _open(context, AppRoutes.room(saved)),
-                        icon: const Icon(Icons.login_rounded),
-                        label: Text(rejoinLabel(saved)),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                    ],
-                    FilledButton(
-                      onPressed: () => _open(
-                        context,
-                        AppRoutes.join(
-                          code: context.read<HomeCubit>().initialCode,
+                    const Padding(
+                      padding: EdgeInsets.only(top: 24),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: QuizNightLockup(
+                          subtitle: 'Survive the round, or go home.',
                         ),
                       ),
-                      child: const Text('Join a game'),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    OutlinedButton(
-                      onPressed: () => _open(context, AppRoutes.hostSetup()),
-                      child: const Text('Host a game'),
+                    const Spacer(),
+                    const SizedBox(height: 20),
+                    if (started) ...[
+                      QnBanner(kind: BannerKind.warning, text: state.error!),
+                      const SizedBox(height: 20),
+                    ],
+                    const _FieldLabel('Room code'),
+                    TextField(
+                      key: const Key('join.code'),
+                      controller: _code,
+                      autofocus: widget.initialCode == null,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      style: AppTextStyles.codeInput,
+                      decoration: InputDecoration(
+                        hintText: '0000',
+                        hintStyle: AppTextStyles.codeInput.copyWith(
+                          color: AppColors.faint,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 13,
+                        ),
+                        enabledBorder: _codeBorder(
+                          notFound ? AppColors.wrong : AppColors.gold,
+                        ),
+                        focusedBorder: _codeBorder(
+                          notFound ? AppColors.wrong : AppColors.gold,
+                        ),
+                      ),
+                    ),
+                    if (notFound)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          '✕ ${state.error}',
+                          style: AppTextStyles.error,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    const _FieldLabel('Nickname'),
+                    TextField(
+                      key: const Key('join.nickname'),
+                      controller: _name,
+                      autofocus: widget.initialCode != null,
+                      maxLength: 20,
+                      textInputAction: TextInputAction.go,
+                      onSubmitted: (_) => _submit(),
+                      style: AppTextStyles.input,
+                      decoration: const InputDecoration(
+                        hintText: 'e.g. Ọlá',
+                        counterText: '',
+                      ),
+                    ),
+                    if (fieldError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(fieldError, style: AppTextStyles.error),
+                      ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 60,
+                      child: FilledButton(
+                        key: const Key('join.submit'),
+                        onPressed: state.submitting ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: state.submitting
+                            ? const SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: AppColors.goldInk,
+                                ),
+                              )
+                            : Text(
+                                'JOIN GAME',
+                                style: AppTextStyles.headline.copyWith(
+                                  fontSize: 22,
+                                  color: AppColors.goldInk,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      key: const Key('home.host'),
+                      onPressed: widget.onHost,
+                      child: Text(
+                        'Hosting on a big screen? Host a game',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.muted,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -93,8 +217,27 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+
+  static OutlineInputBorder _codeBorder(Color color) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppRadii.md),
+    borderSide: BorderSide(color: color, width: AppBorders.focus),
+  );
 }
 
-/// Label for the button that takes you back to a saved seat.
-String rejoinLabel(Seat seat) =>
-    seat.isHost ? 'Back to hosting ${seat.code}' : 'Rejoin room ${seat.code}';
+class _FieldLabel extends StatelessWidget {
+  final String text;
+
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: AppTextStyles.chip.copyWith(
+        fontSize: 14,
+        color: AppColors.chalkSoft,
+      ),
+    ),
+  );
+}
