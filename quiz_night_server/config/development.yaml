@@ -14,10 +14,11 @@ apiServer:
   publicScheme: http
 
 # Configuration for the Insights server.
+# Moved off 8081, which Expo / React Native's Metro bundler also uses.
 insightsServer:
-  port: 8081
+  port: 8083
   publicHost: localhost
-  publicPort: 8081
+  publicPort: 8083
   publicScheme: http
 
 # Configuration for the web server.
