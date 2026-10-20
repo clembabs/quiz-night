@@ -23,6 +23,9 @@ abstract final class AppSpacing {
 
   /// Minimum height of thumb-friendly buttons.
   static const buttonHeight = 56.0;
+
+  /// Height of a player's answer button: big enough to hit without looking.
+  static const answerButtonHeight = 76.0;
 }
 
 /// Corner radii.

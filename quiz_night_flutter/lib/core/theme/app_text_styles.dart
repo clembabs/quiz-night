@@ -45,6 +45,83 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w800,
     color: AppColors.text,
   );
+  // ---- rounds
+  static const questionHost = TextStyle(
+    fontSize: 44,
+    fontWeight: FontWeight.w800,
+    height: 1.2,
+    color: AppColors.text,
+  );
+  static const questionPlayer = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    height: 1.25,
+    color: AppColors.text,
+  );
+  static const roundLabel = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.5,
+    color: AppColors.gold,
+  );
+  static const optionLetter = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+    color: AppColors.onOption,
+  );
+  static const optionText = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: AppColors.onOption,
+  );
+  static const optionTextLarge = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    color: AppColors.onOption,
+  );
+  static const optionCount = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+    color: AppColors.onOption,
+  );
+  static const timer = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w900,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: AppColors.text,
+  );
+  static const verdict = TextStyle(
+    fontSize: 36,
+    fontWeight: FontWeight.w900,
+    color: AppColors.text,
+  );
+  static const points = TextStyle(
+    fontSize: 48,
+    fontWeight: FontWeight.w900,
+    color: AppColors.gold,
+  );
+  static const rank = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: AppColors.muted,
+  );
+  static const leaderName = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: AppColors.text,
+  );
+  static const leaderScore = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w900,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: AppColors.text,
+  );
+  static const leaderGain = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    color: AppColors.success,
+  );
+
   static const chip = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
   static const chipLarge = TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
 }

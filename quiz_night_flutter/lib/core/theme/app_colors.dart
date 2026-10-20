@@ -11,8 +11,12 @@ abstract final class AppColors {
   static const danger = Color(0xFFFF5C7A);
   static const success = Color(0xFF3DDC97);
   static const qrBackground = Colors.white;
+  static const onOption = Colors.white;
 
-  /// One colour per answer option (A-D), used from Milestone 4.
+  /// Overlay that fades options that are not the answer after reveal.
+  static const dimmed = Color(0x99000000);
+
+  /// One colour per answer option (A-D).
   static const options = [
     Color(0xFFE5484D),
     Color(0xFF3E63DD),
