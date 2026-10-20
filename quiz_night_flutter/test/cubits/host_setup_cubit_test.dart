@@ -77,5 +77,35 @@ void main() {
         expect(c.state.seat, isNull);
       },
     );
+
+    blocTest<HostSetupCubit, HostSetupState>(
+      'when questions are hidden from phones then the config says so',
+      setUp: () =>
+          when(() => lobby.createRoom(any())).thenAnswer((_) async => hostSeat),
+      build: () => HostSetupCubit(lobby, seats),
+      act: (c) async {
+        c.setShowQuestionOnPhones(false);
+        await c.create();
+      },
+      verify: (c) {
+        final config =
+            verify(() => lobby.createRoom(captureAny())).captured.single
+                as RoomConfig;
+        expect(config.showQuestionOnPhones, isFalse);
+        expect(c.summary, contains('only on the big screen'));
+      },
+    );
+
+    test('when summarising the defaults then it reads like the prototype', () {
+      final c = HostSetupCubit(lobby, seats);
+      expect(
+        c.summary,
+        startsWith(
+          'Bottom 30% elimination, 5 questions per round, 3 finalists in a '
+          'buzzer final.',
+        ),
+      );
+      c.close();
+    });
   });
 }

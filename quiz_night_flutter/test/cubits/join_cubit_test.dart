@@ -24,7 +24,10 @@ void main() {
       build: () => JoinCubit(lobby, seats),
       act: (c) => c.join('  ', 'Ada'),
       expect: () => [
-        const JoinState(error: 'Enter the room code and a nickname'),
+        const JoinState(
+          error: 'Enter the room code and a nickname',
+          errorKind: JoinError.missingFields,
+        ),
       ],
       verify: (_) => verifyNever(() => lobby.joinRoom(any(), any())),
     );
@@ -45,16 +48,57 @@ void main() {
 
     blocTest<JoinCubit, JoinState>(
       'when the server rejects the nickname then shows its message',
-      setUp: () => when(
-        () => lobby.joinRoom(any(), any()),
-      ).thenThrow(const AppFailure('That nickname is taken')),
+      setUp: () =>
+          when(
+            () => lobby.joinRoom(any(), any()),
+          ).thenThrow(
+            const AppFailure(
+              'That nickname is taken',
+              kind: FailureKind.nicknameTaken,
+            ),
+          ),
       build: () => JoinCubit(lobby, seats),
       act: (c) => c.join('ABCD', 'Ada'),
       expect: () => [
         const JoinState(submitting: true),
-        const JoinState(error: 'That nickname is taken'),
+        const JoinState(
+          error: 'That nickname is taken',
+          errorKind: JoinError.nicknameTaken,
+        ),
       ],
       verify: (_) => verifyNever(() => seats.save(any())),
+    );
+
+    blocTest<JoinCubit, JoinState>(
+      'when the code is unknown then says to check the big screen',
+      setUp: () => when(() => lobby.joinRoom(any(), any())).thenThrow(
+        const AppFailure('Room not found', kind: FailureKind.roomGone),
+      ),
+      build: () => JoinCubit(lobby, seats),
+      act: (c) => c.join('9999', 'Ada'),
+      skip: 1,
+      expect: () => [
+        const JoinState(
+          error: 'Room not found. Check the code on the big screen.',
+          errorKind: JoinError.roomNotFound,
+        ),
+      ],
+    );
+
+    blocTest<JoinCubit, JoinState>(
+      'when the game already started then says to ask for a new room',
+      setUp: () => when(() => lobby.joinRoom(any(), any())).thenThrow(
+        const AppFailure('started', kind: FailureKind.gameStarted),
+      ),
+      build: () => JoinCubit(lobby, seats),
+      act: (c) => c.join('4821', 'Ada'),
+      skip: 1,
+      expect: () => [
+        const JoinState(
+          error: 'This game already started. Ask the host to open a new room.',
+          errorKind: JoinError.gameStarted,
+        ),
+      ],
     );
   });
 }

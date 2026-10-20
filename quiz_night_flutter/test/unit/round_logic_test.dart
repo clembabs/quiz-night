@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
-import 'package:quiz_night_flutter/features/room/round/player_cut_view.dart';
-import 'package:quiz_night_flutter/features/room/round/player_reveal_view.dart';
 import 'package:quiz_night_flutter/features/room/round_logic.dart';
-import 'package:quiz_night_flutter/widgets/answer_option.dart';
+import 'package:quiz_night_flutter/widgets/qn/answer_button.dart';
 
 import '../fakes/fakes.dart';
 
@@ -156,28 +154,39 @@ void main() {
     });
   });
 
-  group('Given option looks', () {
+  group('Given answer looks', () {
     test('when nothing is picked then all are idle', () {
       expect(
-        lookFor(index: 0, correctIndex: null, picked: null),
-        OptionLook.idle,
+        answerLookFor(index: 0, correctIndex: null, picked: null),
+        AnswerLook.idle,
       );
     });
 
-    test('when one is picked then it is highlighted and others fade', () {
+    test('when one is picked then it is selected and others dim', () {
       expect(
-        lookFor(index: 2, correctIndex: null, picked: 2),
-        OptionLook.picked,
+        answerLookFor(index: 2, correctIndex: null, picked: 2),
+        AnswerLook.selected,
       );
       expect(
-        lookFor(index: 0, correctIndex: null, picked: 2),
-        OptionLook.faded,
+        answerLookFor(index: 0, correctIndex: null, picked: 2),
+        AnswerLook.dimmed,
       );
     });
 
-    test('when revealed then the answer is correct and others wrong', () {
-      expect(lookFor(index: 1, correctIndex: 1, picked: 2), OptionLook.correct);
-      expect(lookFor(index: 2, correctIndex: 1, picked: 2), OptionLook.wrong);
+    test('when revealed then the answer is correct, a wrong pick is wrong '
+        'and the rest dim', () {
+      expect(
+        answerLookFor(index: 1, correctIndex: 1, picked: 2),
+        AnswerLook.correct,
+      );
+      expect(
+        answerLookFor(index: 2, correctIndex: 1, picked: 2),
+        AnswerLook.wrong,
+      );
+      expect(
+        answerLookFor(index: 3, correctIndex: 1, picked: 2),
+        AnswerLook.dimmed,
+      );
     });
 
     test('when labelling then options are A to D', () {

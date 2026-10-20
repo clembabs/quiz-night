@@ -522,4 +522,90 @@ void main() {
       await cubit.close();
     });
   });
+
+  group('Given the redesign state on the RoomCubit', () {
+    RoomState reveal(int qid, List<PlayerView> players) => roomState(
+      status: RoomStatus.reveal,
+      question: question(id: qid, revealed: true),
+      players: players,
+    );
+
+    test('when two reveals come in then rank movement is measured between '
+        'them', () async {
+      final cubit = build()..start();
+      streams.last.add(
+        reveal(1, [player(1, 'Ada', score: 900), player(2, 'Bo', score: 500)]),
+      );
+      await pumpEventQueue();
+      expect(cubit.state.rankMoves, isEmpty, reason: 'first reveal');
+
+      streams.last.add(
+        reveal(2, [player(1, 'Ada', score: 900), player(2, 'Bo', score: 1500)]),
+      );
+      await pumpEventQueue();
+      expect(cubit.state.rankMoves, {2: 1, 1: -1});
+      await cubit.close();
+    });
+
+    test('when the same reveal is re-sent then movement is kept', () async {
+      final cubit = build()..start();
+      final players = [
+        player(1, 'Ada', score: 900),
+        player(2, 'Bo', score: 500),
+      ];
+      streams.last.add(reveal(1, players));
+      await pumpEventQueue();
+      streams.last.add(reveal(2, players.reversed.toList()));
+      await pumpEventQueue();
+      final moves = cubit.state.rankMoves;
+      streams.last.add(reveal(2, players));
+      await pumpEventQueue();
+      expect(cubit.state.rankMoves, moves);
+      await cubit.close();
+    });
+
+    test('when the host shows standings then it stays up until the room '
+        'moves on', () async {
+      final cubit = build()..start();
+      streams.last.add(reveal(1, [player(1, 'Ada')]));
+      await pumpEventQueue();
+
+      cubit.showStandings();
+      expect(cubit.state.showingStandings, isTrue);
+
+      streams.last.add(
+        roomState(status: RoomStatus.elimination, lastElimination: cut()),
+      );
+      await pumpEventQueue();
+      expect(cubit.state.showingStandings, isFalse);
+      await cubit.close();
+    });
+
+    test('when a player asks for standings then nothing changes', () async {
+      final cubit = RoomCubit(game, seats, playerSeat)..start();
+      streams.last.add(reveal(1, [player(1, 'Ada')]));
+      await pumpEventQueue();
+      cubit.showStandings();
+      expect(cubit.state.showingStandings, isFalse);
+      await cubit.close();
+    });
+
+    test('when an eliminated player keeps watching then it lasts for this '
+        'cut only', () async {
+      final cubit = RoomCubit(game, seats, playerSeat)..start();
+      streams.last.add(
+        roomState(status: RoomStatus.elimination, lastElimination: cut()),
+      );
+      await pumpEventQueue();
+      cubit.keepWatchingAsSpectator();
+      expect(cubit.state.keepWatching, isTrue);
+
+      streams.last.add(
+        roomState(status: RoomStatus.question, question: question()),
+      );
+      await pumpEventQueue();
+      expect(cubit.state.keepWatching, isFalse);
+      await cubit.close();
+    });
+  });
 }

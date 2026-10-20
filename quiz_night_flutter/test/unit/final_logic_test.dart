@@ -1,8 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/features/room/final/final_logic.dart';
-import 'package:quiz_night_flutter/features/room/final/finalist_card.dart';
-import 'package:quiz_night_flutter/features/room/final/podium_view.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
 import 'package:quiz_night_flutter/features/room/round_logic.dart';
 
 import '../fakes/fakes.dart';
@@ -60,29 +59,42 @@ void main() {
     });
   });
 
-  group('Given the podium personal line', () {
+  group('Given the phone placement wording', () {
     final room = finished();
     PlayerView p(int id) => room.players.firstWhere((x) => x.id == id);
 
-    test('when the winner looks then they won', () {
-      expect(PodiumView.personalLine(room, p(2)), 'You won Quiz Night!');
+    test('when the winner looks then they are champion', () {
+      expect(PhonePlacement.titleFor(room, p(2)), 'Champion');
+      expect(
+        PhonePlacement.detailFor(room, p(2)),
+        'You win Quiz Night with 2,000 final points.',
+      );
     });
 
-    test('when another finalist looks then their place', () {
-      expect(PodiumView.personalLine(room, p(3)), 'You finished #3');
+    test('when another finalist looks then they are a finalist', () {
+      expect(PhonePlacement.titleFor(room, p(3)), 'Finalist');
+      expect(PhonePlacement.detailFor(room, p(3)), contains('Ada wins'));
     });
 
-    test('when a spectator backed the winner then they called it', () {
-      expect(PodiumView.personalLine(room, p(4)), 'You called it!');
+    test('when a spectator backed the winner then it says so', () {
+      expect(
+        PhonePlacement.detailFor(room, p(4)),
+        'You backed the winner, Ada. Shadow score 900.',
+      );
     });
 
     test('when a spectator backed someone else then it says who', () {
-      expect(PodiumView.personalLine(room, p(5)), 'You backed Bo');
+      expect(
+        PhonePlacement.detailFor(room, p(5)),
+        'You backed Bo. Ada won. Shadow score 2,400.',
+      );
     });
 
-    test('when a spectator backed nobody or it is the host then no line', () {
-      expect(PodiumView.personalLine(room, p(6)), isNull);
-      expect(PodiumView.personalLine(room, null), isNull);
+    test('when a spectator backed nobody then it nudges them', () {
+      expect(
+        PhonePlacement.detailFor(room, p(6)),
+        'Shadow score 0. Back a finalist next time.',
+      );
     });
   });
 
@@ -113,7 +125,7 @@ void main() {
     test('when I hold the buzzer then I am holding', () {
       final room = open(holder: 1);
       expect(buzzerSeatFor(room, p(room, 1)), BuzzerSeat.holding);
-      expect(finalistTagFor(room, p(room, 1)), FinalistTag.buzzed);
+      expect(deskStateFor(room, p(room, 1)), DeskState.buzzedFirst);
     });
 
     test('when someone else holds it then I wait', () {
@@ -124,7 +136,7 @@ void main() {
     test('when I answered wrong then I am locked out', () {
       final room = open(holder: 3);
       expect(buzzerSeatFor(room, p(room, 2)), BuzzerSeat.lockedOut);
-      expect(finalistTagFor(room, p(room, 2)), FinalistTag.lockedOut);
+      expect(deskStateFor(room, p(room, 2)), DeskState.lockedOut);
     });
 
     test('when I am not a finalist then I spectate', () {
@@ -152,8 +164,8 @@ void main() {
     test('when someone got it then the line credits them', () {
       expect(finalStatusLine(revealed(winner: 1)), 'Ada got it! +1000');
       expect(
-        finalistTagFor(revealed(winner: 1), revealed().players.first),
-        FinalistTag.gotIt,
+        deskStateFor(revealed(winner: 1), revealed().players.first),
+        DeskState.gotIt,
       );
     });
 
