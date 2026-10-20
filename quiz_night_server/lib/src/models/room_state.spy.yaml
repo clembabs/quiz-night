@@ -16,3 +16,5 @@ fields:
   players: List<PlayerView>
   lastElimination: EliminationEvent?
   buzzerHolderId: int?
+  ### Finalist who answered the current final question correctly, if any.
+  buzzWinnerId: int?

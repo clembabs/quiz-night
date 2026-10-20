@@ -1002,6 +1002,10 @@ class RoomService {
       for (final b in buzzes)
         if (b.lockedOut) b.playerId,
     };
+    final buzzWinnerId = buzzes
+        .where((b) => b.wasCorrect ?? false)
+        .map((b) => b.playerId)
+        .firstOrNull;
 
     List<int>? counts;
     if (question != null && !open && !question.isFinal) {
@@ -1064,6 +1068,7 @@ class RoomService {
       players: views,
       lastElimination: room.lastElimination,
       buzzerHolderId: room.buzzerHolderId,
+      buzzWinnerId: buzzWinnerId,
     );
   }
 

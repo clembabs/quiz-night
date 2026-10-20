@@ -37,6 +37,7 @@ abstract class RoomState
     required this.players,
     this.lastElimination,
     this.buzzerHolderId,
+    this.buzzWinnerId,
   });
 
   factory RoomState({
@@ -55,6 +56,7 @@ abstract class RoomState
     required List<_ijz1mobl.PlayerView> players,
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
+    int? buzzWinnerId,
   }) = _RoomStateImpl;
 
   factory RoomState.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -96,6 +98,7 @@ abstract class RoomState
               jsonSerialization['lastElimination'],
             ),
       buzzerHolderId: jsonSerialization['buzzerHolderId'] as int?,
+      buzzWinnerId: jsonSerialization['buzzWinnerId'] as int?,
     );
   }
 
@@ -129,6 +132,9 @@ abstract class RoomState
 
   int? buzzerHolderId;
 
+  /// Finalist who answered the current final question correctly, if any.
+  int? buzzWinnerId;
+
   /// Returns a shallow copy of this [RoomState]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -148,6 +154,7 @@ abstract class RoomState
     List<_ijz1mobl.PlayerView>? players,
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
+    int? buzzWinnerId,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -168,6 +175,7 @@ abstract class RoomState
       'players': players.toJson(valueToJson: (v) => v.toJson()),
       if (lastElimination != null) 'lastElimination': lastElimination?.toJson(),
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
+      if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
     };
   }
 
@@ -191,6 +199,7 @@ abstract class RoomState
       if (lastElimination != null)
         'lastElimination': lastElimination?.toJsonForProtocol(),
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
+      if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
     };
   }
 
@@ -219,6 +228,7 @@ class _RoomStateImpl extends RoomState {
     required List<_ijz1mobl.PlayerView> players,
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
+    int? buzzWinnerId,
   }) : super._(
          code: code,
          status: status,
@@ -235,6 +245,7 @@ class _RoomStateImpl extends RoomState {
          players: players,
          lastElimination: lastElimination,
          buzzerHolderId: buzzerHolderId,
+         buzzWinnerId: buzzWinnerId,
        );
 
   /// Returns a shallow copy of this [RoomState]
@@ -257,6 +268,7 @@ class _RoomStateImpl extends RoomState {
     List<_ijz1mobl.PlayerView>? players,
     Object? lastElimination = _Undefined,
     Object? buzzerHolderId = _Undefined,
+    Object? buzzWinnerId = _Undefined,
   }) {
     return RoomState(
       code: code ?? this.code,
@@ -282,6 +294,7 @@ class _RoomStateImpl extends RoomState {
       buzzerHolderId: buzzerHolderId is int?
           ? buzzerHolderId
           : this.buzzerHolderId,
+      buzzWinnerId: buzzWinnerId is int? ? buzzWinnerId : this.buzzWinnerId,
     );
   }
 }
