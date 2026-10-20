@@ -9,6 +9,7 @@ import '../../data/app_failure.dart';
 import '../../data/room_repositories.dart';
 import '../../data/seat.dart';
 import '../../data/seat_repository.dart';
+import 'standings_logic.dart';
 
 enum ConnectionStatus { connecting, connected, reconnecting }
 
@@ -44,6 +45,16 @@ class RoomViewState extends Equatable {
   /// A buzz is on its way to the server; ignore further taps.
   final bool buzzing;
 
+  /// Host only: the "After round N" standings are on screen (between the
+  /// last reveal of a round and the cut).
+  final bool showingStandings;
+
+  /// Places each player moved at the latest reveal (positive is up).
+  final Map<int, int> rankMoves;
+
+  /// Phone only: an eliminated player tapped "Keep watching as spectator".
+  final bool keepWatching;
+
   const RoomViewState({
     required this.seat,
     this.room,
@@ -56,6 +67,9 @@ class RoomViewState extends Equatable {
     this.myChoices = const {},
     this.myBackedId,
     this.buzzing = false,
+    this.showingStandings = false,
+    this.rankMoves = const {},
+    this.keepWatching = false,
   });
 
   PlayerView? get me => seat.playerId == null
@@ -79,6 +93,9 @@ class RoomViewState extends Equatable {
     Map<int, int>? myChoices,
     int? Function()? myBackedId,
     bool? buzzing,
+    bool? showingStandings,
+    Map<int, int>? rankMoves,
+    bool? keepWatching,
   }) => RoomViewState(
     seat: seat,
     room: room ?? this.room,
@@ -91,6 +108,9 @@ class RoomViewState extends Equatable {
     myChoices: myChoices ?? this.myChoices,
     myBackedId: myBackedId != null ? myBackedId() : this.myBackedId,
     buzzing: buzzing ?? this.buzzing,
+    showingStandings: showingStandings ?? this.showingStandings,
+    rankMoves: rankMoves ?? this.rankMoves,
+    keepWatching: keepWatching ?? this.keepWatching,
   );
 
   @override
@@ -106,6 +126,9 @@ class RoomViewState extends Equatable {
     myChoices,
     myBackedId,
     buzzing,
+    showingStandings,
+    rankMoves,
+    keepWatching,
   ];
 }
 
@@ -129,6 +152,8 @@ class RoomCubit extends Cubit<RoomViewState> {
   final DateTime Function() _now;
 
   StreamSubscription<RoomState>? _sub;
+  int? _lastRevealId;
+  Map<int, int>? _ranksAtLastReveal;
   Timer? _retry;
   int _attempt = 0;
 
@@ -171,8 +196,32 @@ class RoomCubit extends Cubit<RoomViewState> {
         room: room,
         connection: ConnectionStatus.connected,
         clockOffset: room.serverTime.difference(_now()),
+        rankMoves: _movesAt(room),
+        // The standings board only lives inside a reveal.
+        showingStandings: room.status == RoomStatus.reveal
+            ? state.showingStandings
+            : false,
+        // A new cut asks again whether to keep watching.
+        keepWatching: room.status == RoomStatus.elimination
+            ? state.keepWatching
+            : false,
       ),
     );
+  }
+
+  /// Rank movement is measured from one reveal to the next.
+  Map<int, int>? _movesAt(RoomState room) {
+    final q = room.question;
+    if (room.status != RoomStatus.reveal ||
+        q == null ||
+        q.id == _lastRevealId) {
+      return null;
+    }
+    final ranks = ranksOf(room);
+    final before = _ranksAtLastReveal;
+    _lastRevealId = q.id;
+    _ranksAtLastReveal = ranks;
+    return before == null ? const {} : rankMoves(before, ranks);
   }
 
   void _onStreamError(Object error) {
@@ -210,6 +259,17 @@ class RoomCubit extends Cubit<RoomViewState> {
   Future<void> nextQuestion() => _act(() => _game.nextQuestion(state.seat));
   Future<void> reveal() => _act(() => _game.reveal(state.seat));
   Future<void> endRound() => _act(() => _game.endRound(state.seat));
+
+  /// Host: show the standings board with the danger line before the cut.
+  void showStandings() {
+    if (state.seat.isHost && state.room?.status == RoomStatus.reveal) {
+      emit(state.copyWith(showingStandings: true));
+    }
+  }
+
+  /// Phone: leave the "You're out" screen and spectate.
+  void keepWatchingAsSpectator() => emit(state.copyWith(keepWatching: true));
+
   Future<void> useWildcard(int playerId) =>
       _act(() => _game.useWildcard(state.seat, playerId));
 

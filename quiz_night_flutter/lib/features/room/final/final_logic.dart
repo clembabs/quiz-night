@@ -85,3 +85,17 @@ String finalStatusLine(RoomState room) {
   final holder = nicknameOf(room, room.buzzerHolderId);
   return holder == null ? 'Buzz to answer!' : '$holder is answering…';
 }
+
+/// A finalist's state on the current final question.
+enum DeskState { ready, buzzedFirst, lockedOut, gotIt }
+
+DeskState deskStateFor(RoomState room, PlayerView finalist) {
+  if (room.buzzWinnerId == finalist.id) return DeskState.gotIt;
+  if (room.buzzerHolderId == finalist.id) return DeskState.buzzedFirst;
+  if (finalist.lockedOut) return DeskState.lockedOut;
+  return DeskState.ready;
+}
+
+/// Finalists in join order, so desks do not jump around as points land.
+List<PlayerView> finalistsByJoin(RoomState room) =>
+    finalStandings(room)..sort((a, b) => a.id.compareTo(b.id));

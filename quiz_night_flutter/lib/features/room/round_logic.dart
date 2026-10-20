@@ -5,6 +5,9 @@ enum HostStep {
   startGame,
   reveal,
   nextQuestion,
+
+  /// Show the "After round N" standings with the danger line before the cut.
+  showStandings,
   endRound,
   nextRound,
   startFinal,
@@ -12,8 +15,10 @@ enum HostStep {
   none,
 }
 
-/// Picks the host's next step from the room state.
-HostStep hostStepFor(RoomState room) {
+/// Picks the host's next step from the room state. [showingStandings] is
+/// the host's local standings board, shown between the last reveal of a round
+/// and the cut.
+HostStep hostStepFor(RoomState room, {bool showingStandings = false}) {
   switch (room.status) {
     case RoomStatus.lobby:
       return HostStep.startGame;
@@ -28,10 +33,13 @@ HostStep hostStepFor(RoomState room) {
             ? HostStep.showPodium
             : HostStep.nextQuestion;
       }
-      final roundOver = q.indexInRound >= room.questionsPerRound;
-      return roundOver || _suddenDeathDecided(room)
-          ? HostStep.endRound
-          : HostStep.nextQuestion;
+      if (_suddenDeathDecided(room)) return HostStep.endRound;
+      if (q.indexInRound < room.questionsPerRound) return HostStep.nextQuestion;
+      // Only a predicted cut has a danger line worth showing first.
+      final hasLine = room.projectedSurvivors != null;
+      return hasLine && !showingStandings
+          ? HostStep.showStandings
+          : HostStep.endRound;
     case RoomStatus.elimination:
       return (room.lastElimination?.finalistsDecided ?? false)
           ? HostStep.startFinal
@@ -89,3 +97,27 @@ Duration timeLeft({
 
 /// Letter label for an option index: A, B, C, D…
 String optionLetter(int index) => String.fromCharCode(65 + index);
+
+/// What happened to this player on the question just revealed.
+enum PlayerVerdict { correct, wrong, noAnswer }
+
+PlayerVerdict verdictFor({required PlayerView? me, required int? myChoice}) {
+  final points = me?.lastPoints;
+  if (points == null && myChoice == null) return PlayerVerdict.noAnswer;
+  return (points ?? 0) > 0 ? PlayerVerdict.correct : PlayerVerdict.wrong;
+}
+
+/// What the latest cut meant for this player.
+enum CutOutcome { survived, finalist, out, alreadyOut }
+
+CutOutcome cutOutcomeFor(RoomState room, PlayerView? me) {
+  if (me == null) return CutOutcome.alreadyOut;
+  return switch (me.status) {
+    PlayerStatus.finalist => CutOutcome.finalist,
+    PlayerStatus.active => CutOutcome.survived,
+    PlayerStatus.eliminated =>
+      me.eliminatedInRound == room.round
+          ? CutOutcome.out
+          : CutOutcome.alreadyOut,
+  };
+}

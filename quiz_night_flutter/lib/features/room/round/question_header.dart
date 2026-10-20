@@ -21,5 +21,5 @@ class QuestionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(textFor(room), style: AppTextStyles.roundLabel);
+      Text(textFor(room), style: AppTextStyles.eyebrow);
 }
