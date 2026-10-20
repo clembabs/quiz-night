@@ -41,6 +41,9 @@ class RoomViewState extends Equatable {
   /// the podium, so it is remembered here.
   final int? myBackedId;
 
+  /// A buzz is on its way to the server; ignore further taps.
+  final bool buzzing;
+
   const RoomViewState({
     required this.seat,
     this.room,
@@ -52,6 +55,7 @@ class RoomViewState extends Equatable {
     this.clockOffset = Duration.zero,
     this.myChoices = const {},
     this.myBackedId,
+    this.buzzing = false,
   });
 
   PlayerView? get me => seat.playerId == null
@@ -74,6 +78,7 @@ class RoomViewState extends Equatable {
     Duration? clockOffset,
     Map<int, int>? myChoices,
     int? Function()? myBackedId,
+    bool? buzzing,
   }) => RoomViewState(
     seat: seat,
     room: room ?? this.room,
@@ -85,6 +90,7 @@ class RoomViewState extends Equatable {
     clockOffset: clockOffset ?? this.clockOffset,
     myChoices: myChoices ?? this.myChoices,
     myBackedId: myBackedId != null ? myBackedId() : this.myBackedId,
+    buzzing: buzzing ?? this.buzzing,
   );
 
   @override
@@ -99,6 +105,7 @@ class RoomViewState extends Equatable {
     clockOffset,
     myChoices,
     myBackedId,
+    buzzing,
   ];
 }
 
@@ -239,6 +246,58 @@ class RoomCubit extends Cubit<RoomViewState> {
     } on AppFailure catch (f) {
       if (isClosed) return;
       emit(state.copyWith(myBackedId: () => previous));
+      _showError(f.message);
+    }
+  }
+
+  // ---- buzzer final
+
+  /// Tries to claim the buzzer. Whether it worked arrives with the next
+  /// snapshot; a refusal ("Too slow") is shown as a message.
+  Future<void> buzz() async {
+    final room = state.room;
+    final q = room?.question;
+    final me = state.me;
+    if (room == null ||
+        q == null ||
+        me == null ||
+        state.buzzing ||
+        room.status != RoomStatus.buzzerFinal ||
+        me.status != PlayerStatus.finalist ||
+        me.lockedOut ||
+        room.buzzerHolderId != null) {
+      return;
+    }
+    emit(state.copyWith(buzzing: true));
+    try {
+      final result = await _game.buzz(state.seat, q.id);
+      if (!result.gotBuzzer) _showError(result.reason ?? 'Too slow');
+    } on AppFailure catch (f) {
+      _showError(f.message);
+    } finally {
+      if (!isClosed) emit(state.copyWith(buzzing: false));
+    }
+  }
+
+  /// Answers while holding the buzzer.
+  Future<void> submitBuzzAnswer(int choiceIndex) async {
+    final room = state.room;
+    final q = room?.question;
+    final me = state.me;
+    if (room == null ||
+        q == null ||
+        me == null ||
+        room.status != RoomStatus.buzzerFinal ||
+        room.buzzerHolderId != me.id ||
+        state.myChoices.containsKey(q.id)) {
+      return;
+    }
+    emit(state.copyWith(myChoices: {...state.myChoices, q.id: choiceIndex}));
+    try {
+      await _game.submitBuzzAnswer(state.seat, q.id, choiceIndex);
+    } on AppFailure catch (f) {
+      if (isClosed) return;
+      emit(state.copyWith(myChoices: {...state.myChoices}..remove(q.id)));
       _showError(f.message);
     }
   }
