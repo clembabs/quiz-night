@@ -33,17 +33,22 @@ PlayerView player(
   bool hasAnswered = false,
   int? lastPoints,
   int? eliminatedInRound,
+  int finalScore = 0,
+  int shadowScore = 0,
+  bool lockedOut = false,
+  int? backedPlayerId,
 }) => PlayerView(
   id: id,
   nickname: nickname,
   score: score,
-  shadowScore: 0,
-  finalScore: 0,
+  shadowScore: shadowScore,
+  finalScore: finalScore,
   status: status,
   eliminatedInRound: eliminatedInRound,
+  backedPlayerId: backedPlayerId,
   hasAnswered: hasAnswered,
   lastPoints: lastPoints,
-  lockedOut: false,
+  lockedOut: lockedOut,
 );
 
 /// A four-option round question; correct answer is "Paris" (index 1) once
@@ -79,14 +84,18 @@ RoomState roomState({
   QuestionView? question,
   DateTime? questionEndsAt,
   EliminationEvent? lastElimination,
+  int finalQuestionCount = 5,
+  int finalQuestionsPlayed = 0,
+  int? buzzerHolderId,
+  int? buzzWinnerId,
 }) => RoomState(
   code: code,
   status: status,
   round: round,
   questionsPerRound: questionsPerRound,
   finalistTarget: finalistTarget,
-  finalQuestionCount: 5,
-  finalQuestionsPlayed: 0,
+  finalQuestionCount: finalQuestionCount,
+  finalQuestionsPlayed: finalQuestionsPlayed,
   eliminationRule: rule,
   wildcardUsed: false,
   question: question,
@@ -94,6 +103,8 @@ RoomState roomState({
   serverTime: serverTime ?? DateTime.utc(2026, 1, 1),
   players: players,
   lastElimination: lastElimination,
+  buzzerHolderId: buzzerHolderId,
+  buzzWinnerId: buzzWinnerId,
 );
 
 EliminationEvent cut({

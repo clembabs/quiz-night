@@ -355,4 +355,118 @@ void main() {
       },
     );
   });
+
+  group('Given the buzzer final on a finalist phone', () {
+    Future<RoomCubit> finalRoom({
+      PlayerStatus status = PlayerStatus.finalist,
+      bool lockedOut = false,
+      int? holder,
+      RoomStatus roomStatus = RoomStatus.buzzerFinal,
+    }) async {
+      final c = RoomCubit(
+        game,
+        seats,
+        playerSeat,
+        backoff: (_) => Duration.zero,
+      )..start();
+      streams.last.add(
+        roomState(
+          status: roomStatus,
+          question: question(id: 20, isFinal: true),
+          buzzerHolderId: holder,
+          players: [
+            player(1, 'Ada', status: status, lockedOut: lockedOut),
+            player(2, 'Bo', status: PlayerStatus.finalist),
+          ],
+        ),
+      );
+      await pumpEventQueue();
+      return c;
+    }
+
+    test(
+      'when buzzing then the server is asked once, even on a double tap',
+      () async {
+        final reply = Completer<BuzzResult>();
+        when(() => game.buzz(playerSeat, 20)).thenAnswer((_) => reply.future);
+        final cubit = await finalRoom();
+
+        final first = cubit.buzz();
+        expect(cubit.state.buzzing, isTrue);
+        await cubit.buzz();
+        reply.complete(BuzzResult(gotBuzzer: true));
+        await first;
+
+        verify(() => game.buzz(playerSeat, 20)).called(1);
+        expect(cubit.state.buzzing, isFalse);
+        expect(cubit.state.errorSeq, 0);
+        await cubit.close();
+      },
+    );
+
+    test('when someone beat them to it then the reason is shown', () async {
+      when(
+        () => game.buzz(any(), any()),
+      ).thenAnswer(
+        (_) async => BuzzResult(gotBuzzer: false, reason: 'Too slow'),
+      );
+      final cubit = await finalRoom();
+
+      await cubit.buzz();
+
+      expect(cubit.state.actionError, 'Too slow');
+      expect(cubit.state.buzzing, isFalse);
+      await cubit.close();
+    });
+
+    for (final (name, make) in [
+      ('a spectator', () => finalRoom(status: PlayerStatus.eliminated)),
+      ('a locked-out finalist', () => finalRoom(lockedOut: true)),
+      ('anyone while another holds it', () => finalRoom(holder: 2)),
+      (
+        'anyone after the reveal',
+        () => finalRoom(roomStatus: RoomStatus.reveal),
+      ),
+    ]) {
+      test('when $name buzzes then nothing is sent', () async {
+        final cubit = await make();
+        await cubit.buzz();
+        verifyNever(() => game.buzz(any(), any()));
+        await cubit.close();
+      });
+    }
+
+    test('when holding the buzzer then the answer is sent and shown', () async {
+      when(
+        () => game.submitBuzzAnswer(playerSeat, 20, 1),
+      ).thenAnswer((_) async => true);
+      final cubit = await finalRoom(holder: 1);
+
+      await cubit.submitBuzzAnswer(1);
+
+      expect(cubit.state.myChoice, 1);
+      verify(() => game.submitBuzzAnswer(playerSeat, 20, 1)).called(1);
+      await cubit.close();
+    });
+
+    test('when not holding the buzzer then an answer is not sent', () async {
+      final cubit = await finalRoom(holder: 2);
+      await cubit.submitBuzzAnswer(1);
+      verifyNever(() => game.submitBuzzAnswer(any(), any(), any()));
+      await cubit.close();
+    });
+
+    test('when the buzz answer fails then the pick is undone', () async {
+      when(
+        () => game.submitBuzzAnswer(any(), any(), any()),
+      ).thenThrow(const AppFailure('You do not hold the buzzer'));
+      final cubit = await finalRoom(holder: 1);
+
+      await cubit.submitBuzzAnswer(1);
+
+      expect(cubit.state.myChoice, isNull);
+      expect(cubit.state.actionError, 'You do not hold the buzzer');
+      await cubit.close();
+    });
+  });
 }
