@@ -162,18 +162,18 @@ class HostSetupScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(28),
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const _Label('Summary'),
-                      const SizedBox(height: 24),
-                      Flexible(
+                      const SizedBox(height: 20),
+                      Expanded(
                         child: SingleChildScrollView(
-                          child: Text(
-                            cubit.summary,
-                            style: AppProjectorText.body.copyWith(
-                              fontSize: 40,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final item in cubit.summary)
+                                _SummaryRow(item: item),
+                            ],
                           ),
                         ),
                       ),
@@ -193,6 +193,36 @@ class HostSetupScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A picked setting in gold, with what it means underneath.
+class _SummaryRow extends StatelessWidget {
+  final SummaryItem item;
+
+  const _SummaryRow({required this.item});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 22),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item.title,
+          style: AppProjectorText.body.copyWith(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: AppColors.gold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          item.detail,
+          style: AppProjectorText.bodySoft.copyWith(fontSize: 23, height: 1.35),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
