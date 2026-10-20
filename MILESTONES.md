@@ -9,7 +9,7 @@ before starting the next.
 | 1 | **Data models + elimination ("cut") logic**, with unit tests | `cd quiz_night_server && dart test test/unit` → 33 tests pass | ✅ Done |
 | 2 | **Game server**: create/join room, questions, answers, scoring, reveal, end-of-round cut, buzzer final, live updates | `cd quiz_night_server && dart test` → 52 tests pass (33 cut logic + 19 full-game integration) | ✅ Done |
 | 3 | **Flutter: join + lobby**: home screen (Host / Join), room code + QR, live lobby list | `cd quiz_night_flutter && flutter test` → 31 tests pass; then open two browser tabs, create a room in one, join from the other, see the player appear live | 🟡 Built + tested; live check pending |
-| 4 | **Flutter: playing a round**: question + countdown, answer buttons, reveal, leaderboard | Play one round end to end from host + 2 player tabs | ⏳ |
+| 4 | **Flutter: playing a round**: question + countdown, answer buttons, reveal, leaderboard | `flutter test` → 74 tests pass; then play one round end to end from a host tab + 2 player tabs | 🟡 Built + tested; live check pending |
 | 5 | **Flutter: elimination + spectator**: one-by-one reveal, "eliminated" banner, shadow answers, back a finalist | Players get knocked out and keep playing as spectators | ⏳ |
 | 6 | **Flutter: buzzer final + podium** | Last 3 buzz head to head; podium shows who backed the winner | ⏳ |
 | 7 | **Reconnect + phone polish**: survives tab sleep/refresh, mobile layouts, light loading screen | Refresh a player's phone mid-game and they come back in the same state | ⏳ |
