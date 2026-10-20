@@ -123,6 +123,9 @@ class RoomCubit extends Cubit<RoomViewState> {
 
   /// Delay before the n-th reconnect attempt.
   final Duration Function(int attempt) backoff;
+
+  /// Pause before resending an answer that hit a connection error.
+  final Duration answerRetryDelay;
   final DateTime Function() _now;
 
   StreamSubscription<RoomState>? _sub;
@@ -134,6 +137,7 @@ class RoomCubit extends Cubit<RoomViewState> {
     this._seats,
     Seat seat, {
     this.backoff = defaultBackoff,
+    this.answerRetryDelay = const Duration(milliseconds: 600),
     DateTime Function()? now,
   }) : _now = now ?? (() => DateTime.now().toUtc()),
        super(RoomViewState(seat: seat));
@@ -226,12 +230,26 @@ class RoomCubit extends Cubit<RoomViewState> {
     final id = question.id;
     emit(state.copyWith(myChoices: {...state.myChoices, id: choiceIndex}));
     try {
-      await _game.submitAnswer(state.seat, id, choiceIndex);
+      await _sendAnswer(id, choiceIndex);
     } on AppFailure catch (f) {
       // An earlier answer already counts; keep showing a pick.
       if (f.kind == FailureKind.alreadyAnswered || isClosed) return;
       emit(state.copyWith(myChoices: {...state.myChoices}..remove(id)));
       _showError(f.message);
+    }
+  }
+
+  /// Sends an answer, retrying once after a connection blip. If the first
+  /// attempt did reach the server, the retry reports alreadyAnswered, which
+  /// the caller treats as success.
+  Future<void> _sendAnswer(int questionId, int choiceIndex) async {
+    try {
+      await _game.submitAnswer(state.seat, questionId, choiceIndex);
+    } on AppFailure catch (f) {
+      if (f.kind != FailureKind.connection || isClosed) rethrow;
+      await Future<void>.delayed(answerRetryDelay);
+      if (isClosed) rethrow;
+      await _game.submitAnswer(state.seat, questionId, choiceIndex);
     }
   }
 
