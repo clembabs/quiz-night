@@ -13,8 +13,28 @@ before starting the next.
 | 5 | **Flutter: elimination + spectator**: one-by-one reveal, "eliminated" banner, shadow answers, back a finalist | `flutter test` → 96 tests pass; then play to a cut: names reveal one by one, knocked-out phones switch to spectating, back a finalist, host can use the wildcard | 🟡 Built + tested; live check pending |
 | 6 | **Flutter: buzzer final + podium** | `flutter test` → 136 tests pass, `dart test` (server) → 52; then play to the end: finalists buzz head to head, podium shows who backed the winner | 🟡 Built + tested; live check pending |
 | 7 | **Reconnect + phone polish**: survives tab sleep/refresh, mobile layouts, light loading screen | `flutter test` → 148 tests pass (incl. 360px phone-layout checks); then refresh a phone mid-game: it reopens straight into the room | 🟡 Built + tested; live check pending |
-| 8 | **Deploy**: public HTTPS URL, QR points to it | Scan the QR on your phone over mobile data and play | ⏳ |
+| R | **Redesign** to the Quiz Night design system + prototype (blackboard, chalk, maroon, gold). Phases below | Every screen rendered with the real fonts and compared to the prototype; `flutter test` → 189, `dart test` → 58 | ✅ Built + tested; live check pending |
+| 8 | **Deploy**: public HTTPS URL, QR points to it | Follow [DEPLOY.md](DEPLOY.md) (Serverpod Cloud); then scan the QR on your phone over mobile data and play | 🟡 Prepared (CDN caching, build hook verified, guide); waiting on your Cloud account + launch |
 | 9 | **Stretch**: AI-generated quizzes, tiebreaker rounds, game history | — | ⏳ |
+
+## Redesign (Milestone R)
+Source: `Quiz Night Design System.dc.html` + `Quiz Night Prototype.html` (Claude Design export).
+
+| Phase | What | Status |
+|-------|------|--------|
+| R1 | **Server:** 4-digit numeric room codes; host option "show question on phones"; `projectedSurvivors` (where the danger line sits) in `RoomState` | ✅ `dart test` → 58 |
+| R2 | **Foundation:** bundled fonts (Bricolage Grotesque, Figtree, Noto Sans African Latin fallback), new colour/type/spacing/radius/motion/haptic tokens, crest logo, chalk-dust background, initial badges, option shapes | ✅ fonts 114 KB gzipped; `flutter test` → 160 |
+| R3 | **Components:** answer button states, buttons, code input, countdown bar + ring, player chip, leaderboard row + danger line, danger indicator, banners/toasts, buzzer states, podium blocks, reconnecting pill | ✅ |
+| R4 | **Phone screens:** loading, join, waiting, answer, locked, too late, result, survived, eliminated, back a finalist, watching, buzzer, final placement | ✅ |
+| R5 | **Host screens** on a 1920×1080 canvas scaled to fit: create, lobby, question (ring), reveal (bars), standings board, elimination stamps, final desks, podium | ✅ `flutter test` → 189 |
+
+Decisions: final is answered by tapping on the phone (server-checked), not out loud; 4-digit numeric codes;
+the host chooses whether phones show the question text; fonts are downloaded from google/fonts (OFL) and subset.
+The landing page is the join form (prototype "Join"); hosts use the "Host a game" link. Host screens
+are laid out on a 1920×1080 canvas and scaled to fit. A small Noto Sans Symbols 2 subset (3 KB) supplies
+✓ ✕ ▲ ▼ ★ ⏱, which none of the text fonts contain.
+Deferred (need new server features): tiebreaker round, host-disconnected / players-reconnecting presence, AI topic
+(shown as "coming soon").
 
 ## Flutter architecture (from Milestone 3)
 - **State management: `flutter_bloc` Cubits**, one per job: `HomeCubit`, `JoinCubit`, `HostSetupCubit`, `RoomCubit`.
