@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'app/quiz_night_app.dart';
 import 'client.dart';
+import 'data/room_repositories.dart';
+import 'data/seat_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeClient();
-  runApp(const QuizNightApp());
-}
-
-class QuizNightApp extends StatelessWidget {
-  const QuizNightApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Quiz Night',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      // Placeholder until Milestone 3 (join + lobby screens).
-      home: const Scaffold(body: Center(child: Text('Quiz Night'))),
-    );
-  }
+  final rooms = ServerpodRoomRepository(client);
+  final code = Uri.base.queryParameters['code']?.trim().toUpperCase();
+  runApp(
+    QuizNightApp(
+      lobby: rooms,
+      game: rooms,
+      seats: PrefsSeatRepository(),
+      initialCode: (code == null || code.isEmpty) ? null : code,
+    ),
+  );
 }
