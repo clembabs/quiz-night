@@ -2,185 +2,146 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Every text style in the app. Widgets pick from here instead of building
-/// their own `TextStyle`s.
+/// Font families bundled in assets/fonts (see tool/make_fonts.py).
+abstract final class AppFonts {
+  /// Display: Bricolage Grotesque, weight 800 only.
+  static const display = 'Bricolage';
+
+  /// Body: Figtree 400 / 700 / 800.
+  static const body = 'Figtree';
+
+  /// Per-glyph fallbacks: Nigerian letters the others lack (ẹ ọ ṣ ị ụ ṅ ɓ
+  /// ɗ ƙ ƴ), then UI symbols (✓ ✕ ▲ ▼ ★ ⏱).
+  static const fallback = ['NotoSansAfr', 'NotoSansSymbols'];
+}
+
+const _tabular = [FontFeature.tabularFigures()];
+
+TextStyle _display(double size, double height, {double tracking = 0}) =>
+    TextStyle(
+      fontFamily: AppFonts.display,
+      fontFamilyFallback: AppFonts.fallback,
+      fontWeight: FontWeight.w800,
+      fontSize: size,
+      height: height,
+      letterSpacing: tracking * size,
+      fontFeatures: _tabular,
+      color: AppColors.chalk,
+    );
+
+TextStyle _body(
+  double size,
+  double height,
+  FontWeight weight, {
+  double tracking = 0,
+  Color color = AppColors.chalk,
+}) => TextStyle(
+  fontFamily: AppFonts.body,
+  fontFamilyFallback: AppFonts.fallback,
+  fontWeight: weight,
+  fontSize: size,
+  height: height,
+  letterSpacing: tracking * size,
+  color: color,
+);
+
+/// The phone type scale (design system "Typography", phone column).
+///
+/// Display roles (displayXl, displayL, headline) are set in capitals: pass
+/// upper-cased text, e.g. via `DisplayText`.
 abstract final class AppTextStyles {
-  static const title = TextStyle(
-    fontSize: 44,
-    fontWeight: FontWeight.w900,
-    letterSpacing: -1,
-    color: AppColors.text,
+  // ---- Design-system roles
+  /// Room codes and the biggest moments. 56 / 1.0 / 800.
+  static final displayXl = _display(56, 1.0, tracking: -0.01);
+
+  /// "You survived". 40 / 1.05 / 800.
+  static final displayL = _display(40, 1.05, tracking: -0.01);
+
+  /// "Round 2 · Question 4". 28 / 1.15 / 800.
+  static final headline = _display(28, 1.15);
+
+  /// Question text. Figtree 20 / 1.25 / 700.
+  static final title = _body(20, 1.25, FontWeight.w700);
+
+  /// 16 / 1.45 / 400.
+  static final body = _body(16, 1.45, FontWeight.w400);
+  static final bodySoft = _body(
+    16,
+    1.45,
+    FontWeight.w400,
+    color: AppColors.chalkSoft,
   );
-  static const tagline = TextStyle(fontSize: 16, color: AppColors.muted);
-  static const heading = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w800,
-    color: AppColors.text,
-  );
-  static const label = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
-    color: AppColors.text,
-  );
-  static const body = TextStyle(fontSize: 16, color: AppColors.text);
-  static const bodyMuted = TextStyle(fontSize: 18, color: AppColors.muted);
-  static const caption = TextStyle(fontSize: 14, color: AppColors.muted);
-  static const error = TextStyle(fontSize: 14, color: AppColors.danger);
-  static const button = TextStyle(fontSize: 18, fontWeight: FontWeight.w700);
-  static const input = TextStyle(fontSize: 20, color: AppColors.text);
-  static const codeInput = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w800,
-    letterSpacing: 8,
-    color: AppColors.text,
-  );
-  static const roomCode = TextStyle(
-    fontSize: 72,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 12,
-    color: AppColors.gold,
-  );
-  static const stepperValue = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w800,
-    color: AppColors.text,
-  );
-  // ---- rounds
-  static const questionHost = TextStyle(
-    fontSize: 44,
-    fontWeight: FontWeight.w800,
-    height: 1.2,
-    color: AppColors.text,
-  );
-  static const questionPlayer = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    height: 1.25,
-    color: AppColors.text,
-  );
-  static const roundLabel = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 1.5,
-    color: AppColors.gold,
-  );
-  static const optionLetter = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w900,
-    color: AppColors.onOption,
-  );
-  static const optionText = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-    color: AppColors.onOption,
-  );
-  static const optionTextLarge = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    color: AppColors.onOption,
-  );
-  static const optionCount = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w900,
-    color: AppColors.onOption,
-  );
-  static const timer = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w900,
-    fontFeatures: [FontFeature.tabularFigures()],
-    color: AppColors.text,
-  );
-  static const verdict = TextStyle(
-    fontSize: 36,
-    fontWeight: FontWeight.w900,
-    color: AppColors.text,
-  );
-  static const points = TextStyle(
-    fontSize: 48,
-    fontWeight: FontWeight.w900,
-    color: AppColors.gold,
-  );
-  static const rank = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
+
+  /// Small capitals labels. 14 / 1.2 / 700 / +6%.
+  static final label = _body(14, 1.2, FontWeight.w700, tracking: 0.06);
+
+  /// 12 / 1.35.
+  static final caption = _body(
+    12,
+    1.35,
+    FontWeight.w400,
+    tracking: 0.01,
     color: AppColors.muted,
   );
-  static const leaderName = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-    color: AppColors.text,
-  );
-  static const leaderScore = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w900,
-    fontFeatures: [FontFeature.tabularFigures()],
-    color: AppColors.text,
-  );
-  static const leaderGain = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
-    color: AppColors.success,
-  );
 
-  // ---- elimination
-  static const revealIntro = TextStyle(
-    fontSize: 48,
-    fontWeight: FontWeight.w900,
-    height: 1.1,
-    color: AppColors.gold,
-  );
-  static const revealName = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w900,
-    color: AppColors.text,
-  );
-  static const bubbleTag = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w800,
-    letterSpacing: 1,
-    color: AppColors.gold,
-  );
-  static const banner = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w700,
-    color: AppColors.text,
-  );
+  /// Scores and timers, tabular. 32 / 1.0 / 800.
+  static final numeric = _display(32, 1.0);
 
-  // ---- buzzer final and podium
-  static const buzzLabel = TextStyle(
-    fontSize: 44,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 2,
-    color: AppColors.onOption,
+  // ---- Component styles built from the roles
+  static final button = _body(17, 1.0, FontWeight.w800);
+  static final buttonSecondary = _body(15, 1.0, FontWeight.w700);
+  static final input = _body(18, 1.2, FontWeight.w400);
+  static final codeInput = _display(34, 1.0, tracking: 0.3);
+  static final error = _body(
+    14,
+    1.35,
+    FontWeight.w700,
+    color: AppColors.errorText,
   );
-  static const finalistName = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w800,
-    color: AppColors.text,
+  static final eyebrow = _body(
+    13,
+    1.2,
+    FontWeight.w800,
+    tracking: 0.1,
+    color: AppColors.mint,
   );
-  static const finalScore = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w900,
-    fontFeatures: [FontFeature.tabularFigures()],
-    color: AppColors.gold,
+  static final optionLetter = _display(22, 1.0).copyWith(
+    color: AppColors.white,
   );
-  static const statusTag = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 1.2,
-    color: AppColors.background,
-  );
-  static const podiumPlace = TextStyle(
-    fontSize: 40,
-    fontWeight: FontWeight.w900,
-    color: AppColors.background,
-  );
-  static const podiumName = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w800,
-    color: AppColors.text,
-  );
+  static final optionText = _body(17, 1.25, FontWeight.w700);
+  static final chip = _body(15, 1.2, FontWeight.w700);
+  static final badge = _display(15, 1.0);
+  static final banner = _body(15, 1.35, FontWeight.w700);
+  static final toast = _body(14, 1.2, FontWeight.w700);
+}
 
-  static const chip = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
-  static const chipLarge = TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
+/// The projector type scale (design system "Typography", 1080p column), for
+/// host screens laid out on a 1920×1080 canvas. Body never goes below 36: on
+/// a ~2.5 m projected image that is legible from 10 m.
+abstract final class AppProjectorText {
+  static final displayXl = _display(200, 0.95, tracking: 0.06);
+  static final displayL = _display(120, 1.0, tracking: -0.01);
+  static final headline = _display(72, 1.1);
+  static final title = _body(56, 1.2, FontWeight.w700);
+  static final body = _body(36, 1.35, FontWeight.w400);
+  static final bodySoft = _body(
+    36,
+    1.35,
+    FontWeight.w400,
+    color: AppColors.chalkSoft,
+  );
+  static final label = _body(
+    28,
+    1.2,
+    FontWeight.w700,
+    tracking: 0.06,
+    color: AppColors.muted,
+  );
+  static final caption = _body(
+    24,
+    1.3,
+    FontWeight.w400,
+    color: AppColors.muted,
+  );
+  static final numeric = _display(96, 1.0);
 }
