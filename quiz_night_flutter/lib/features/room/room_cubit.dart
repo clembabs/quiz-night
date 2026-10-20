@@ -33,6 +33,10 @@ class RoomViewState extends Equatable {
   /// Server clock minus local clock, so countdowns follow server time.
   final Duration clockOffset;
 
+  /// The option this player picked, per question id. Kept locally so the
+  /// tapped button stays highlighted; the server never reveals others' picks.
+  final Map<int, int> myChoices;
+
   const RoomViewState({
     required this.seat,
     this.room,
@@ -42,11 +46,18 @@ class RoomViewState extends Equatable {
     this.actionError,
     this.errorSeq = 0,
     this.clockOffset = Duration.zero,
+    this.myChoices = const {},
   });
 
   PlayerView? get me => seat.playerId == null
       ? null
       : room?.players.where((p) => p.id == seat.playerId).firstOrNull;
+
+  /// This player's pick for the current question, if any.
+  int? get myChoice {
+    final id = room?.question?.id;
+    return id == null ? null : myChoices[id];
+  }
 
   RoomViewState copyWith({
     RoomState? room,
@@ -56,6 +67,7 @@ class RoomViewState extends Equatable {
     String? actionError,
     int? errorSeq,
     Duration? clockOffset,
+    Map<int, int>? myChoices,
   }) => RoomViewState(
     seat: seat,
     room: room ?? this.room,
@@ -65,6 +77,7 @@ class RoomViewState extends Equatable {
     actionError: actionError ?? this.actionError,
     errorSeq: errorSeq ?? this.errorSeq,
     clockOffset: clockOffset ?? this.clockOffset,
+    myChoices: myChoices ?? this.myChoices,
   );
 
   @override
@@ -77,6 +90,7 @@ class RoomViewState extends Equatable {
     actionError,
     errorSeq,
     clockOffset,
+    myChoices,
   ];
 }
 
@@ -91,6 +105,7 @@ Duration defaultBackoff(int attempt) =>
 class RoomCubit extends Cubit<RoomViewState> {
   final GameRepository _game;
   final SeatRepository _seats;
+
   /// Delay before the n-th reconnect attempt.
   final Duration Function(int attempt) backoff;
   final DateTime Function() _now;
@@ -161,17 +176,47 @@ class RoomCubit extends Cubit<RoomViewState> {
     try {
       await action();
     } on AppFailure catch (f) {
-      if (!isClosed) {
-        emit(
-          state.copyWith(actionError: f.message, errorSeq: state.errorSeq + 1),
-        );
-      }
+      _showError(f.message);
     }
+  }
+
+  void _showError(String message) {
+    if (isClosed) return;
+    emit(state.copyWith(actionError: message, errorSeq: state.errorSeq + 1));
   }
 
   // ---- host actions
 
   Future<void> startGame() => _act(() => _game.startGame(state.seat));
+  Future<void> nextQuestion() => _act(() => _game.nextQuestion(state.seat));
+  Future<void> reveal() => _act(() => _game.reveal(state.seat));
+  Future<void> endRound() => _act(() => _game.endRound(state.seat));
+
+  // ---- player actions
+
+  /// Locks in [choiceIndex] for the open question. The pick shows at once;
+  /// if the server rejects it (e.g. too late) it is rolled back.
+  Future<void> submitAnswer(int choiceIndex) async {
+    final room = state.room;
+    final question = room?.question;
+    if (state.seat.isHost ||
+        room == null ||
+        question == null ||
+        room.status != RoomStatus.question ||
+        state.myChoice != null) {
+      return;
+    }
+    final id = question.id;
+    emit(state.copyWith(myChoices: {...state.myChoices, id: choiceIndex}));
+    try {
+      await _game.submitAnswer(state.seat, id, choiceIndex);
+    } on AppFailure catch (f) {
+      // An earlier answer already counts; keep showing a pick.
+      if (f.kind == FailureKind.alreadyAnswered || isClosed) return;
+      emit(state.copyWith(myChoices: {...state.myChoices}..remove(id)));
+      _showError(f.message);
+    }
+  }
 
   // ---- seat
 
