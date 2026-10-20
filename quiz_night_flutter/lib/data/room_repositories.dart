@@ -37,6 +37,12 @@ abstract interface class GameRepository {
 
   /// A spectator picks the finalist they think will win.
   Future<void> backFinalist(Seat spectator, int finalistId);
+
+  /// A finalist tries to claim the buzzer; the server decides who was first.
+  Future<BuzzResult> buzz(Seat finalist, int questionId);
+
+  /// The buzzer holder answers. Returns whether it was correct.
+  Future<bool> submitBuzzAnswer(Seat finalist, int questionId, int choiceIndex);
 }
 
 /// Both repositories over the generated Serverpod [Client].
@@ -106,6 +112,23 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   @override
   Future<void> useWildcard(Seat host, int playerId) => _guard(
     () => _client.room.useWildcard(host.code, host.token, playerId),
+  );
+
+  @override
+  Future<BuzzResult> buzz(Seat finalist, int questionId) =>
+      _guard(() => _client.buzzer.buzz(finalist.token, questionId));
+
+  @override
+  Future<bool> submitBuzzAnswer(
+    Seat finalist,
+    int questionId,
+    int choiceIndex,
+  ) => _guard(
+    () => _client.buzzer.submitBuzzAnswer(
+      finalist.token,
+      questionId,
+      choiceIndex,
+    ),
   );
 
   @override
