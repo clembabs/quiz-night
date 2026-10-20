@@ -98,7 +98,9 @@ void main() {
 
     test('when the room is gone then it stops retrying', () async {
       final cubit = build()..start();
-      streams.last.addError(const AppFailure('Room not found', roomGone: true));
+      streams.last.addError(
+        const AppFailure('Room not found', kind: FailureKind.roomGone),
+      );
       await pumpEventQueue();
 
       expect(cubit.state.roomGone, isTrue);
@@ -161,6 +163,129 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.me!.nickname, 'Ada');
+      await cubit.close();
+    });
+  });
+
+  group('Given round host actions', () {
+    setUp(() {
+      when(() => game.nextQuestion(hostSeat)).thenAnswer((_) async {});
+      when(() => game.reveal(hostSeat)).thenAnswer((_) async {});
+      when(() => game.endRound(hostSeat)).thenAnswer((_) async {});
+    });
+
+    test('when the host advances, reveals and ends a round then each '
+        'reaches the server with the host seat', () async {
+      final cubit = build();
+      await cubit.nextQuestion();
+      await cubit.reveal();
+      await cubit.endRound();
+
+      verify(() => game.nextQuestion(hostSeat)).called(1);
+      verify(() => game.reveal(hostSeat)).called(1);
+      verify(() => game.endRound(hostSeat)).called(1);
+      await cubit.close();
+    });
+  });
+
+  group('Given an open question for a player', () {
+    late RoomCubit cubit;
+
+    Future<RoomCubit> openQuestion({
+      RoomStatus status = RoomStatus.question,
+    }) async {
+      final c = RoomCubit(
+        game,
+        seats,
+        playerSeat,
+        backoff: (_) => Duration.zero,
+      )..start();
+      streams.last.add(
+        roomState(
+          status: status,
+          question: question(id: 10),
+          players: [player(1, 'Ada')],
+        ),
+      );
+      await pumpEventQueue();
+      return c;
+    }
+
+    tearDown(() => cubit.close());
+
+    test('when tapping an option then it is locked in and sent', () async {
+      when(() => game.submitAnswer(playerSeat, 10, 2)).thenAnswer((_) async {});
+      cubit = await openQuestion();
+
+      await cubit.submitAnswer(2);
+
+      expect(cubit.state.myChoice, 2);
+      verify(() => game.submitAnswer(playerSeat, 10, 2)).called(1);
+    });
+
+    test('when tapping again then the second tap is ignored', () async {
+      when(
+        () => game.submitAnswer(any(), any(), any()),
+      ).thenAnswer((_) async {});
+      cubit = await openQuestion();
+
+      await cubit.submitAnswer(2);
+      await cubit.submitAnswer(3);
+
+      expect(cubit.state.myChoice, 2);
+      verify(() => game.submitAnswer(playerSeat, 10, 2)).called(1);
+      verifyNever(() => game.submitAnswer(playerSeat, 10, 3));
+    });
+
+    test('when the answer arrives too late then the pick is undone '
+        'and the reason shown', () async {
+      when(() => game.submitAnswer(any(), any(), any())).thenThrow(
+        const AppFailure('Time is up', kind: FailureKind.tooLate),
+      );
+      cubit = await openQuestion();
+
+      await cubit.submitAnswer(1);
+
+      expect(cubit.state.myChoice, isNull);
+      expect(cubit.state.actionError, 'Time is up');
+    });
+
+    test('when the server already has an answer then the pick stays', () async {
+      when(() => game.submitAnswer(any(), any(), any())).thenThrow(
+        const AppFailure('Already answered', kind: FailureKind.alreadyAnswered),
+      );
+      cubit = await openQuestion();
+
+      await cubit.submitAnswer(1);
+
+      expect(cubit.state.myChoice, 1);
+      expect(cubit.state.errorSeq, 0);
+    });
+
+    test(
+      'when the question is already revealed then nothing is sent',
+      () async {
+        cubit = await openQuestion(status: RoomStatus.reveal);
+
+        await cubit.submitAnswer(1);
+
+        expect(cubit.state.myChoice, isNull);
+        verifyNever(() => game.submitAnswer(any(), any(), any()));
+      },
+    );
+  });
+
+  group('Given the host seat', () {
+    test('when asked to submit an answer then nothing is sent', () async {
+      final cubit = build()..start();
+      streams.last.add(
+        roomState(status: RoomStatus.question, question: question()),
+      );
+      await pumpEventQueue();
+
+      await cubit.submitAnswer(0);
+
+      verifyNever(() => game.submitAnswer(any(), any(), any()));
       await cubit.close();
     });
   });
