@@ -79,7 +79,8 @@ void main() {
       skip: 1,
       expect: () => [
         const JoinState(
-          error: 'Room not found. Check the code on the big screen.',
+          error:
+              "This game session doesn't exist. Check the code on the big screen.",
           errorKind: JoinError.roomNotFound,
         ),
       ],
@@ -99,6 +100,17 @@ void main() {
           errorKind: JoinError.gameStarted,
         ),
       ],
+    );
+
+    blocTest<JoinCubit, JoinState>(
+      'when reset after an error then the form state is empty again',
+      seed: () => const JoinState(
+        error: 'That nickname is taken',
+        errorKind: JoinError.nicknameTaken,
+      ),
+      build: () => JoinCubit(lobby, seats),
+      act: (c) => c.reset(),
+      expect: () => [const JoinState()],
     );
   });
 }

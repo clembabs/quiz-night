@@ -369,4 +369,25 @@ void main() {
       verify(() => cubit.leave()).called(1);
     });
   });
+
+  group('Given everyone made the final', () {
+    testWidgets('when the podium shows then it says so instead of 0 of 0', (
+      t,
+    ) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        players: [
+          player(1, 'Aya', status: f, finalScore: 3000),
+          player(2, 'Clem', status: f, finalScore: 2000),
+          player(3, 'Opera', status: f),
+        ],
+      );
+      await pump(t, HostPodium(room: room));
+      for (var i = 0; i < 4; i++) {
+        await t.pump(const Duration(seconds: 1));
+      }
+      expect(find.text('Everyone made the final'), findsOneWidget);
+      expect(find.text('0 of 0'), findsNothing);
+    });
+  });
 }

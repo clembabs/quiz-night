@@ -175,12 +175,15 @@ void main() {
       await pump(
         tester,
         const JoinState(
-          error: 'Room not found. Check the code on the big screen.',
+          error:
+              "This game session doesn't exist. Check the code on the big screen.",
           errorKind: JoinError.roomNotFound,
         ),
       );
       expect(
-        find.text('✕ Room not found. Check the code on the big screen.'),
+        find.text(
+          "✕ This game session doesn't exist. Check the code on the big screen.",
+        ),
         findsOneWidget,
       );
     });
@@ -214,6 +217,50 @@ void main() {
         ),
       );
       expect(find.text('That nickname is taken'), findsOneWidget);
+    });
+  });
+
+  group('Given a player comes back from a game', () {
+    testWidgets('when they leave the room then the join form is empty again', (
+      tester,
+    ) async {
+      final lobby = MockLobbyRepository();
+      final game = MockGameRepository();
+      final seats = MockSeatRepository();
+      when(() => seats.load()).thenAnswer((_) async => null);
+      when(() => seats.save(any())).thenAnswer((_) async {});
+      when(() => seats.clear()).thenAnswer((_) async {});
+      when(
+        () => lobby.joinRoom('4821', 'Opera'),
+      ).thenAnswer((_) async => playerSeat);
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Opera')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom(any())).thenAnswer((_) => live.stream);
+
+      await tester.pumpWidget(
+        QuizNightApp(lobby: lobby, game: game, seats: seats),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('join.code')), '4821');
+      await tester.enterText(find.byKey(const Key('join.nickname')), 'Opera');
+      await tester.tap(find.byKey(const Key('join.submit')));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
+
+      await tester.tap(find.text('Leave'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.widgetWithText(FilledButton, 'Leave'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      final name = tester.widget<TextField>(
+        find.byKey(const Key('join.nickname')),
+      );
+      expect(code.controller!.text, isEmpty);
+      expect(name.controller!.text, isEmpty);
     });
   });
 }
