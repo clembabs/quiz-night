@@ -81,15 +81,23 @@ class HostPodium extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    '${backers.length} of $spectators',
+                    spectators == 0
+                        ? 'Everyone made the final'
+                        : '${backers.length} of $spectators',
                     key: const Key('podium.backers'),
-                    style: AppTextStyles.displayXl.copyWith(fontSize: 72),
+                    style: AppTextStyles.displayXl.copyWith(
+                      fontSize: spectators == 0 ? 56 : 72,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    winner == null
+                    spectators == 0
+                        ? 'Nobody was knocked out, so there was no one left '
+                              'to back a finalist.'
+                        : winner == null
                         ? 'No winner'
-                        : 'spectators backed ${winner.nickname}',
+                        : '${spectators == 1 ? 'spectator' : 'spectators'} '
+                              'backed ${winner.nickname}',
                     style: AppProjectorText.bodySoft,
                   ),
                   const SizedBox(height: 28),
