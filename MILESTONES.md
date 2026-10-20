@@ -11,7 +11,7 @@ before starting the next.
 | 3 | **Flutter: join + lobby**: home screen (Host / Join), room code + QR, live lobby list | `cd quiz_night_flutter && flutter test` → 31 tests pass; then open two browser tabs, create a room in one, join from the other, see the player appear live | 🟡 Built + tested; live check pending |
 | 4 | **Flutter: playing a round**: question + countdown, answer buttons, reveal, leaderboard | `flutter test` → 74 tests pass; then play one round end to end from a host tab + 2 player tabs | 🟡 Built + tested; live check pending |
 | 5 | **Flutter: elimination + spectator**: one-by-one reveal, "eliminated" banner, shadow answers, back a finalist | `flutter test` → 96 tests pass; then play to a cut: names reveal one by one, knocked-out phones switch to spectating, back a finalist, host can use the wildcard | 🟡 Built + tested; live check pending |
-| 6 | **Flutter: buzzer final + podium** | Last 3 buzz head to head; podium shows who backed the winner | ⏳ |
+| 6 | **Flutter: buzzer final + podium** | `flutter test` → 136 tests pass, `dart test` (server) → 52; then play to the end: finalists buzz head to head, podium shows who backed the winner | 🟡 Built + tested; live check pending |
 | 7 | **Reconnect + phone polish**: survives tab sleep/refresh, mobile layouts, light loading screen | Refresh a player's phone mid-game and they come back in the same state | ⏳ |
 | 8 | **Deploy**: public HTTPS URL, QR points to it | Scan the QR on your phone over mobile data and play | ⏳ |
 | 9 | **Stretch**: AI-generated quizzes, tiebreaker rounds, game history | — | ⏳ |
