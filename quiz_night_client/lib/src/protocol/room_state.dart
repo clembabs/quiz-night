@@ -38,7 +38,9 @@ abstract class RoomState
     this.lastElimination,
     this.buzzerHolderId,
     this.buzzWinnerId,
-  });
+    bool? showQuestionOnPhones,
+    this.projectedSurvivors,
+  }) : showQuestionOnPhones = showQuestionOnPhones ?? true;
 
   factory RoomState({
     required String code,
@@ -57,6 +59,8 @@ abstract class RoomState
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
     int? buzzWinnerId,
+    bool? showQuestionOnPhones,
+    int? projectedSurvivors,
   }) = _RoomStateImpl;
 
   factory RoomState.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -99,6 +103,12 @@ abstract class RoomState
             ),
       buzzerHolderId: jsonSerialization['buzzerHolderId'] as int?,
       buzzWinnerId: jsonSerialization['buzzWinnerId'] as int?,
+      showQuestionOnPhones: jsonSerialization['showQuestionOnPhones'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['showQuestionOnPhones'],
+            ),
+      projectedSurvivors: jsonSerialization['projectedSurvivors'] as int?,
     );
   }
 
@@ -135,6 +145,14 @@ abstract class RoomState
   /// Finalist who answered the current final question correctly, if any.
   int? buzzWinnerId;
 
+  /// Whether phones show the question text (host setting).
+  bool showQuestionOnPhones;
+
+  /// How many players would survive if the round ended now: the danger line.
+  /// Null when there is no end-of-round cut to predict (lobby, sudden death,
+  /// the final).
+  int? projectedSurvivors;
+
   /// Returns a shallow copy of this [RoomState]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -155,6 +173,8 @@ abstract class RoomState
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
     int? buzzWinnerId,
+    bool? showQuestionOnPhones,
+    int? projectedSurvivors,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -176,6 +196,8 @@ abstract class RoomState
       if (lastElimination != null) 'lastElimination': lastElimination?.toJson(),
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
+      'showQuestionOnPhones': showQuestionOnPhones,
+      if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
 
@@ -200,6 +222,8 @@ abstract class RoomState
         'lastElimination': lastElimination?.toJsonForProtocol(),
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
+      'showQuestionOnPhones': showQuestionOnPhones,
+      if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
 
@@ -229,6 +253,8 @@ class _RoomStateImpl extends RoomState {
     _i044r49r.EliminationEvent? lastElimination,
     int? buzzerHolderId,
     int? buzzWinnerId,
+    bool? showQuestionOnPhones,
+    int? projectedSurvivors,
   }) : super._(
          code: code,
          status: status,
@@ -246,6 +272,8 @@ class _RoomStateImpl extends RoomState {
          lastElimination: lastElimination,
          buzzerHolderId: buzzerHolderId,
          buzzWinnerId: buzzWinnerId,
+         showQuestionOnPhones: showQuestionOnPhones,
+         projectedSurvivors: projectedSurvivors,
        );
 
   /// Returns a shallow copy of this [RoomState]
@@ -269,6 +297,8 @@ class _RoomStateImpl extends RoomState {
     Object? lastElimination = _Undefined,
     Object? buzzerHolderId = _Undefined,
     Object? buzzWinnerId = _Undefined,
+    bool? showQuestionOnPhones,
+    Object? projectedSurvivors = _Undefined,
   }) {
     return RoomState(
       code: code ?? this.code,
@@ -295,6 +325,10 @@ class _RoomStateImpl extends RoomState {
           ? buzzerHolderId
           : this.buzzerHolderId,
       buzzWinnerId: buzzWinnerId is int? ? buzzWinnerId : this.buzzWinnerId,
+      showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      projectedSurvivors: projectedSurvivors is int?
+          ? projectedSurvivors
+          : this.projectedSurvivors,
     );
   }
 }

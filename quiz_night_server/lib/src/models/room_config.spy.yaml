@@ -11,3 +11,5 @@ fields:
   tiebreakMode: TiebreakMode, default=speed
   finalQuestionCount: int, default=5
   timeLimitSeconds: int, default=20
+  ### Whether players' phones show the question text, or only the projector.
+  showQuestionOnPhones: bool, default=true

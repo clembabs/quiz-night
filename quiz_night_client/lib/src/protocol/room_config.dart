@@ -26,6 +26,7 @@ abstract class RoomConfig
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
   }) : questionsPerRound = questionsPerRound ?? 5,
        eliminationRule =
            eliminationRule ?? _ix1rmfwn.EliminationRule.bottomPercent,
@@ -34,7 +35,8 @@ abstract class RoomConfig
        roundsBeforeFinal = roundsBeforeFinal ?? 3,
        tiebreakMode = tiebreakMode ?? _ixk2jfuv.TiebreakMode.speed,
        finalQuestionCount = finalQuestionCount ?? 5,
-       timeLimitSeconds = timeLimitSeconds ?? 20;
+       timeLimitSeconds = timeLimitSeconds ?? 20,
+       showQuestionOnPhones = showQuestionOnPhones ?? true;
 
   factory RoomConfig({
     int? questionsPerRound,
@@ -45,6 +47,7 @@ abstract class RoomConfig
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
   }) = _RoomConfigImpl;
 
   factory RoomConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -66,6 +69,11 @@ abstract class RoomConfig
             ),
       finalQuestionCount: jsonSerialization['finalQuestionCount'] as int?,
       timeLimitSeconds: jsonSerialization['timeLimitSeconds'] as int?,
+      showQuestionOnPhones: jsonSerialization['showQuestionOnPhones'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['showQuestionOnPhones'],
+            ),
     );
   }
 
@@ -87,6 +95,9 @@ abstract class RoomConfig
 
   int timeLimitSeconds;
 
+  /// Whether players' phones show the question text, or only the projector.
+  bool showQuestionOnPhones;
+
   /// Returns a shallow copy of this [RoomConfig]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -99,6 +110,7 @@ abstract class RoomConfig
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -112,6 +124,7 @@ abstract class RoomConfig
       'tiebreakMode': tiebreakMode.toJson(),
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
+      'showQuestionOnPhones': showQuestionOnPhones,
     };
   }
 
@@ -127,6 +140,7 @@ abstract class RoomConfig
       'tiebreakMode': tiebreakMode.toJson(),
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
+      'showQuestionOnPhones': showQuestionOnPhones,
     };
   }
 
@@ -146,6 +160,7 @@ class _RoomConfigImpl extends RoomConfig {
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
   }) : super._(
          questionsPerRound: questionsPerRound,
          eliminationRule: eliminationRule,
@@ -155,6 +170,7 @@ class _RoomConfigImpl extends RoomConfig {
          tiebreakMode: tiebreakMode,
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
+         showQuestionOnPhones: showQuestionOnPhones,
        );
 
   /// Returns a shallow copy of this [RoomConfig]
@@ -170,6 +186,7 @@ class _RoomConfigImpl extends RoomConfig {
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
   }) {
     return RoomConfig(
       questionsPerRound: questionsPerRound ?? this.questionsPerRound,
@@ -180,6 +197,7 @@ class _RoomConfigImpl extends RoomConfig {
       tiebreakMode: tiebreakMode ?? this.tiebreakMode,
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
+      showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
     );
   }
 }

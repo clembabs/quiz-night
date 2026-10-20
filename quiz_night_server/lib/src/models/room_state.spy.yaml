@@ -18,3 +18,9 @@ fields:
   buzzerHolderId: int?
   ### Finalist who answered the current final question correctly, if any.
   buzzWinnerId: int?
+  ### Whether phones show the question text (host setting).
+  showQuestionOnPhones: bool, default=true
+  ### How many players would survive if the round ended now: the danger line.
+  ### Null when there is no end-of-round cut to predict (lobby, sudden death,
+  ### the final).
+  projectedSurvivors: int?

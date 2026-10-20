@@ -16,6 +16,7 @@ fields:
   tiebreakMode: TiebreakMode
   finalQuestionCount: int
   timeLimitSeconds: int
+  showQuestionOnPhones: bool, default=true
   wildcardUsed: bool, default=false
   startingPlayerCount: int?
   questionStartedAt: DateTime?

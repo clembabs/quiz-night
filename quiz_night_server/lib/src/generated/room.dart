@@ -34,6 +34,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required this.tiebreakMode,
     required this.finalQuestionCount,
     required this.timeLimitSeconds,
+    bool? showQuestionOnPhones,
     bool? wildcardUsed,
     this.startingPlayerCount,
     this.questionStartedAt,
@@ -46,6 +47,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
   }) : status = status ?? _ilj1at52.RoomStatus.lobby,
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
+       showQuestionOnPhones = showQuestionOnPhones ?? true,
        wildcardUsed = wildcardUsed ?? false,
        lastCutRound = lastCutRound ?? 0,
        finalQuestionsPlayed = finalQuestionsPlayed ?? 0,
@@ -67,6 +69,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required _ixk2jfuv.TiebreakMode tiebreakMode,
     required int finalQuestionCount,
     required int timeLimitSeconds,
+    bool? showQuestionOnPhones,
     bool? wildcardUsed,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
@@ -104,6 +107,11 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       ),
       finalQuestionCount: jsonSerialization['finalQuestionCount'] as int,
       timeLimitSeconds: jsonSerialization['timeLimitSeconds'] as int,
+      showQuestionOnPhones: jsonSerialization['showQuestionOnPhones'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['showQuestionOnPhones'],
+            ),
       wildcardUsed: jsonSerialization['wildcardUsed'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['wildcardUsed']),
@@ -168,6 +176,8 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
 
   int timeLimitSeconds;
 
+  bool showQuestionOnPhones;
+
   bool wildcardUsed;
 
   int? startingPlayerCount;
@@ -209,6 +219,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
     bool? wildcardUsed,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
@@ -238,6 +249,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'tiebreakMode': tiebreakMode.toJson(),
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
+      'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
@@ -270,6 +282,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'tiebreakMode': tiebreakMode.toJson(),
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
+      'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
@@ -332,6 +345,7 @@ class _RoomImpl extends Room {
     required _ixk2jfuv.TiebreakMode tiebreakMode,
     required int finalQuestionCount,
     required int timeLimitSeconds,
+    bool? showQuestionOnPhones,
     bool? wildcardUsed,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
@@ -357,6 +371,7 @@ class _RoomImpl extends Room {
          tiebreakMode: tiebreakMode,
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
+         showQuestionOnPhones: showQuestionOnPhones,
          wildcardUsed: wildcardUsed,
          startingPlayerCount: startingPlayerCount,
          questionStartedAt: questionStartedAt,
@@ -388,6 +403,7 @@ class _RoomImpl extends Room {
     _ixk2jfuv.TiebreakMode? tiebreakMode,
     int? finalQuestionCount,
     int? timeLimitSeconds,
+    bool? showQuestionOnPhones,
     bool? wildcardUsed,
     Object? startingPlayerCount = _Undefined,
     Object? questionStartedAt = _Undefined,
@@ -416,6 +432,7 @@ class _RoomImpl extends Room {
       tiebreakMode: tiebreakMode ?? this.tiebreakMode,
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
+      showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
       startingPlayerCount: startingPlayerCount is int?
           ? startingPlayerCount
@@ -517,6 +534,12 @@ class RoomUpdateTable extends _is.UpdateTable<RoomTable> {
     table.timeLimitSeconds,
     value,
   );
+
+  _is.ColumnValue<bool, bool> showQuestionOnPhones(bool value) =>
+      _is.ColumnValue(
+        table.showQuestionOnPhones,
+        value,
+      );
 
   _is.ColumnValue<bool, bool> wildcardUsed(bool value) => _is.ColumnValue(
     table.wildcardUsed,
@@ -633,6 +656,11 @@ class RoomTable extends _is.Table<int?> {
       'timeLimitSeconds',
       this,
     );
+    showQuestionOnPhones = _is.ColumnBool(
+      'showQuestionOnPhones',
+      this,
+      hasDefault: true,
+    );
     wildcardUsed = _is.ColumnBool(
       'wildcardUsed',
       this,
@@ -706,6 +734,8 @@ class RoomTable extends _is.Table<int?> {
 
   late final _is.ColumnInt timeLimitSeconds;
 
+  late final _is.ColumnBool showQuestionOnPhones;
+
   late final _is.ColumnBool wildcardUsed;
 
   late final _is.ColumnInt startingPlayerCount;
@@ -742,6 +772,7 @@ class RoomTable extends _is.Table<int?> {
     tiebreakMode,
     finalQuestionCount,
     timeLimitSeconds,
+    showQuestionOnPhones,
     wildcardUsed,
     startingPlayerCount,
     questionStartedAt,
