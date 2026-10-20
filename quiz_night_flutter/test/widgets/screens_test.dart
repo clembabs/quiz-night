@@ -9,17 +9,15 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/app/quiz_night_app.dart';
 import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
+import 'package:quiz_night_flutter/features/home/home_cubit.dart';
+import 'package:quiz_night_flutter/features/home/home_screen.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
-import 'package:quiz_night_flutter/features/join/join_screen.dart';
-import 'package:quiz_night_flutter/features/room/host_lobby_view.dart';
-import 'package:quiz_night_flutter/features/room/player_lobby_view.dart';
-import 'package:quiz_night_flutter/features/room/room_cubit.dart';
 
 import '../fakes/fakes.dart';
 
-class MockRoomCubit extends MockCubit<RoomViewState> implements RoomCubit {}
-
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
+
+class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 
 class CountingWakeLock implements ScreenWakeLock {
   int keepOnCalls = 0;
@@ -31,11 +29,6 @@ class CountingWakeLock implements ScreenWakeLock {
   @override
   Future<void> release() async => releaseCalls++;
 }
-
-Widget wrap(Widget child) => MaterialApp(
-  theme: AppTheme.dark(),
-  home: Scaffold(body: child),
-);
 
 void main() {
   setUpAll(registerFallbacks);
@@ -51,22 +44,58 @@ void main() {
       seats = MockSeatRepository();
     });
 
-    testWidgets('when there is no saved seat then shows Join and Host', (
-      tester,
-    ) async {
+    testWidgets('when there is no saved seat then the landing page is the '
+        'join form', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => null);
       await tester.pumpWidget(
         QuizNightApp(lobby: lobby, game: game, seats: seats),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Join a game'), findsOneWidget);
-      expect(find.text('Host a game'), findsOneWidget);
-      expect(find.textContaining('Rejoin'), findsNothing);
+      expect(find.text('QUIZ NIGHT'), findsOneWidget);
+      expect(find.text('Survive the round, or go home.'), findsOneWidget);
+      expect(find.byKey(const Key('join.code')), findsOneWidget);
+      expect(find.text('JOIN GAME'), findsOneWidget);
+      expect(find.byKey(const Key('home.host')), findsOneWidget);
+    });
+
+    testWidgets('when opened from a QR link then the code is pre-filled', (
+      tester,
+    ) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialCode: '4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when the host link is tapped then the create screen opens', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(lobby: lobby, game: game, seats: seats),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('home.host')));
+      await tester.pumpAndSettle();
+      expect(find.text('NEW GAME'), findsOneWidget);
     });
 
     testWidgets('when a live seat is saved then reopens straight into the '
-        'room', (tester) async {
+        'room and keeps the screen on', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => playerSeat);
       when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
       // A live room stream stays open; one that closes means a dropped
@@ -84,151 +113,107 @@ void main() {
           wakeLock: wakeLock,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('Room ABCD'), findsOneWidget);
-      expect(find.text("You're in, Ada!"), findsOneWidget);
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
+      expect(find.text('Lobby'), findsOneWidget);
       expect(wakeLock.keepOnCalls, 1, reason: 'screen kept on in a room');
     });
-
-    testWidgets('when opened from a QR link then the join form has the code', (
-      tester,
-    ) async {
-      when(() => seats.load()).thenAnswer((_) async => null);
-      await tester.pumpWidget(
-        QuizNightApp(
-          lobby: lobby,
-          game: game,
-          seats: seats,
-          initialCode: 'WXYZ',
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Join a game'), findsWidgets);
-      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
-      expect(code.controller!.text, 'WXYZ');
-    });
   });
 
-  group('Given the join screen', () {
-    testWidgets(
-      'when submitting then passes the typed code and nickname to the cubit',
-      (
-        tester,
-      ) async {
-        final cubit = MockJoinCubit();
-        when(() => cubit.state).thenReturn(const JoinState());
-        when(() => cubit.join(any(), any())).thenAnswer((_) async {});
-
-        await tester.pumpWidget(
-          wrap(
-            BlocProvider<JoinCubit>.value(
-              value: cubit,
-              child: const JoinScreen(),
-            ),
-          ),
-        );
-        await tester.enterText(find.byKey(const Key('join.code')), 'abcd');
-        await tester.enterText(find.byKey(const Key('join.nickname')), 'Ada');
-        await tester.tap(find.text("Let's go"));
-
-        // The screen passes raw input; JoinCubit normalises it (see its tests).
-        verify(() => cubit.join('abcd', 'Ada')).called(1);
-      },
-    );
-
-    testWidgets('when there is an error then it is shown', (tester) async {
-      final cubit = MockJoinCubit();
-      when(
-        () => cubit.state,
-      ).thenReturn(const JoinState(error: 'That nickname is taken'));
-
-      await tester.pumpWidget(
-        wrap(
-          BlocProvider<JoinCubit>.value(
-            value: cubit,
-            child: const JoinScreen(),
-          ),
-        ),
-      );
-
-      expect(find.text('That nickname is taken'), findsOneWidget);
-    });
-  });
-
-  group('Given the host lobby', () {
-    late MockRoomCubit cubit;
+  group('Given the join form', () {
+    late MockJoinCubit join;
+    late MockHomeCubit home;
 
     setUp(() {
-      cubit = MockRoomCubit();
-      when(() => cubit.state).thenReturn(const RoomViewState(seat: hostSeat));
-      when(() => cubit.startGame()).thenAnswer((_) async {});
+      join = MockJoinCubit();
+      home = MockHomeCubit();
+      when(() => home.state).thenReturn(const HomeState(loading: false));
+      when(() => home.initialCode).thenReturn(null);
+      when(() => join.join(any(), any())).thenAnswer((_) async {});
     });
 
-    Future<void> pump(WidgetTester tester, int players) async {
-      tester.view.physicalSize = const Size(1400, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+    Future<void> pump(WidgetTester tester, JoinState state) async {
+      when(() => join.state).thenReturn(state);
       await tester.pumpWidget(
-        wrap(
-          BlocProvider<RoomCubit>.value(
-            value: cubit,
-            child: HostLobbyView(
-              room: roomState(
-                players: [
-                  for (var i = 1; i <= players; i++) player(i, 'P$i'),
-                ],
-              ),
-            ),
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<HomeCubit>.value(value: home),
+              BlocProvider<JoinCubit>.value(value: join),
+            ],
+            child: const HomeScreen(),
           ),
         ),
       );
     }
 
-    testWidgets('when one player is in then Start is disabled', (tester) async {
-      await pump(tester, 1);
-
-      expect(find.text('ABCD'), findsOneWidget);
-      expect(find.text('1 player in'), findsOneWidget);
-      await tester.tap(find.text('Need at least 2 players'));
-      verifyNever(() => cubit.startGame());
-    });
-
-    testWidgets('when two players are in then Start starts the game', (
+    testWidgets('when submitting then passes the code and nickname', (
       tester,
     ) async {
-      await pump(tester, 2);
+      await pump(tester, const JoinState());
+      await tester.enterText(find.byKey(const Key('join.code')), '4821');
+      await tester.enterText(find.byKey(const Key('join.nickname')), 'Ọlá');
+      await tester.tap(find.byKey(const Key('join.submit')));
 
-      expect(find.text('P1'), findsOneWidget);
-      expect(find.text('P2'), findsOneWidget);
-      await tester.tap(find.text('Start the game'));
-      verify(() => cubit.startGame()).called(1);
+      verify(() => join.join('4821', 'Ọlá')).called(1);
     });
 
-    test('when building the join link then the code is in the query', () {
-      final url = HostLobbyView.joinUrl(
-        Uri.parse('https://quiz.example.com/#/old'),
-        'ABCD',
-      );
-      expect(url.toString(), 'https://quiz.example.com/?code=ABCD');
+    testWidgets('when letters are typed into the code then only digits stay', (
+      tester,
+    ) async {
+      await pump(tester, const JoinState());
+      await tester.enterText(find.byKey(const Key('join.code')), '48ab21');
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
     });
-  });
 
-  group('Given the player lobby', () {
-    testWidgets('when waiting then greets the player by name', (tester) async {
-      final ada = player(1, 'Ada');
-      await tester.pumpWidget(
-        wrap(
-          PlayerLobbyView(
-            room: roomState(players: [ada, player(2, 'Bo')]),
-            me: ada,
-          ),
+    testWidgets('when the room is not found then the error sits under the '
+        'code', (tester) async {
+      await pump(
+        tester,
+        const JoinState(
+          error: 'Room not found. Check the code on the big screen.',
+          errorKind: JoinError.roomNotFound,
         ),
       );
+      expect(
+        find.text('✕ Room not found. Check the code on the big screen.'),
+        findsOneWidget,
+      );
+    });
 
-      expect(find.text("You're in, Ada!"), findsOneWidget);
-      expect(find.text('2 in the room'), findsOneWidget);
+    testWidgets('when the game already started then a warning banner shows', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        const JoinState(
+          error: 'This game already started. Ask the host to open a new room.',
+          errorKind: JoinError.gameStarted,
+        ),
+      );
+      expect(
+        find.text(
+          'This game already started. Ask the host to open a new room.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('when the nickname is taken then the error sits under it', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        const JoinState(
+          error: 'That nickname is taken',
+          errorKind: JoinError.nicknameTaken,
+        ),
+      );
+      expect(find.text('That nickname is taken'), findsOneWidget);
     });
   });
 }

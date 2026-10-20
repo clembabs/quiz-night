@@ -4,46 +4,51 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
+import 'package:quiz_night_flutter/core/platform/haptics.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/home/home_cubit.dart';
 import 'package:quiz_night_flutter/features/home/home_screen.dart';
-import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
-import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
-import 'package:quiz_night_flutter/features/join/join_screen.dart';
-import 'package:quiz_night_flutter/features/room/cut_reveal/reveal_sequence_cubit.dart';
-import 'package:quiz_night_flutter/features/room/final/player_final_view.dart';
-import 'package:quiz_night_flutter/features/room/final/podium_view.dart';
-import 'package:quiz_night_flutter/features/room/player_lobby_view.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_question.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_result.dart';
+import 'package:quiz_night_flutter/features/room/phone/phone_waiting.dart';
 import 'package:quiz_night_flutter/features/room/room_cubit.dart';
-import 'package:quiz_night_flutter/features/room/round/player_cut_view.dart';
-import 'package:quiz_night_flutter/features/room/round/player_question_view.dart';
-import 'package:quiz_night_flutter/features/room/round/player_reveal_view.dart';
+import 'package:quiz_night_flutter/widgets/qn/phone_frame.dart';
 
 import '../fakes/fakes.dart';
-
-class MockRoomCubit extends MockCubit<RoomViewState> implements RoomCubit {}
+import 'harness.dart';
 
 class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
 
-class MockHostSetupCubit extends MockCubit<HostSetupState>
-    implements HostSetupCubit {}
-
 /// A small Android phone; iPhone SE is 375 wide.
 const phone = Size(360, 640);
 
 /// Long names and long answers, the worst case for a narrow screen.
-const longName = 'Bartholomew-Jones';
+const longName = 'Olúwaṣẹ́gun-the-Great';
+
+const f = PlayerStatus.finalist;
+const out = PlayerStatus.eliminated;
 
 void main() {
   setUpAll(registerFallbacks);
 
   final endsAt = DateTime.now().toUtc().add(const Duration(minutes: 5));
-  final me = player(1, longName, score: 12345, lastPoints: 987);
+  final me = player(1, longName, score: 123456, lastPoints: 987);
+  final spectator = player(
+    9,
+    longName,
+    status: out,
+    eliminatedInRound: 1,
+    shadowScore: 99999,
+  );
 
-  /// Renders [child] at phone size. Flutter fails the test on any overflow.
+  /// Renders [child] in the phone frame at 360×640, with the header.
+  /// Flutter fails the test on any overflow.
   Future<void> render(WidgetTester tester, Widget child) async {
     tester.view.physicalSize = phone;
     tester.view.devicePixelRatio = 1;
@@ -51,189 +56,219 @@ void main() {
     final room = MockRoomCubit();
     when(() => room.state).thenReturn(const RoomViewState(seat: playerSeat));
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.dark(),
-        home: Scaffold(
-          appBar: AppBar(title: const Text('Room ABCD')),
-          body: BlocProvider<RoomCubit>.value(value: room, child: child),
+      RepositoryProvider<Haptics>(
+        create: (_) => SilentHaptics(),
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: BlocProvider<RoomCubit>.value(
+              value: room,
+              child: PhoneFrame(code: '4821', phase: 'Round 2', child: child),
+            ),
+          ),
         ),
       ),
     );
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
   }
 
   List<PlayerView> crowd() => [
     me,
-    for (var i = 2; i <= 12; i++) player(i, '$longName $i', score: i * 100),
+    for (var i = 2; i <= 30; i++) player(i, '$longName $i', score: i * 100),
   ];
 
+  /// Long question and long options.
+  QuestionView longQuestion({bool revealed = false, bool isFinal = false}) =>
+      QuestionView(
+        id: 10,
+        round: 2,
+        indexInRound: 8,
+        isFinal: isFinal,
+        text:
+            'Which river forms most of the border between Nigeria and Niger, '
+            'and where does it meet the Benue?',
+        options: const [
+          'The Federal Capital Territory moved from Lagos to Abuja in 1991',
+          'Ibadan',
+          'Kaduna, the old capital of the Northern Region',
+          'Enugu',
+        ],
+        timeLimitSeconds: 20,
+        correctIndex: revealed ? 0 : null,
+      );
+
   group('Given a 360x640 phone', () {
-    testWidgets('when on the home screen then nothing overflows', (
-      tester,
-    ) async {
-      final cubit = MockHomeCubit();
-      when(() => cubit.state).thenReturn(
-        const HomeState(loading: false, savedSeat: playerSeat),
-      );
-      when(() => cubit.initialCode).thenReturn(null);
-      await render(
-        tester,
-        BlocProvider<HomeCubit>.value(value: cubit, child: const HomeScreen()),
-      );
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('when on the join form then nothing overflows', (tester) async {
-      final cubit = MockJoinCubit();
-      when(() => cubit.state).thenReturn(
-        const JoinState(error: 'That nickname is already taken in this room'),
-      );
-      await render(
-        tester,
-        BlocProvider<JoinCubit>.value(value: cubit, child: const JoinScreen()),
-      );
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('when on host setup then the rule picker fits', (tester) async {
-      final cubit = MockHostSetupCubit();
-      when(() => cubit.state).thenReturn(
-        const HostSetupState(rule: EliminationRule.autoScaled),
-      );
-      await render(
-        tester,
-        BlocProvider<HostSetupCubit>.value(
-          value: cubit,
-          child: const HostSetupScreen(),
+    testWidgets('when on the landing page then nothing overflows', (t) async {
+      final home = MockHomeCubit();
+      final join = MockJoinCubit();
+      when(() => home.state).thenReturn(const HomeState(loading: false));
+      when(() => home.initialCode).thenReturn(null);
+      when(() => join.state).thenReturn(
+        const JoinState(
+          error: 'This game already started. Ask the host to open a new room.',
+          errorKind: JoinError.gameStarted,
         ),
       );
-      expect(tester.takeException(), isNull);
+      t.view.physicalSize = phone;
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<HomeCubit>.value(value: home),
+              BlocProvider<JoinCubit>.value(value: join),
+            ],
+            child: const HomeScreen(),
+          ),
+        ),
+      );
+      expect(t.takeException(), isNull);
     });
 
-    testWidgets('when in the lobby with a crowd then nothing overflows', (
-      tester,
-    ) async {
+    testWidgets('when waiting with a crowd then nothing overflows', (t) async {
       await render(
-        tester,
-        PlayerLobbyView(
+        t,
+        PhoneWaiting(
           room: roomState(players: crowd()),
           me: me,
         ),
       );
-      expect(tester.takeException(), isNull);
+      expect(t.takeException(), isNull);
     });
 
     testWidgets('when answering a long question then nothing overflows', (
-      tester,
+      t,
     ) async {
       final room = roomState(
         status: RoomStatus.question,
-        question: question(),
+        question: longQuestion(),
         questionEndsAt: endsAt,
         players: [me],
       );
       await render(
-        tester,
-        PlayerQuestionView(
+        t,
+        PhoneQuestion(
           room: room,
           me: me,
-          myChoice: 2,
+          myChoice: null,
           clockOffset: Duration.zero,
         ),
       );
-      expect(tester.takeException(), isNull);
+      expect(t.takeException(), isNull);
     });
 
-    testWidgets('when seeing a reveal then nothing overflows', (tester) async {
+    testWidgets('when locked in then nothing overflows', (t) async {
       final room = roomState(
-        status: RoomStatus.reveal,
-        question: question(revealed: true),
+        status: RoomStatus.question,
+        question: longQuestion(),
+        questionEndsAt: endsAt,
         players: crowd(),
       );
-      await render(tester, PlayerRevealView(room: room, me: me, myChoice: 1));
-      expect(tester.takeException(), isNull);
+      await render(
+        t,
+        PhoneQuestion(
+          room: room,
+          me: me,
+          myChoice: 0,
+          clockOffset: Duration.zero,
+        ),
+      );
+      expect(t.takeException(), isNull);
     });
 
-    testWidgets('when backing a finalist after a cut then nothing overflows', (
-      tester,
-    ) async {
-      final spectator = player(
-        9,
-        longName,
-        status: PlayerStatus.eliminated,
-        eliminatedInRound: 1,
+    testWidgets('when seeing a result in the danger zone then nothing '
+        'overflows', (t) async {
+      final room = roomState(
+        status: RoomStatus.reveal,
+        question: longQuestion(revealed: true),
+        players: crowd(),
+      ).copyWith(projectedSurvivors: 2);
+      await render(
+        t,
+        PhoneResult(room: room, me: room.players.last, myChoice: 2, move: -12),
       );
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('when out and backing a finalist then nothing overflows', (
+      t,
+    ) async {
       final room = roomState(
         status: RoomStatus.elimination,
         round: 1,
         lastElimination: cut(out: [9], finalists: true),
         players: [
-          for (var i = 1; i <= 3; i++)
-            player(i, '$longName $i', status: PlayerStatus.finalist),
+          for (var i = 1; i <= 4; i++) player(i, '$longName $i', status: f),
           spectator,
         ],
       );
       await render(
-        tester,
-        PlayerCutView(
-          room: room,
-          me: spectator,
-          createSequence: (total) => RevealSequenceCubit(total: total)..skip(),
-        ),
+        t,
+        PhoneCut(room: room, me: spectator, myBackedId: 1, keepWatching: true),
       );
-      expect(tester.takeException(), isNull);
+      expect(t.takeException(), isNull);
     });
 
-    testWidgets('when buzzing in the final then the buzzer and cards fit', (
-      tester,
-    ) async {
-      final finalist = player(1, longName, status: PlayerStatus.finalist);
+    testWidgets('when eliminated then nothing overflows', (t) async {
+      final room = roomState(
+        status: RoomStatus.elimination,
+        round: 1,
+        lastElimination: cut(out: [9], tie: true),
+        players: [me, spectator],
+      );
+      await render(t, PhoneCut(room: room, me: spectator));
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('when holding the buzzer with long options then nothing '
+        'overflows', (t) async {
+      final finalist = player(1, longName, status: f);
       final room = roomState(
         status: RoomStatus.buzzerFinal,
-        question: question(isFinal: true),
+        question: longQuestion(isFinal: true),
         questionEndsAt: endsAt,
+        buzzerHolderId: 1,
         players: [
           finalist,
-          player(2, '$longName 2', status: PlayerStatus.finalist),
-          player(3, '$longName 3', status: PlayerStatus.finalist),
+          player(2, '$longName 2', status: f),
         ],
       );
       await render(
-        tester,
-        PlayerFinalView(
-          room: room,
-          me: finalist,
-          myChoice: null,
-          myBackedId: null,
-          buzzing: false,
-          clockOffset: Duration.zero,
-        ),
+        t,
+        PhoneBuzzer(room: room, me: finalist, myChoice: null, buzzing: false),
       );
-      expect(tester.takeException(), isNull);
+      expect(t.takeException(), isNull);
     });
 
-    testWidgets('when on the podium then nothing overflows', (tester) async {
+    testWidgets('when watching the final then nothing overflows', (t) async {
+      final room = roomState(
+        status: RoomStatus.buzzerFinal,
+        question: longQuestion(isFinal: true),
+        questionEndsAt: endsAt,
+        players: [
+          for (var i = 1; i <= 4; i++) player(i, '$longName $i', status: f),
+          spectator,
+        ],
+      );
+      await render(t, PhoneWatching(room: room, me: spectator, myBackedId: 1));
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('when on the final placement then nothing overflows', (
+      t,
+    ) async {
       final room = roomState(
         status: RoomStatus.finished,
         players: [
-          for (var i = 1; i <= 4; i++)
-            player(
-              i,
-              '$longName $i',
-              status: PlayerStatus.finalist,
-              finalScore: 5000 - i * 1000,
-            ),
-          player(
-            9,
-            longName,
-            status: PlayerStatus.eliminated,
-            backedPlayerId: 1,
-            shadowScore: 99999,
-          ),
+          for (var i = 1; i <= 3; i++)
+            player(i, '$longName $i', status: f, finalScore: 99000),
+          spectator.copyWith(backedPlayerId: 2),
         ],
       );
-      await render(tester, PodiumView(room: room, me: room.players.last));
-      expect(tester.takeException(), isNull);
+      await render(t, PhonePlacement(room: room, me: room.players.last));
+      expect(t.takeException(), isNull);
     });
   });
 }
