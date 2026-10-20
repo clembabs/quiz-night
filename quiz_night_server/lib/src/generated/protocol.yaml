@@ -1,0 +1,27 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+answer:
+  - submitAnswer:
+buzzer:
+  - buzz:
+  - submitBuzzAnswer:
+  - backFinalist:
+room:
+  - createRoom:
+  - joinRoom:
+  - rejoin:
+  - startGame:
+  - nextQuestion:
+  - reveal:
+  - endRound:
+  - useWildcard:
+  - watchRoom:
