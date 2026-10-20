@@ -1,0 +1,10 @@
+# Two HTTPS tunnels for testing on phones (see tool/start_with_ngrok.sh).
+# Your authtoken stays in your own ngrok config; this file holds none.
+version: "3"
+tunnels:
+  web:
+    proto: http
+    addr: 8082
+  api:
+    proto: http
+    addr: 8080
