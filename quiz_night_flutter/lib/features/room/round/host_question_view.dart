@@ -3,9 +3,9 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../widgets/answer_option.dart';
 import '../../../widgets/countdown_bar.dart';
 import '../../../widgets/leaderboard_list.dart';
+import '../../../widgets/options_grid.dart';
 import '../round_logic.dart';
 import 'host_step_button.dart';
 import 'question_header.dart';
@@ -46,7 +46,7 @@ class HostQuestionView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
         ],
-        _OptionsGrid(question: q),
+        OptionsGrid(question: q),
         const SizedBox(height: AppSpacing.xl),
         Row(
           children: [
@@ -114,46 +114,5 @@ class HostQuestionView extends StatelessWidget {
     final correct = q.correctIndex;
     if (counts == null || correct == null || correct >= counts.length) return 0;
     return counts[correct];
-  }
-}
-
-class _OptionsGrid extends StatelessWidget {
-  final QuestionView question;
-
-  const _OptionsGrid({required this.question});
-
-  @override
-  Widget build(BuildContext context) {
-    final q = question;
-    final tiles = [
-      for (var i = 0; i < q.options.length; i++)
-        AnswerOption(
-          index: i,
-          text: q.options[i],
-          large: true,
-          look: lookFor(index: i, correctIndex: q.correctIndex, picked: null),
-          votes: q.answerCounts?[i],
-        ),
-    ];
-    // Two columns: A B / C D, like the classic quiz board.
-    return Column(
-      children: [
-        for (var row = 0; row < tiles.length; row += 2)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(child: tiles[row]),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: row + 1 < tiles.length
-                      ? tiles[row + 1]
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
   }
 }
