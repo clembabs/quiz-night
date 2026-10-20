@@ -386,6 +386,91 @@ void main() {
     );
   });
 
+  withServerpod('Given a new room', (sb, endpoints) {
+    test('when created then the code is 4 digits', () async {
+      for (var i = 0; i < 5; i++) {
+        final created = await endpoints.room.createRoom(sb, RoomConfig());
+        expect(created.roomCode, matches(RegExp(r'^\d{4}$')));
+      }
+    });
+
+    test(
+      'when the host hides questions on phones then the state says so',
+      () async {
+        final created = await endpoints.room.createRoom(
+          sb,
+          RoomConfig(showQuestionOnPhones: false),
+        );
+        final state = await endpoints.room
+            .watchRoom(sb, created.roomCode)
+            .first;
+        expect(state.showQuestionOnPhones, isFalse);
+      },
+    );
+
+    test(
+      'when the host does not choose then phones show the question',
+      () async {
+        final created = await endpoints.room.createRoom(sb, RoomConfig());
+        final state = await endpoints.room
+            .watchRoom(sb, created.roomCode)
+            .first;
+        expect(state.showQuestionOnPhones, isTrue);
+      },
+    );
+  });
+
+  withServerpod('Given the danger line', (sb, endpoints) {
+    test('when in the lobby then there is no projection', () async {
+      final g = await setUpGame(sb, endpoints, players: 5);
+      final state = await endpoints.room.watchRoom(sb, g.code).first;
+      expect(state.projectedSurvivors, isNull);
+    });
+
+    test(
+      'when a bottom-30% round is running then it matches the real cut',
+      () async {
+        // 10 players: 30% cut leaves 7, and the real cut must agree.
+        final g = await setUpGame(
+          sb,
+          endpoints,
+          players: 10,
+          config: RoomConfig(questionsPerRound: 1, finalistTarget: 3),
+        );
+        await endpoints.room.startGame(sb, g.code, g.hostToken);
+        var state = await endpoints.room.watchRoom(sb, g.code).first;
+        expect(state.projectedSurvivors, 7);
+
+        final q = await currentQuestion(sb, g.code);
+        for (final p in g.players) {
+          await endpoints.answer.submitAnswer(sb, p.playerToken, q.id!, 0);
+        }
+        state = await endpoints.room.watchRoom(sb, g.code).first;
+        expect(state.status, RoomStatus.reveal);
+        expect(state.projectedSurvivors, 7);
+
+        await endpoints.room.endRound(sb, g.code, g.hostToken);
+        final active = await Player.db.count(
+          sb.build(),
+          where: (t) => t.status.equals(PlayerStatus.active),
+        );
+        expect(active, 7);
+      },
+    );
+
+    test('when sudden death then there is no line to show', () async {
+      final g = await setUpGame(
+        sb,
+        endpoints,
+        players: 5,
+        config: RoomConfig(eliminationRule: EliminationRule.suddenDeath),
+      );
+      await endpoints.room.startGame(sb, g.code, g.hostToken);
+      final state = await endpoints.room.watchRoom(sb, g.code).first;
+      expect(state.projectedSurvivors, isNull);
+    });
+  });
+
   // Concurrent transactions need real commits, not the per-test rollback.
   withServerpod(
     'Given the buzzer final with 3 finalists',
