@@ -76,6 +76,36 @@ flutter:
   # https://flutter.dev/assets-and-images/#from-packages
   assets:
     - assets/config.json
+    - assets/fonts/licenses/
+
+  # Bundled, subset fonts (see tool/make_fonts.py). Display: Bricolage
+  # Grotesque 800; body: Figtree. NotoSansAfr is a tiny per-glyph fallback for
+  # Nigerian letters the other two lack (ẹ ọ ṣ ị ụ ṅ ɓ ɗ ƙ ƴ).
+  fonts:
+    - family: Bricolage
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque-ExtraBold.ttf
+          weight: 800
+    - family: Figtree
+      fonts:
+        - asset: assets/fonts/Figtree-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Figtree-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Figtree-ExtraBold.ttf
+          weight: 800
+    - family: NotoSansAfr
+      fonts:
+        - asset: assets/fonts/NotoSansAfr-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansAfr-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansAfr-ExtraBold.ttf
+          weight: 800
+    # ✓ ✕ ▲ ▼ ★ ⏱ only (3 KB), for UI symbols no text font has.
+    - family: NotoSansSymbols
+      fonts:
+        - asset: assets/fonts/NotoSansSymbols-Regular.ttf
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
