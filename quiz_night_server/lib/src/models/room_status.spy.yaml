@@ -1,0 +1,9 @@
+enum: RoomStatus
+values:
+  - lobby
+  - question
+  - reveal
+  - elimination
+  - tiebreak
+  - buzzerFinal
+  - finished

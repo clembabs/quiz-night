@@ -1,0 +1,10 @@
+class: EliminationEvent
+fields:
+  round: int
+  ### Eliminated players in reveal order (worst first, the bubble last).
+  eliminatedPlayerIds: List<int>
+  survivorsCount: int
+  ### True when players tied on score at the cutoff and speed decided it.
+  tieBrokenBySpeed: bool
+  ### True when this cut produced the finalists.
+  finalistsDecided: bool

@@ -1,0 +1,15 @@
+class: Question
+table: question
+fields:
+  roomId: int, relation(parent=room, onDelete=Cascade)
+  orderIndex: int
+  round: int
+  isFinal: bool, default=false
+  isTiebreak: bool, default=false
+  text: String
+  options: List<String>
+  correctIndex: int
+  timeLimitSeconds: int
+indexes:
+  question_room_idx:
+    fields: roomId, orderIndex

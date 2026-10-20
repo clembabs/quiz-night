@@ -1,0 +1,4 @@
+class: AnswerResult
+fields:
+  accepted: bool
+  isShadow: bool

@@ -1,0 +1,16 @@
+### Public view of a player (no token).
+class: PlayerView
+fields:
+  id: int
+  nickname: String
+  score: int
+  shadowScore: int
+  finalScore: int
+  status: PlayerStatus
+  eliminatedInRound: int?
+  ### Only revealed once the game is finished.
+  backedPlayerId: int?
+  hasAnswered: bool
+  ### Points from the current question; only set after reveal.
+  lastPoints: int?
+  lockedOut: bool

@@ -1,0 +1,5 @@
+class: JoinResult
+fields:
+  roomCode: String
+  playerId: int
+  playerToken: String

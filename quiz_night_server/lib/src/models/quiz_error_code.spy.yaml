@@ -1,0 +1,11 @@
+enum: QuizErrorCode
+values:
+  - roomNotFound
+  - playerNotFound
+  - notHost
+  - invalidState
+  - nicknameTaken
+  - invalidInput
+  - tooLate
+  - alreadyAnswered
+  - notAllowed

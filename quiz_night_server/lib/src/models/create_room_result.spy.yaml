@@ -1,0 +1,4 @@
+class: CreateRoomResult
+fields:
+  roomCode: String
+  hostToken: String

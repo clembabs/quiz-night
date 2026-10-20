@@ -1,0 +1,20 @@
+class: Player
+table: player
+fields:
+  roomId: int, relation(parent=room, onDelete=Cascade)
+  nickname: String
+  token: String?, scope=serverOnly
+  score: int, default=0
+  shadowScore: int, default=0
+  finalScore: int, default=0
+  totalCorrectAnswerMs: int, default=0
+  status: PlayerStatus, default=active
+  eliminatedInRound: int?
+  backedPlayerId: int?
+  joinedAt: DateTime, default=now
+indexes:
+  player_room_idx:
+    fields: roomId
+  player_token_idx:
+    fields: token
+    unique: true

@@ -1,0 +1,5 @@
+enum: EliminationRule
+values:
+  - bottomPercent
+  - autoScaled
+  - suddenDeath

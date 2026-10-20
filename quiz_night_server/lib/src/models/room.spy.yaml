@@ -1,0 +1,32 @@
+class: Room
+table: room
+fields:
+  code: String
+  hostToken: String?, scope=serverOnly
+  status: RoomStatus, default=lobby
+  currentRound: int, default=0
+  ### Index of the current question within the current round (1-based, 0 = none yet).
+  currentQuestionIndex: int, default=0
+  currentQuestionId: int?
+  questionsPerRound: int
+  eliminationRule: EliminationRule
+  eliminationPercent: double
+  finalistTarget: int
+  roundsBeforeFinal: int
+  tiebreakMode: TiebreakMode
+  finalQuestionCount: int
+  timeLimitSeconds: int
+  wildcardUsed: bool, default=false
+  startingPlayerCount: int?
+  questionStartedAt: DateTime?
+  questionEndsAt: DateTime?
+  ### Last round whose cut has been applied; makes endRound idempotent.
+  lastCutRound: int, default=0
+  finalQuestionsPlayed: int, default=0
+  buzzerHolderId: int?
+  lastElimination: EliminationEvent?
+  createdAt: DateTime, default=now
+indexes:
+  room_code_idx:
+    fields: code
+    unique: true

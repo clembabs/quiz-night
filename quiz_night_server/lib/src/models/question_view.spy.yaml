@@ -1,0 +1,13 @@
+### Question as sent to clients. correctIndex is null until reveal.
+class: QuestionView
+fields:
+  id: int
+  round: int
+  indexInRound: int
+  isFinal: bool
+  text: String
+  options: List<String>
+  timeLimitSeconds: int
+  correctIndex: int?
+  ### Votes per option (active players only); only set after reveal.
+  answerCounts: List<int>?

@@ -1,0 +1,13 @@
+### Host-chosen settings for a new room.
+class: RoomConfig
+fields:
+  questionsPerRound: int, default=5
+  eliminationRule: EliminationRule, default=bottomPercent
+  ### Fraction (0-1) of active players cut each round for bottomPercent.
+  eliminationPercent: double, default=0.3
+  finalistTarget: int, default=3
+  ### Rounds before the final; used by autoScaled.
+  roundsBeforeFinal: int, default=3
+  tiebreakMode: TiebreakMode, default=speed
+  finalQuestionCount: int, default=5
+  timeLimitSeconds: int, default=20

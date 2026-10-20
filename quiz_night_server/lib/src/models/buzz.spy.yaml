@@ -1,0 +1,12 @@
+class: Buzz
+table: buzz
+fields:
+  playerId: int, relation(parent=player, onDelete=Cascade)
+  questionId: int, relation(parent=question, onDelete=Cascade)
+  buzzedAt: DateTime
+  wasCorrect: bool?
+  lockedOut: bool, default=false
+indexes:
+  buzz_player_question_idx:
+    fields: playerId, questionId
+    unique: true

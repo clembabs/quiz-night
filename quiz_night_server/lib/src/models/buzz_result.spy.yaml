@@ -1,0 +1,4 @@
+class: BuzzResult
+fields:
+  gotBuzzer: bool
+  reason: String?

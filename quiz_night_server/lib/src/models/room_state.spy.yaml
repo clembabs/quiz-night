@@ -1,0 +1,18 @@
+### Snapshot pushed to every client in a room.
+class: RoomState
+fields:
+  code: String
+  status: RoomStatus
+  round: int
+  questionsPerRound: int
+  finalistTarget: int
+  finalQuestionCount: int
+  finalQuestionsPlayed: int
+  eliminationRule: EliminationRule
+  wildcardUsed: bool
+  question: QuestionView?
+  questionEndsAt: DateTime?
+  serverTime: DateTime
+  players: List<PlayerView>
+  lastElimination: EliminationEvent?
+  buzzerHolderId: int?

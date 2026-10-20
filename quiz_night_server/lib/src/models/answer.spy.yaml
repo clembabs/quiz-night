@@ -1,0 +1,17 @@
+class: Answer
+table: answer
+fields:
+  playerId: int, relation(parent=player, onDelete=Cascade)
+  questionId: int, relation(parent=question, onDelete=Cascade)
+  choiceIndex: int
+  answeredAt: DateTime
+  elapsedMs: int
+  isCorrect: bool
+  pointsAwarded: int
+  isShadow: bool
+indexes:
+  answer_player_question_idx:
+    fields: playerId, questionId
+    unique: true
+  answer_question_idx:
+    fields: questionId
