@@ -37,6 +37,10 @@ class RoomViewState extends Equatable {
   /// tapped button stays highlighted; the server never reveals others' picks.
   final Map<int, int> myChoices;
 
+  /// The finalist this spectator backed. The server keeps picks hidden until
+  /// the podium, so it is remembered here.
+  final int? myBackedId;
+
   const RoomViewState({
     required this.seat,
     this.room,
@@ -47,6 +51,7 @@ class RoomViewState extends Equatable {
     this.errorSeq = 0,
     this.clockOffset = Duration.zero,
     this.myChoices = const {},
+    this.myBackedId,
   });
 
   PlayerView? get me => seat.playerId == null
@@ -68,6 +73,7 @@ class RoomViewState extends Equatable {
     int? errorSeq,
     Duration? clockOffset,
     Map<int, int>? myChoices,
+    int? Function()? myBackedId,
   }) => RoomViewState(
     seat: seat,
     room: room ?? this.room,
@@ -78,6 +84,7 @@ class RoomViewState extends Equatable {
     errorSeq: errorSeq ?? this.errorSeq,
     clockOffset: clockOffset ?? this.clockOffset,
     myChoices: myChoices ?? this.myChoices,
+    myBackedId: myBackedId != null ? myBackedId() : this.myBackedId,
   );
 
   @override
@@ -91,6 +98,7 @@ class RoomViewState extends Equatable {
     errorSeq,
     clockOffset,
     myChoices,
+    myBackedId,
   ];
 }
 
@@ -191,6 +199,8 @@ class RoomCubit extends Cubit<RoomViewState> {
   Future<void> nextQuestion() => _act(() => _game.nextQuestion(state.seat));
   Future<void> reveal() => _act(() => _game.reveal(state.seat));
   Future<void> endRound() => _act(() => _game.endRound(state.seat));
+  Future<void> useWildcard(int playerId) =>
+      _act(() => _game.useWildcard(state.seat, playerId));
 
   // ---- player actions
 
@@ -214,6 +224,21 @@ class RoomCubit extends Cubit<RoomViewState> {
       // An earlier answer already counts; keep showing a pick.
       if (f.kind == FailureKind.alreadyAnswered || isClosed) return;
       emit(state.copyWith(myChoices: {...state.myChoices}..remove(id)));
+      _showError(f.message);
+    }
+  }
+
+  /// Backs [finalistId] to win. Shows at once; rolled back if rejected.
+  /// Picking again changes the pick.
+  Future<void> backFinalist(int finalistId) async {
+    if (state.seat.isHost || state.myBackedId == finalistId) return;
+    final previous = state.myBackedId;
+    emit(state.copyWith(myBackedId: () => finalistId));
+    try {
+      await _game.backFinalist(state.seat, finalistId);
+    } on AppFailure catch (f) {
+      if (isClosed) return;
+      emit(state.copyWith(myBackedId: () => previous));
       _showError(f.message);
     }
   }
