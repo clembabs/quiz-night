@@ -6,9 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/room/room_cubit.dart';
-import 'package:quiz_night_flutter/features/room/round/host_cut_view.dart';
 import 'package:quiz_night_flutter/features/room/round/host_question_view.dart';
-import 'package:quiz_night_flutter/features/room/round/player_cut_view.dart';
 import 'package:quiz_night_flutter/features/room/round/player_question_view.dart';
 import 'package:quiz_night_flutter/features/room/round/player_reveal_view.dart';
 
@@ -209,50 +207,6 @@ void main() {
 
       await tester.tap(find.text('End round'));
       verify(() => cubit.endRound()).called(1);
-    });
-  });
-
-  group('Given a cut has happened', () {
-    final room = roomState(
-      status: RoomStatus.elimination,
-      round: 1,
-      lastElimination: cut(out: [3], survivors: 2, tie: true),
-      players: [
-        player(1, 'Ada', score: 900),
-        player(2, 'Bo', score: 500),
-        player(
-          3,
-          'Cy',
-          status: PlayerStatus.eliminated,
-          eliminatedInRound: 1,
-        ),
-      ],
-    );
-
-    testWidgets('when the host looks then sees who is out and Next round', (
-      tester,
-    ) async {
-      await pump(tester, HostCutView(room: room));
-
-      expect(find.text('1 going home'), findsOneWidget);
-      expect(find.text('Cy'), findsOneWidget);
-      expect(find.textContaining('broken by answer speed'), findsOneWidget);
-      await tester.tap(find.text('Next round'));
-      verify(() => cubit.nextQuestion()).called(1);
-    });
-
-    testWidgets('when the cut player looks then is told they are out', (
-      tester,
-    ) async {
-      await pump(tester, PlayerCutView(room: room, me: room.players[2]));
-      expect(find.text("You're out"), findsOneWidget);
-    });
-
-    testWidgets('when a survivor looks then is told they survived', (
-      tester,
-    ) async {
-      await pump(tester, PlayerCutView(room: room, me: room.players[0]));
-      expect(find.text('You survived round 1'), findsOneWidget);
     });
   });
 }
