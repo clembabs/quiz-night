@@ -10,8 +10,8 @@ import 'package:quiz_night_flutter/app/quiz_night_app.dart';
 import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/home/home_cubit.dart';
-import 'package:quiz_night_flutter/features/home/home_screen.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
+import 'package:quiz_night_flutter/features/join/join_form.dart';
 
 import '../fakes/fakes.dart';
 
@@ -89,13 +89,70 @@ void main() {
           lobby: lobby,
           game: game,
           seats: seats,
-          initialCode: '4821',
+          initialLocation: '/join?code=4821',
         ),
       );
       await tester.pumpAndSettle();
 
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when opened from an old QR link on the home page then it '
+        'redirects to the join form with the code', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/?code=4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when a room address opens without a seat on this device '
+        'then it goes to the join form for that room', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/room/4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+      verifyNever(() => game.watchRoom(any()));
+    });
+
+    testWidgets('when a room address is reloaded with this device\'s seat '
+        'then the room opens again', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => playerSeat);
+      when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Ada')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/room/ABCD',
+        ),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
     });
 
     testWidgets('when the host link is tapped then the create screen opens', (

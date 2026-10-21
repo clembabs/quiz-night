@@ -136,17 +136,20 @@ void main() {
       verify(() => cubit.startGame()).called(1);
     });
 
-    test('when building the join link then the code is in the query', () {
-      final url = HostLobby.joinUrl(
-        Uri.parse('https://quiz.example.com/#/old'),
-        '4821',
-      );
-      expect(url.toString(), 'https://quiz.example.com/?code=4821');
-      expect(
-        HostLobby.shortAddress(Uri.parse('https://quiznight.ng/')),
-        'quiznight.ng',
-      );
-    });
+    test(
+      'when building the join link then it opens the join page with the code',
+      () {
+        final url = HostLobby.joinUrl(
+          Uri.parse('https://quiz.example.com/#/old'),
+          '4821',
+        );
+        expect(url.toString(), 'https://quiz.example.com/join?code=4821');
+        expect(
+          HostLobby.shortAddress(Uri.parse('https://quiznight.ng/')),
+          'quiznight.ng',
+        );
+      },
+    );
   });
 
   group('Given a question on the projector', () {
