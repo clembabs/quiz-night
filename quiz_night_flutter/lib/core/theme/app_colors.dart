@@ -71,6 +71,9 @@ abstract final class AppColors {
   /// The website header over scrolling content: the page at 94%.
   static const headerGlass = Color(0xF00F1A15);
 
+  /// Behind the current page's link in the website header: chalk at 8%.
+  static const navActive = Color(0x14F2F0E6);
+
   /// Soft shadow under raised mock-ups on the website.
   static const dropShadow = Color(0x66000000);
 

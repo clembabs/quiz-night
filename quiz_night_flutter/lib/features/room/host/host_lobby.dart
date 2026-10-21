@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
+import '../../../app/app_paths.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/host_stage.dart';
@@ -23,9 +25,12 @@ class HostLobby extends StatelessWidget {
   /// Chips shown before collapsing into "+N more".
   static const maxChips = 24;
 
-  /// The link the QR encodes: this app's address with the code pre-filled.
+  /// The link the QR encodes: the join page with the code pre-filled.
   static Uri joinUrl(Uri appUrl, String code) =>
-      appUrl.removeFragment().replace(queryParameters: {'code': code});
+      appUrl.removeFragment().replace(
+        path: AppPaths.join,
+        queryParameters: {'code': code},
+      );
 
   /// What to tell people to type: host and path, no scheme.
   static String shortAddress(Uri appUrl) {

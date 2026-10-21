@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/app_paths.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -8,34 +9,34 @@ import '../../../widgets/brand/crest.dart';
 import '../landing_cubit.dart';
 import 'landing_parts.dart';
 
-/// The parts of the page the header links to.
-enum LandingAnchor {
-  top('Home'),
-  how('How it works'),
-  teachers('For teachers'),
-  faq('FAQ');
+/// The website's pages, in menu order.
+enum SitePage {
+  home('Home', AppPaths.home),
+  how('How it works', AppPaths.howItWorks),
+  teachers('For teachers', AppPaths.teachers),
+  faq('FAQ', AppPaths.faq);
 
   final String label;
-  const LandingAnchor(this.label);
+  final String path;
+  const SitePage(this.label, this.path);
 }
 
 /// Brand on the left; links and "Join a game" on wide screens, a Menu
 /// button that opens them underneath on narrow ones.
 class LandingHeader extends StatelessWidget {
-  final ValueChanged<LandingAnchor> onNavigate;
+  /// The page being shown, highlighted in the links; null on "not found".
+  final SitePage? current;
+  final ValueChanged<SitePage> onNavigate;
   final VoidCallback onJoin;
 
   const LandingHeader({
     super.key,
+    required this.current,
     required this.onNavigate,
     required this.onJoin,
   });
 
-  static const _links = [
-    LandingAnchor.how,
-    LandingAnchor.teachers,
-    LandingAnchor.faq,
-  ];
+  static const _links = [SitePage.how, SitePage.teachers, SitePage.faq];
 
   @override
   Widget build(BuildContext context) {
@@ -70,23 +71,17 @@ class LandingHeader extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: _Brand(
-                            onTap: () => onNavigate(LandingAnchor.top),
+                            onTap: () => onNavigate(SitePage.home),
                           ),
                         ),
                       ),
                       const Spacer(),
                       if (wide) ...[
                         for (final a in _links)
-                          TextButton(
-                            onPressed: () => onNavigate(a),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.chalkSoft,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                            ),
-                            child: Text(a.label, style: AppWebText.navLink),
+                          _NavLink(
+                            page: a,
+                            active: a == current,
+                            onTap: () => onNavigate(a),
                           ),
                         const SizedBox(width: 8),
                         LandingButton(
@@ -115,21 +110,15 @@ class LandingHeader extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final a in LandingAnchor.values)
-                        TextButton(
-                          onPressed: () {
+                      for (final a in SitePage.values)
+                        _NavLink(
+                          page: a,
+                          active: a == current,
+                          large: true,
+                          onTap: () {
                             cubit.closeMenu();
                             onNavigate(a);
                           },
-                          style: TextButton.styleFrom(
-                            alignment: Alignment.centerLeft,
-                            minimumSize: const Size.fromHeight(48),
-                            foregroundColor: AppColors.chalkSoft,
-                          ),
-                          child: Text(
-                            a.label,
-                            style: AppWebText.navLink.copyWith(fontSize: 17),
-                          ),
                         ),
                       const SizedBox(height: 8),
                       LandingButton(
@@ -148,6 +137,48 @@ class LandingHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A header link; the current page is lit.
+class _NavLink extends StatelessWidget {
+  final SitePage page;
+  final bool active;
+  final bool large;
+  final VoidCallback onTap;
+
+  const _NavLink({
+    required this.page,
+    required this.active,
+    required this.onTap,
+    this.large = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    link: true,
+    selected: active,
+    child: TextButton(
+      key: Key('nav.${page.name}${large ? '.menu' : ''}'),
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        alignment: large ? Alignment.centerLeft : Alignment.center,
+        minimumSize: large ? const Size.fromHeight(48) : const Size(0, 40),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        backgroundColor: active ? AppColors.navActive : Colors.transparent,
+        foregroundColor: active ? AppColors.chalk : AppColors.chalkSoft,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(large ? 10 : 8),
+        ),
+      ),
+      child: Text(
+        page.label,
+        style: AppWebText.navLink.copyWith(
+          fontSize: large ? 17 : 15,
+          color: active ? AppColors.chalk : AppColors.chalkSoft,
+        ),
+      ),
+    ),
+  );
 }
 
 class _Brand extends StatelessWidget {

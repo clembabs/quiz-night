@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
-import '../../app/app_routes.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/app_paths.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
@@ -40,7 +42,10 @@ class HostSetupScreen extends StatelessWidget {
           (b.error != null && a.error != b.error),
       listener: (context, state) {
         if (state.seat != null) {
-          Navigator.of(context).pushReplacement(AppRoutes.room(state.seat!));
+          context.go(
+            AppPaths.roomFor(state.seat!.code),
+            extra: state.seat,
+          );
         } else if (state.error != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -53,7 +58,7 @@ class HostSetupScreen extends StatelessWidget {
           actions: [
             HostTextButton(
               label: 'Back',
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () => context.go(AppPaths.home),
             ),
           ],
           child: Builder(
