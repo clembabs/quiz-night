@@ -78,3 +78,26 @@ abstract final class AppOpacity {
   static const pressed = 0.12;
   static const hover = 0.08;
 }
+
+/// Website layout (landing page).
+abstract final class AppWebLayout {
+  /// Widest the content column gets.
+  static const maxWidth = 1160.0;
+
+  /// From this width the header shows its links; below it, a Menu button.
+  static const wideNav = 900.0;
+
+  static const headerHeight = 68.0;
+
+  /// Side gutter: 16 to 32, like CSS `clamp(16px, 4vw, 32px)`.
+  static double gutter(double width) => (width * 0.04).clamp(16, 32);
+
+  /// Space above the hero: 40 to 96.
+  static double heroTop(double width) => (width * 0.08).clamp(40, 96);
+
+  /// Gap between the hero's two columns: 32 to 64.
+  static double heroGap(double width) => (width * 0.05).clamp(32, 64);
+
+  /// Card corner radius.
+  static const card = 20.0;
+}

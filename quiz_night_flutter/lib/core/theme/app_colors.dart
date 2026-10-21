@@ -68,6 +68,12 @@ abstract final class AppColors {
   static const white = Color(0xFFFFFFFF);
   static const qrBackground = white;
 
+  /// The website header over scrolling content: the page at 94%.
+  static const headerGlass = Color(0xF00F1A15);
+
+  /// Soft shadow under raised mock-ups on the website.
+  static const dropShadow = Color(0x66000000);
+
   /// Scrim behind dialogs and the reconnecting overlay.
   static const scrim = Color(0x8C0B1310);
 
