@@ -98,7 +98,9 @@ void main() {
       );
 
   group('Given a 360x640 phone', () {
-    testWidgets('when on the landing page then nothing overflows', (t) async {
+    testWidgets('when on the join form with a warning then nothing overflows', (
+      t,
+    ) async {
       final home = MockHomeCubit();
       final join = MockJoinCubit();
       when(() => home.state).thenReturn(const HomeState(loading: false));
@@ -120,7 +122,11 @@ void main() {
               BlocProvider<HomeCubit>.value(value: home),
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: const HomeScreen(),
+            child: Scaffold(
+              body: PhoneFrame(
+                child: JoinForm(onHost: () {}, onBack: () {}),
+              ),
+            ),
           ),
         ),
       );

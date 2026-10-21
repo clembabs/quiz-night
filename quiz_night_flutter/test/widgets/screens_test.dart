@@ -44,19 +44,40 @@ void main() {
       seats = MockSeatRepository();
     });
 
-    testWidgets('when there is no saved seat then the landing page is the '
-        'join form', (tester) async {
+    testWidgets('when there is no saved seat then the landing page shows '
+        'with both ways in', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => null);
       await tester.pumpWidget(
         QuizNightApp(lobby: lobby, game: game, seats: seats),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('QUIZ NIGHT'), findsOneWidget);
-      expect(find.text('Survive the round, or go home.'), findsOneWidget);
-      expect(find.byKey(const Key('join.code')), findsOneWidget);
-      expect(find.text('JOIN GAME'), findsOneWidget);
-      expect(find.byKey(const Key('home.host')), findsOneWidget);
+      expect(find.text('SURVIVE THE ROUND. WIN THE NIGHT.'), findsOneWidget);
+      expect(find.byKey(const Key('landing.code')), findsOneWidget);
+      expect(find.byKey(const Key('landing.host')), findsOneWidget);
+      expect(find.byKey(const Key('join.code')), findsNothing);
+    });
+
+    testWidgets('when a code is typed on the landing page then Join game '
+        'opens the join form with it, and Back returns', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(lobby: lobby, game: game, seats: seats),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('landing.code')), '4821');
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('landing.join')));
+      await tester.tap(find.byKey(const Key('landing.join')));
+      await tester.pumpAndSettle();
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+
+      await tester.tap(find.byKey(const Key('join.back')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('join.code')), findsNothing);
+      expect(find.byKey(const Key('landing.code')), findsOneWidget);
     });
 
     testWidgets('when opened from a QR link then the code is pre-filled', (
@@ -89,7 +110,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('home.host')));
+      await tester.ensureVisible(find.byKey(const Key('landing.host')));
+      await tester.tap(find.byKey(const Key('landing.host')));
       await tester.pumpAndSettle();
       expect(find.text('NEW GAME'), findsOneWidget);
     });
@@ -144,7 +166,7 @@ void main() {
               BlocProvider<HomeCubit>.value(value: home),
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: const HomeScreen(),
+            child: Scaffold(body: JoinForm(onHost: () {})),
           ),
         ),
       );
@@ -221,46 +243,53 @@ void main() {
   });
 
   group('Given a player comes back from a game', () {
-    testWidgets('when they leave the room then the join form is empty again', (
-      tester,
-    ) async {
-      final lobby = MockLobbyRepository();
-      final game = MockGameRepository();
-      final seats = MockSeatRepository();
-      when(() => seats.load()).thenAnswer((_) async => null);
-      when(() => seats.save(any())).thenAnswer((_) async {});
-      when(() => seats.clear()).thenAnswer((_) async {});
-      when(
-        () => lobby.joinRoom('4821', 'Opera'),
-      ).thenAnswer((_) async => playerSeat);
-      final live = StreamController<RoomState>()
-        ..add(roomState(players: [player(1, 'Opera')]));
-      addTearDown(live.close);
-      when(() => game.watchRoom(any())).thenAnswer((_) => live.stream);
+    testWidgets(
+      'when they leave the room then the landing page is back with an empty code',
+      (
+        tester,
+      ) async {
+        final lobby = MockLobbyRepository();
+        final game = MockGameRepository();
+        final seats = MockSeatRepository();
+        when(() => seats.load()).thenAnswer((_) async => null);
+        when(() => seats.save(any())).thenAnswer((_) async {});
+        when(() => seats.clear()).thenAnswer((_) async {});
+        when(
+          () => lobby.joinRoom('4821', 'Opera'),
+        ).thenAnswer((_) async => playerSeat);
+        final live = StreamController<RoomState>()
+          ..add(roomState(players: [player(1, 'Opera')]));
+        addTearDown(live.close);
+        when(() => game.watchRoom(any())).thenAnswer((_) => live.stream);
 
-      await tester.pumpWidget(
-        QuizNightApp(lobby: lobby, game: game, seats: seats),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('join.code')), '4821');
-      await tester.enterText(find.byKey(const Key('join.nickname')), 'Opera');
-      await tester.tap(find.byKey(const Key('join.submit')));
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text("YOU'RE IN!"), findsOneWidget);
+        await tester.pumpWidget(
+          QuizNightApp(lobby: lobby, game: game, seats: seats),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('landing.code')), '4821');
+        await tester.pump();
+        await tester.ensureVisible(find.byKey(const Key('landing.join')));
+        await tester.tap(find.byKey(const Key('landing.join')));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('join.nickname')), 'Opera');
+        await tester.tap(find.byKey(const Key('join.submit')));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.text("YOU'RE IN!"), findsOneWidget);
 
-      await tester.tap(find.text('Leave'));
-      await tester.pump(const Duration(seconds: 1));
-      await tester.tap(find.widgetWithText(FilledButton, 'Leave'));
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
+        await tester.tap(find.text('Leave'));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.tap(find.widgetWithText(FilledButton, 'Leave'));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump(const Duration(seconds: 1));
 
-      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
-      final name = tester.widget<TextField>(
-        find.byKey(const Key('join.nickname')),
-      );
-      expect(code.controller!.text, isEmpty);
-      expect(name.controller!.text, isEmpty);
-    });
+        // Back on the landing page, with the old code gone.
+        final code = tester.widget<TextField>(
+          find.byKey(const Key('landing.code')),
+        );
+        expect(code.controller!.text, isEmpty);
+        expect(find.byKey(const Key('join.nickname')), findsNothing);
+      },
+    );
   });
 }
