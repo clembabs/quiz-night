@@ -9,6 +9,7 @@ import '../data/seat_repository.dart';
 import '../features/home/home_cubit.dart';
 import '../features/home/home_screen.dart';
 import '../features/join/join_cubit.dart';
+import '../features/landing/landing_cubit.dart';
 
 /// App root. Takes its repositories from outside, so tests can pass fakes.
 class QuizNightApp extends StatelessWidget {
@@ -56,6 +57,7 @@ class QuizNightApp extends StatelessWidget {
                   HomeCubit(lobby, seats, initialCode: initialCode)..restore(),
             ),
             BlocProvider(create: (_) => JoinCubit(lobby, seats)),
+            BlocProvider(create: (_) => LandingCubit()),
           ],
           child: const HomeScreen(),
         ),

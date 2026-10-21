@@ -10,10 +10,13 @@ import '../../widgets/brand/crest.dart';
 import '../../widgets/qn/notices.dart';
 import '../../widgets/qn/phone_frame.dart';
 import '../join/join_cubit.dart';
+import '../landing/landing_cubit.dart';
+import '../landing/landing_screen.dart';
 import 'home_cubit.dart';
 
-/// The landing page is the join form (prototype "Join"): crest lockup, room
-/// code, nickname, JOIN GAME. Hosts on a laptop use the link underneath.
+/// The front door. Visitors get the landing page (what the game is, join or
+/// host); a scanned QR goes straight to the join form with its code. Also
+/// owns the hops into a room: a resumed seat, or a successful join.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,24 +24,45 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-/// Stateful only to start a fresh form each time you come back from a room.
+/// Stateful only to swap the QR's join form for the landing page.
 class _HomeScreenState extends State<HomeScreen> {
-  /// Bumped on return from a room; a new key gives the form empty fields.
+  /// Bumped on return from a room or on Back; once above zero the landing
+  /// page shows instead of the QR's join form.
   int _formGeneration = 0;
 
   Future<void> _open(Route<void> route) async {
     final home = context.read<HomeCubit>();
     final join = context.read<JoinCubit>();
+    final landing = context.read<LandingCubit>();
     await Navigator.of(context).push(route);
     await home.refresh();
     if (!mounted) return;
     // Old code, nickname and errors belong to the game you just left.
     join.reset();
+    landing.clearCode();
     setState(() => _formGeneration++);
+  }
+
+  void _openHost() => _open(AppRoutes.hostSetup());
+
+  /// The join form on its own page, so Back returns to the landing page.
+  void _openJoin(String? code) {
+    final join = context.read<JoinCubit>()..reset();
+    Navigator.of(context).push(
+      AppRoutes.join(
+        join,
+        code: code,
+        onHost: () {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+          _openHost();
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final initialCode = context.read<HomeCubit>().initialCode;
     return MultiBlocListener(
       listeners: [
         BlocListener<HomeCubit, HomeState>(
@@ -54,21 +78,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         BlocListener<JoinCubit, JoinState>(
           listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
-          listener: (context, state) => _open(AppRoutes.room(state.seat!)),
+          listener: (context, state) {
+            // Close the join page first, so leaving the room lands home.
+            Navigator.of(context).popUntil((r) => r.isFirst);
+            _open(AppRoutes.room(state.seat!));
+          },
         ),
       ],
-      child: Scaffold(
-        body: PhoneFrame(
-          child: JoinForm(
-            key: ValueKey(_formGeneration),
-            // The QR's code is for the first visit only.
-            initialCode: _formGeneration == 0
-                ? context.read<HomeCubit>().initialCode
-                : null,
-            onHost: () => _open(AppRoutes.hostSetup()),
-          ),
-        ),
-      ),
+      child: _formGeneration == 0 && initialCode != null
+          ? Scaffold(
+              body: PhoneFrame(
+                child: JoinForm(
+                  initialCode: initialCode,
+                  onHost: _openHost,
+                  onBack: () => setState(() => _formGeneration++),
+                ),
+              ),
+            )
+          : LandingScreen(onJoin: _openJoin, onHost: _openHost),
     );
   }
 }
@@ -78,7 +105,15 @@ class JoinForm extends StatefulWidget {
   final String? initialCode;
   final VoidCallback onHost;
 
-  const JoinForm({super.key, this.initialCode, required this.onHost});
+  /// Shows a Back link to the landing page.
+  final VoidCallback? onBack;
+
+  const JoinForm({
+    super.key,
+    this.initialCode,
+    required this.onHost,
+    this.onBack,
+  });
 
   @override
   State<JoinForm> createState() => _JoinFormState();
@@ -116,6 +151,20 @@ class _JoinFormState extends State<JoinForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (widget.onBack != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: const Key('join.back'),
+                          onPressed: widget.onBack,
+                          child: Text(
+                            '← About Quiz Night',
+                            style: AppTextStyles.buttonSecondary.copyWith(
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ),
                     const Padding(
                       padding: EdgeInsets.only(top: 32),
                       child: Center(
