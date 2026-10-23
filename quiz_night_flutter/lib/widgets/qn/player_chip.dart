@@ -13,6 +13,9 @@ class PlayerChip extends StatelessWidget {
   final bool isFinalist;
   final bool isEliminated;
 
+  /// Shows a remove button (host lobby) that calls this.
+  final VoidCallback? onRemove;
+
   /// Chip height: 40 on phones, 52 for "you" on the waiting screen, 80 on
   /// the projector lobby.
   final double height;
@@ -23,6 +26,7 @@ class PlayerChip extends StatelessWidget {
     this.isYou = false,
     this.isFinalist = false,
     this.isEliminated = false,
+    this.onRemove,
     this.height = 40,
   });
 
@@ -67,6 +71,29 @@ class PlayerChip extends StatelessWidget {
                 ),
               ),
             ),
+            if (onRemove != null) ...[
+              SizedBox(width: height * 0.12),
+              Semantics(
+                button: true,
+                label: 'Remove $nickname',
+                excludeSemantics: true,
+                child: InkResponse(
+                  key: Key('chip.remove.$nickname'),
+                  onTap: onRemove,
+                  radius: height * 0.4,
+                  child: Padding(
+                    padding: EdgeInsets.all(height * 0.08),
+                    child: Text(
+                      '✕',
+                      style: AppTextStyles.chip.copyWith(
+                        fontSize: height * 0.34,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

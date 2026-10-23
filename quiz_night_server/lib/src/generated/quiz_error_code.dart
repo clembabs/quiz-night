@@ -21,7 +21,10 @@ enum QuizErrorCode implements _is.SerializableModel {
   invalidInput,
   tooLate,
   alreadyAnswered,
-  notAllowed;
+  notAllowed,
+  rateLimited,
+  roomFull,
+  roomLocked;
 
   static QuizErrorCode fromJson(String name) {
     switch (name) {
@@ -43,6 +46,12 @@ enum QuizErrorCode implements _is.SerializableModel {
         return QuizErrorCode.alreadyAnswered;
       case 'notAllowed':
         return QuizErrorCode.notAllowed;
+      case 'rateLimited':
+        return QuizErrorCode.rateLimited;
+      case 'roomFull':
+        return QuizErrorCode.roomFull;
+      case 'roomLocked':
+        return QuizErrorCode.roomLocked;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "QuizErrorCode"',

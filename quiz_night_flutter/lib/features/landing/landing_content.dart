@@ -212,6 +212,11 @@ abstract final class LandingContent {
             'and their answers and scores for the game they play. No names, '
             'emails or phone numbers.',
       ),
+      Faq(
+        'How long do you keep it?',
+        'One day. Every room, with its nicknames, answers and scores, is '
+            'deleted automatically 24 hours after it was created.',
+      ),
     ]),
   ];
 

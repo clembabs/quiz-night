@@ -34,6 +34,7 @@ import 'quiz_error_code.dart' as _ig7vrbjo;
 import 'quiz_exception.dart' as _izdirdeu;
 import 'room.dart' as _ieflxecy;
 import 'room_config.dart' as _iwzadpd6;
+import 'room_end_reason.dart' as _i1z47hfo;
 import 'room_state.dart' as _i1uzd9w7;
 import 'room_status.dart' as _ilj1at52;
 import 'tiebreak_mode.dart' as _ixk2jfuv;
@@ -54,6 +55,7 @@ export 'quiz_error_code.dart';
 export 'quiz_exception.dart';
 export 'room.dart';
 export 'room_config.dart';
+export 'room_end_reason.dart';
 export 'room_state.dart';
 export 'room_status.dart';
 export 'tiebreak_mode.dart';
@@ -618,6 +620,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'false',
         ),
         _isp.ColumnDefinition(
+          name: 'locked',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
           name: 'startingPlayerCount',
           columnType: _isp.ColumnType.bigint,
           isNullable: true,
@@ -667,6 +676,25 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'DateTime',
           columnDefault: 'now',
+        ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastActivityAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
+        _isp.ColumnDefinition(
+          name: 'endReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:RoomEndReason?',
         ),
       ],
       foreignKeys: [],
@@ -770,6 +798,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iwzadpd6.RoomConfig) {
       return _iwzadpd6.RoomConfig.fromJson(data) as T;
     }
+    if (t == _i1z47hfo.RoomEndReason) {
+      return _i1z47hfo.RoomEndReason.fromJson(data) as T;
+    }
     if (t == _i1uzd9w7.RoomState) {
       return _i1uzd9w7.RoomState.fromJson(data) as T;
     }
@@ -835,6 +866,10 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iwzadpd6.RoomConfig?>()) {
       return (data != null ? _iwzadpd6.RoomConfig.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_i1z47hfo.RoomEndReason?>()) {
+      return (data != null ? _i1z47hfo.RoomEndReason.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_i1uzd9w7.RoomState?>()) {
       return (data != null ? _i1uzd9w7.RoomState.fromJson(data) : null) as T;
     }
@@ -893,6 +928,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _izdirdeu.QuizException => 'QuizException',
       _ieflxecy.Room => 'Room',
       _iwzadpd6.RoomConfig => 'RoomConfig',
+      _i1z47hfo.RoomEndReason => 'RoomEndReason',
       _i1uzd9w7.RoomState => 'RoomState',
       _ilj1at52.RoomStatus => 'RoomStatus',
       _ixk2jfuv.TiebreakMode => 'TiebreakMode',
@@ -944,6 +980,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'Room';
       case _iwzadpd6.RoomConfig():
         return 'RoomConfig';
+      case _i1z47hfo.RoomEndReason():
+        return 'RoomEndReason';
       case _i1uzd9w7.RoomState():
         return 'RoomState';
       case _ilj1at52.RoomStatus():
@@ -1026,6 +1064,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'RoomConfig') {
       return deserialize<_iwzadpd6.RoomConfig>(data['data']);
+    }
+    if (dataClassName == 'RoomEndReason') {
+      return deserialize<_i1z47hfo.RoomEndReason>(data['data']);
     }
     if (dataClassName == 'RoomState') {
       return deserialize<_i1uzd9w7.RoomState>(data['data']);

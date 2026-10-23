@@ -19,6 +19,7 @@ import 'package:quiz_night_flutter/features/room/host/host_reveal.dart';
 import 'package:quiz_night_flutter/features/room/host/host_standings.dart';
 import 'package:quiz_night_flutter/features/room/room_cubit.dart';
 import 'package:quiz_night_flutter/widgets/qn/host_stage.dart';
+import 'package:quiz_night_flutter/widgets/qn/session_clock.dart';
 
 import '../fakes/fakes.dart';
 import 'harness.dart';
@@ -52,6 +53,10 @@ void main() {
   final screens = <String, Widget Function()>{
     'lobby': () => HostLobby(
       room: roomState(code: '4821', players: crowd(9)),
+      appUrl: Uri.parse('https://quiz-night.serverpod.space/'),
+    ),
+    'lobby-locked': () => HostLobby(
+      room: roomState(code: '4821', players: crowd(20)).copyWith(locked: true),
       appUrl: Uri.parse('https://quiz-night.serverpod.space/'),
     ),
     'question': () => HostQuestion(
@@ -104,6 +109,13 @@ void main() {
       ),
       clockOffset: Duration.zero,
     ),
+    'podium-time-up': () => HostPodium(
+      room: roomState(
+        status: RoomStatus.finished,
+        round: 2,
+        players: crowd(8),
+      ).copyWith(endReason: RoomEndReason.timeUp),
+    ),
     'podium': () => HostPodium(
       room: roomState(
         status: RoomStatus.finished,
@@ -138,6 +150,14 @@ void main() {
                 topLabel: 'Round 1 · Question 3',
                 code: '4821',
                 actions: [HostTextButton(label: 'Leave', onPressed: () {})],
+                // The game clock is in the header from Start onwards.
+                clock: SessionClock(
+                  endsAt: DateTime.now().toUtc().add(
+                    const Duration(minutes: 24),
+                  ),
+                  clockOffset: Duration.zero,
+                  large: true,
+                ),
                 child: build(),
               ),
             ),

@@ -9,6 +9,12 @@ on:
     branches: [develop]
   workflow_call:
 
+# The workflow token can only read the repository. Actions are pinned to
+# exact commits (the comment names the version), so a moved tag can't change
+# what runs here; Dependabot proposes updates.
+permissions:
+  contents: read
+
 # A new push to the same PR or branch cancels the run it replaces.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -26,9 +32,9 @@ jobs:
       SERVERPOD_PASSWORD_database: ${{ secrets.SERVERPOD_TEST_DB_PASSWORD || 'ci-only-test-db-password' }}
       SERVERPOD_PASSWORD_redis: ${{ secrets.SERVERPOD_TEST_REDIS_PASSWORD || 'ci-only-test-redis-password' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
@@ -37,7 +43,7 @@ jobs:
       # embedded PostgreSQL that Serverpod starts itself. No Docker needed.
       # The binaries change with the Serverpod version, so it is in the key.
       - name: Cache embedded PostgreSQL binaries
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/serverpod/pg-binaries
           key: serverpod-pg-binaries-${{ runner.os }}-${{ env.SERVERPOD_VERSION }}
@@ -78,9 +84,9 @@ jobs:
     name: app
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
@@ -105,9 +111,9 @@ jobs:
     name: web
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true

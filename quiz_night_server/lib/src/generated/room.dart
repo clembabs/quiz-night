@@ -14,6 +14,7 @@ import 'package:quiz_night_server/src/generated/protocol.dart' as _izn0xfae;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'elimination_event.dart' as _i044r49r;
 import 'elimination_rule.dart' as _ix1rmfwn;
+import 'room_end_reason.dart' as _i1z47hfo;
 import 'room_status.dart' as _ilj1at52;
 import 'tiebreak_mode.dart' as _ixk2jfuv;
 
@@ -36,6 +37,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required this.timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     this.startingPlayerCount,
     this.questionStartedAt,
     this.questionEndsAt,
@@ -44,14 +46,19 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     this.buzzerHolderId,
     this.lastElimination,
     DateTime? createdAt,
+    this.startedAt,
+    DateTime? lastActivityAt,
+    this.endReason,
   }) : status = status ?? _ilj1at52.RoomStatus.lobby,
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
        showQuestionOnPhones = showQuestionOnPhones ?? true,
        wildcardUsed = wildcardUsed ?? false,
+       locked = locked ?? false,
        lastCutRound = lastCutRound ?? 0,
        finalQuestionsPlayed = finalQuestionsPlayed ?? 0,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       lastActivityAt = lastActivityAt ?? DateTime.now();
 
   factory Room({
     int? id,
@@ -71,6 +78,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -79,6 +87,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   }) = _RoomImpl;
 
   factory Room.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -115,6 +126,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       wildcardUsed: jsonSerialization['wildcardUsed'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['wildcardUsed']),
+      locked: jsonSerialization['locked'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['locked']),
       startingPlayerCount: jsonSerialization['startingPlayerCount'] as int?,
       questionStartedAt: jsonSerialization['questionStartedAt'] == null
           ? null
@@ -137,6 +151,19 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      startedAt: jsonSerialization['startedAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(jsonSerialization['startedAt']),
+      lastActivityAt: jsonSerialization['lastActivityAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastActivityAt'],
+            ),
+      endReason: jsonSerialization['endReason'] == null
+          ? null
+          : _i1z47hfo.RoomEndReason.fromJson(
+              (jsonSerialization['endReason'] as String),
+            ),
     );
   }
 
@@ -180,6 +207,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
 
   bool wildcardUsed;
 
+  /// Host has closed the room to new players.
+  bool locked;
+
   int? startingPlayerCount;
 
   DateTime? questionStartedAt;
@@ -196,6 +226,16 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
   _i044r49r.EliminationEvent? lastElimination;
 
   DateTime createdAt;
+
+  /// When the host started the game; the 30-minute game clock runs from here.
+  DateTime? startedAt;
+
+  /// Last change in the room (a join, an answer, a host action). Rooms idle
+  /// for 30 minutes are closed.
+  DateTime lastActivityAt;
+
+  /// Set when the game ends.
+  _i1z47hfo.RoomEndReason? endReason;
 
   @override
   _is.Table<int?> get table => t;
@@ -221,6 +261,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -229,6 +270,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -251,6 +295,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
       if (questionStartedAt != null)
@@ -261,6 +306,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (lastElimination != null) 'lastElimination': lastElimination?.toJson(),
       'createdAt': createdAt.toJson(),
+      if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      'lastActivityAt': lastActivityAt.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
     };
   }
 
@@ -284,6 +332,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
       if (questionStartedAt != null)
@@ -295,6 +344,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       if (lastElimination != null)
         'lastElimination': lastElimination?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
+      if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      'lastActivityAt': lastActivityAt.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
     };
   }
 
@@ -347,6 +399,7 @@ class _RoomImpl extends Room {
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -355,6 +408,9 @@ class _RoomImpl extends Room {
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   }) : super._(
          id: id,
          code: code,
@@ -373,6 +429,7 @@ class _RoomImpl extends Room {
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
          wildcardUsed: wildcardUsed,
+         locked: locked,
          startingPlayerCount: startingPlayerCount,
          questionStartedAt: questionStartedAt,
          questionEndsAt: questionEndsAt,
@@ -381,6 +438,9 @@ class _RoomImpl extends Room {
          buzzerHolderId: buzzerHolderId,
          lastElimination: lastElimination,
          createdAt: createdAt,
+         startedAt: startedAt,
+         lastActivityAt: lastActivityAt,
+         endReason: endReason,
        );
 
   /// Returns a shallow copy of this [Room]
@@ -405,6 +465,7 @@ class _RoomImpl extends Room {
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     Object? startingPlayerCount = _Undefined,
     Object? questionStartedAt = _Undefined,
     Object? questionEndsAt = _Undefined,
@@ -413,6 +474,9 @@ class _RoomImpl extends Room {
     Object? buzzerHolderId = _Undefined,
     Object? lastElimination = _Undefined,
     DateTime? createdAt,
+    Object? startedAt = _Undefined,
+    DateTime? lastActivityAt,
+    Object? endReason = _Undefined,
   }) {
     return Room(
       id: id is int? ? id : this.id,
@@ -434,6 +498,7 @@ class _RoomImpl extends Room {
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
+      locked: locked ?? this.locked,
       startingPlayerCount: startingPlayerCount is int?
           ? startingPlayerCount
           : this.startingPlayerCount,
@@ -452,6 +517,11 @@ class _RoomImpl extends Room {
           ? lastElimination
           : this.lastElimination?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
+      startedAt: startedAt is DateTime? ? startedAt : this.startedAt,
+      lastActivityAt: lastActivityAt ?? this.lastActivityAt,
+      endReason: endReason is _i1z47hfo.RoomEndReason?
+          ? endReason
+          : this.endReason,
     );
   }
 }
@@ -546,6 +616,11 @@ class RoomUpdateTable extends _is.UpdateTable<RoomTable> {
     value,
   );
 
+  _is.ColumnValue<bool, bool> locked(bool value) => _is.ColumnValue(
+    table.locked,
+    value,
+  );
+
   _is.ColumnValue<int, int> startingPlayerCount(int? value) => _is.ColumnValue(
     table.startingPlayerCount,
     value,
@@ -589,6 +664,25 @@ class RoomUpdateTable extends _is.UpdateTable<RoomTable> {
         table.createdAt,
         value,
       );
+
+  _is.ColumnValue<DateTime, DateTime> startedAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.startedAt,
+        value,
+      );
+
+  _is.ColumnValue<DateTime, DateTime> lastActivityAt(DateTime value) =>
+      _is.ColumnValue(
+        table.lastActivityAt,
+        value,
+      );
+
+  _is.ColumnValue<_i1z47hfo.RoomEndReason, _i1z47hfo.RoomEndReason> endReason(
+    _i1z47hfo.RoomEndReason? value,
+  ) => _is.ColumnValue(
+    table.endReason,
+    value,
+  );
 }
 
 class RoomTable extends _is.Table<int?> {
@@ -666,6 +760,11 @@ class RoomTable extends _is.Table<int?> {
       this,
       hasDefault: true,
     );
+    locked = _is.ColumnBool(
+      'locked',
+      this,
+      hasDefault: true,
+    );
     startingPlayerCount = _is.ColumnInt(
       'startingPlayerCount',
       this,
@@ -700,6 +799,20 @@ class RoomTable extends _is.Table<int?> {
       'createdAt',
       this,
       hasDefault: true,
+    );
+    startedAt = _is.ColumnDateTime(
+      'startedAt',
+      this,
+    );
+    lastActivityAt = _is.ColumnDateTime(
+      'lastActivityAt',
+      this,
+      hasDefault: true,
+    );
+    endReason = _is.ColumnEnum(
+      'endReason',
+      this,
+      _is.EnumSerialization.byName,
     );
   }
 
@@ -738,6 +851,9 @@ class RoomTable extends _is.Table<int?> {
 
   late final _is.ColumnBool wildcardUsed;
 
+  /// Host has closed the room to new players.
+  late final _is.ColumnBool locked;
+
   late final _is.ColumnInt startingPlayerCount;
 
   late final _is.ColumnDateTime questionStartedAt;
@@ -754,6 +870,16 @@ class RoomTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<_i044r49r.EliminationEvent> lastElimination;
 
   late final _is.ColumnDateTime createdAt;
+
+  /// When the host started the game; the 30-minute game clock runs from here.
+  late final _is.ColumnDateTime startedAt;
+
+  /// Last change in the room (a join, an answer, a host action). Rooms idle
+  /// for 30 minutes are closed.
+  late final _is.ColumnDateTime lastActivityAt;
+
+  /// Set when the game ends.
+  late final _is.ColumnEnum<_i1z47hfo.RoomEndReason> endReason;
 
   @override
   List<_is.Column> get columns => [
@@ -774,6 +900,7 @@ class RoomTable extends _is.Table<int?> {
     timeLimitSeconds,
     showQuestionOnPhones,
     wildcardUsed,
+    locked,
     startingPlayerCount,
     questionStartedAt,
     questionEndsAt,
@@ -782,6 +909,9 @@ class RoomTable extends _is.Table<int?> {
     buzzerHolderId,
     lastElimination,
     createdAt,
+    startedAt,
+    lastActivityAt,
+    endReason,
   ];
 }
 

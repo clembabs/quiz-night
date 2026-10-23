@@ -163,8 +163,39 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.me!.nickname, 'Ada');
+      expect(cubit.state.removedByHost, isFalse);
       await cubit.close();
     });
+
+    test('when a snapshot no longer includes them then they were removed by '
+        'the host', () async {
+      final cubit = RoomCubit(game, seats, playerSeat)..start();
+      streams.last.add(roomState(players: [player(1, 'Ada'), player(2, 'Bo')]));
+      await pumpEventQueue();
+      streams.last.add(roomState(players: [player(2, 'Bo')]));
+      await pumpEventQueue();
+
+      expect(cubit.state.removedByHost, isTrue);
+      await cubit.close();
+    });
+  });
+
+  group('Given the host removes a player', () {
+    test(
+      'when it succeeds then the repository is asked with the host seat',
+      () async {
+        when(() => game.removePlayer(hostSeat, 2)).thenAnswer((_) async {});
+        final cubit = build()..start();
+        await cubit.removePlayer(2);
+        verify(() => game.removePlayer(hostSeat, 2)).called(1);
+        expect(
+          cubit.state.removedByHost,
+          isFalse,
+          reason: 'hosts are never removed',
+        );
+        await cubit.close();
+      },
+    );
   });
 
   group('Given round host actions', () {

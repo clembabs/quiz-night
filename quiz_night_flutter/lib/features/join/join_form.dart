@@ -47,7 +47,11 @@ class _JoinFormState extends State<JoinForm> {
     return BlocBuilder<JoinCubit, JoinState>(
       builder: (context, state) {
         final notFound = state.errorKind == JoinError.roomNotFound;
-        final started = state.errorKind == JoinError.gameStarted;
+        // Problems with the room itself go in a banner, not under a field.
+        final started =
+            state.errorKind == JoinError.gameStarted ||
+            state.errorKind == JoinError.roomFull ||
+            state.errorKind == JoinError.roomLocked;
         final fieldError = !notFound && !started ? state.error : null;
         return LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(

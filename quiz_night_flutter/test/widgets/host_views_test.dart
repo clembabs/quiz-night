@@ -121,6 +121,50 @@ void main() {
       expect(find.text('START GAME'), findsOneWidget);
     });
 
+    testWidgets('when the host removes a player then it asks first, then '
+        'removes them', (t) async {
+      when(() => cubit.removePlayer(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.pump(const Duration(seconds: 1));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      expect(find.text('REMOVE P2?'), findsOneWidget);
+      await t.tap(find.text('Keep'));
+      await t.pumpAndSettle();
+      verifyNever(() => cubit.removePlayer(any()));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('remove.confirm')));
+      await t.pumpAndSettle();
+      verify(() => cubit.removePlayer(2)).called(1);
+    });
+
+    testWidgets('when the host locks the room then it asks the server, and a '
+        'locked room offers to unlock', (t) async {
+      when(() => cubit.setLocked(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(true)).called(1);
+
+      final locked = lobby(3).copyWith(locked: true);
+      await pump(
+        t,
+        HostLobby(room: locked, appUrl: Uri.parse('https://q.ng/')),
+      );
+      expect(find.text('Unlock room'), findsOneWidget);
+      expect(find.text('No new players can join'), findsOneWidget);
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(false)).called(1);
+    });
+
     testWidgets('when players are in then they show and Start starts', (
       t,
     ) async {
@@ -393,6 +437,30 @@ void main() {
       }
       expect(find.text('Everyone made the final'), findsOneWidget);
       expect(find.text('0 of 0'), findsNothing);
+    });
+  });
+
+  group('Given a game that ran out of time', () {
+    testWidgets('when the podium shows then it says why and ranks by score '
+        'so far', (t) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        round: 2,
+        players: [
+          player(1, 'Ada', score: 1000),
+          player(2, 'Bo', score: 3000),
+          player(3, 'Cy', score: 2000),
+        ],
+      ).copyWith(endReason: RoomEndReason.timeUp);
+      await pump(t, HostPodium(room: room));
+      for (var i = 0; i < 4; i++) {
+        await t.pump(const Duration(seconds: 1));
+      }
+      expect(find.byKey(const Key('podium.notice')), findsOneWidget);
+      expect(find.textContaining("Time's up"), findsOneWidget);
+      expect(find.text('Bo'), findsOneWidget);
+      expect(find.text('No final this time'), findsOneWidget);
+      expect(find.text('Everyone made the final'), findsNothing);
     });
   });
 }
