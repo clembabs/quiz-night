@@ -42,10 +42,7 @@ class HostSetupScreen extends StatelessWidget {
           (b.error != null && a.error != b.error),
       listener: (context, state) {
         if (state.seat != null) {
-          context.go(
-            AppPaths.roomFor(state.seat!.code),
-            extra: state.seat,
-          );
+          context.go(AppPaths.roomFor(state.seat!.code));
         } else if (state.error != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()

@@ -18,16 +18,16 @@ class JoinScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
+    // A new code is a new form: no error carried over from the last one.
+    key: ValueKey(code),
     create: (context) => JoinCubit(
       context.read<LobbyRepository>(),
       context.read<SeatRepository>(),
     ),
     child: BlocListener<JoinCubit, JoinState>(
       listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
-      listener: (context, state) => context.go(
-        AppPaths.roomFor(state.seat!.code),
-        extra: state.seat,
-      ),
+      listener: (context, state) =>
+          context.go(AppPaths.roomFor(state.seat!.code)),
       child: Scaffold(
         body: PhoneFrame(
           child: JoinForm(

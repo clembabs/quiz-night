@@ -27,21 +27,15 @@ class RoomGateState extends Equatable {
   List<Object?> get props => [status, seat];
 }
 
-/// Finds this device's seat for the room in the URL: the one handed over by
-/// the join or host screen, or the saved one after a refresh.
+/// Finds this device's saved seat for the room in the URL. Join and host
+/// save the seat before opening the room, so this also covers a refresh.
 class RoomGateCubit extends Cubit<RoomGateState> {
   final SeatRepository _seats;
   final String code;
 
-  RoomGateCubit(this._seats, this.code, {Seat? known})
-    : super(
-        known != null && known.code == code
-            ? RoomGateState.ready(known)
-            : const RoomGateState.loading(),
-      );
+  RoomGateCubit(this._seats, this.code) : super(const RoomGateState.loading());
 
   Future<void> load() async {
-    if (state.status == RoomGateStatus.ready) return;
     final saved = await _seats.load();
     emit(
       saved != null && saved.code == code
@@ -55,15 +49,13 @@ class RoomGateCubit extends Cubit<RoomGateState> {
 /// visitor without one to the join form for that code.
 class RoomGate extends StatelessWidget {
   final String code;
-  final Seat? seat;
 
-  const RoomGate({super.key, required this.code, this.seat});
+  const RoomGate({super.key, required this.code});
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
-        RoomGateCubit(context.read<SeatRepository>(), code, known: seat)
-          ..load(),
+        RoomGateCubit(context.read<SeatRepository>(), code)..load(),
     child: BlocConsumer<RoomGateCubit, RoomGateState>(
       listenWhen: (a, b) => b.status == RoomGateStatus.noSeat,
       listener: (context, _) => context.go(AppPaths.joinWith(code)),
