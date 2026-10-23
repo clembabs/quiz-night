@@ -1,0 +1,110 @@
+import 'package:quiz_night_server/src/generated/protocol.dart';
+import 'package:quiz_night_server/src/security/guard.dart';
+import 'package:test/test.dart';
+
+import 'test_tools/serverpod_test_tools.dart';
+
+Matcher throwsQuiz(QuizErrorCode code) =>
+    throwsA(isA<QuizException>().having((e) => e.code, 'code', code));
+
+void main() {
+  setUp(() {
+    Guard.reset();
+    Guard.enabled = true;
+  });
+  tearDown(() {
+    Guard.enabled = false;
+    Guard.reset();
+  });
+
+  withServerpod('Given rate limits are on', (sb, endpoints) {
+    test('when an address creates too many rooms then it is refused', () async {
+      for (var i = 0; i < Limits.createRoom.max; i++) {
+        await endpoints.room.createRoom(sb, RoomConfig());
+      }
+      await expectLater(
+        endpoints.room.createRoom(sb, RoomConfig()),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+    });
+
+    test('when an address keeps guessing room codes then it is stopped, '
+        'even for a real code', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      for (var i = 0; i < Limits.wrongCode.max; i++) {
+        await expectLater(
+          endpoints.room.joinRoom(sb, '0000$i', 'Guesser'),
+          throwsQuiz(QuizErrorCode.roomNotFound),
+        );
+      }
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'Guesser'),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+    });
+
+    test('when an address mistypes a code a few times then it can still '
+        'join', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      for (var i = 0; i < 3; i++) {
+        await expectLater(
+          endpoints.room.joinRoom(sb, '0000$i', 'Ada'),
+          throwsQuiz(QuizErrorCode.roomNotFound),
+        );
+      }
+      final joined = await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
+      expect(joined.roomCode, room.roomCode);
+    });
+
+    test('when a host token sends too many controls then it is refused, '
+        'without slowing other hosts', () async {
+      final a = await endpoints.room.createRoom(sb, RoomConfig());
+      final b = await endpoints.room.createRoom(sb, RoomConfig());
+      for (var i = 0; i < Limits.hostAction.max; i++) {
+        // Fails on game rules (nobody joined), but still counts.
+        try {
+          await endpoints.room.startGame(sb, a.roomCode, a.hostToken);
+        } on QuizException catch (e) {
+          expect(e.code, isNot(QuizErrorCode.rateLimited));
+        }
+      }
+      await expectLater(
+        endpoints.room.startGame(sb, a.roomCode, a.hostToken),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+      await expectLater(
+        endpoints.room.startGame(sb, b.roomCode, b.hostToken),
+        throwsA(
+          isA<QuizException>().having(
+            (e) => e.code,
+            'code',
+            isNot(QuizErrorCode.rateLimited),
+          ),
+        ),
+      );
+    });
+
+    test('when a player floods answers then the token is refused', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      final player = await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
+      for (var i = 0; i < Limits.playerAction.max; i++) {
+        try {
+          await endpoints.answer.submitAnswer(sb, player.playerToken, 1, 0);
+        } on QuizException catch (e) {
+          expect(e.code, isNot(QuizErrorCode.rateLimited));
+        }
+      }
+      await expectLater(
+        endpoints.answer.submitAnswer(sb, player.playerToken, 1, 0),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+    });
+
+    test('when a room stream closes then its slot is given back', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      final first = await endpoints.room.watchRoom(sb, room.roomCode).first;
+      expect(first.code, room.roomCode);
+      expect(Guard.streams.openFor('internal'), 0);
+    });
+  });
+}
