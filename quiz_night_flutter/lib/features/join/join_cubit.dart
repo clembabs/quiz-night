@@ -40,9 +40,6 @@ class JoinCubit extends Cubit<JoinState> {
 
   JoinCubit(this._lobby, this._seats) : super(const JoinState());
 
-  /// Back to an empty form, e.g. after returning from a finished game.
-  void reset() => emit(const JoinState());
-
   Future<void> join(String code, String nickname) async {
     final cleanCode = code.trim().toUpperCase();
     final cleanName = nickname.trim();

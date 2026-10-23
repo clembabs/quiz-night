@@ -116,72 +116,67 @@ class _JoinCardState extends State<_JoinCard> {
       if (ready) widget.onJoin(state.code);
     }
 
-    // The cubit can empty the box (after a game); follow it.
-    return BlocListener<LandingCubit, LandingState>(
-      listenWhen: (a, b) => a.code != b.code && b.code != _code.text,
-      listener: (context, state) => _code.text = state.code,
-      child: LandingCard(
-        borderColor: AppColors.gold,
-        borderWidth: 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'I’M PLAYING',
-              style: AppWebText.cardEyebrow.copyWith(
-                color: AppColors.goldLight,
+    return LandingCard(
+      borderColor: AppColors.gold,
+      borderWidth: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'I’M PLAYING',
+            style: AppWebText.cardEyebrow.copyWith(
+              color: AppColors.goldLight,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text('GOT A ROOM CODE?', style: AppWebText.cardTitle),
+          const SizedBox(height: 14),
+          Text(
+            'Room code',
+            style: AppWebText.small.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.chalkSoft,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            key: const Key('landing.code'),
+            controller: _code,
+            onChanged: cubit.setCode,
+            onSubmitted: (_) => join(),
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.go,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
+            style: AppTextStyles.codeInput.copyWith(fontSize: 32),
+            decoration: InputDecoration(
+              hintText: '0000',
+              hintStyle: AppTextStyles.codeInput.copyWith(
+                fontSize: 32,
+                color: AppColors.faint,
               ),
-            ),
-            const SizedBox(height: 14),
-            Text('GOT A ROOM CODE?', style: AppWebText.cardTitle),
-            const SizedBox(height: 14),
-            Text(
-              'Room code',
-              style: AppWebText.small.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.chalkSoft,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
               ),
+              enabledBorder: _border(ready ? AppColors.gold : AppColors.line),
+              focusedBorder: _border(AppColors.gold),
             ),
-            const SizedBox(height: 6),
-            TextField(
-              key: const Key('landing.code'),
-              controller: _code,
-              onChanged: cubit.setCode,
-              onSubmitted: (_) => join(),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.go,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(4),
-              ],
-              style: AppTextStyles.codeInput.copyWith(fontSize: 32),
-              decoration: InputDecoration(
-                hintText: '0000',
-                hintStyle: AppTextStyles.codeInput.copyWith(
-                  fontSize: 32,
-                  color: AppColors.faint,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                enabledBorder: _border(ready ? AppColors.gold : AppColors.line),
-                focusedBorder: _border(AppColors.gold),
-              ),
-            ),
-            const SizedBox(height: 14),
-            LandingButton(
-              buttonKey: const Key('landing.join'),
-              label: 'Join game',
-              onPressed: ready ? join : null,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'The code is on the big screen. No account needed.',
-              style: AppWebText.small,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          LandingButton(
+            buttonKey: const Key('landing.join'),
+            label: 'Join game',
+            onPressed: ready ? join : null,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'The code is on the big screen. No account needed.',
+            style: AppWebText.small,
+          ),
+        ],
       ),
     );
   }

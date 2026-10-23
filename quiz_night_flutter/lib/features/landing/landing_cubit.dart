@@ -67,7 +67,4 @@ class LandingCubit extends Cubit<LandingState> {
       state.copyWith(code: digits.length > 4 ? digits.substring(0, 4) : digits),
     );
   }
-
-  /// Empties the code box, e.g. after coming back from a game.
-  void clearCode() => emit(state.copyWith(code: ''));
 }
