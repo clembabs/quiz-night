@@ -7,6 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Read-only token: the deploy authenticates to Serverpod Cloud with its own
+# secret, and needs nothing else from GitHub.
+permissions:
+  contents: read
+
 # One deploy at a time, and a newer one never cancels a rollout in progress.
 concurrency:
   group: deploy-production
@@ -38,7 +43,7 @@ jobs:
       SERVERPOD_CLOUD_TOKEN: ${{ secrets.SERVERPOD_CLOUD_TOKEN }}
       PROJECT: ${{ vars.SERVERPOD_CLOUD_PROJECT }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Site address
         id: site
@@ -57,7 +62,7 @@ jobs:
 
       # The deploy's pre-deploy hook builds the Flutter web app, so Flutter
       # must be on the runner.
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
