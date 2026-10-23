@@ -253,12 +253,12 @@ class KnockedOutSection extends StatelessWidget {
 
 enum _Chip { finalist, active, out }
 
-/// "For teachers": the three cut rules, then the hosting guide cards.
-class TeachersSection extends StatelessWidget {
+/// "For hosts": the three cut rules, then the hosting guide cards.
+class HostingGuideSection extends StatelessWidget {
   final VoidCallback onHost;
   final VoidCallback onReadFaq;
 
-  const TeachersSection({
+  const HostingGuideSection({
     super.key,
     required this.onHost,
     required this.onReadFaq,
@@ -269,13 +269,13 @@ class TeachersSection extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading(eyebrow: 'For teachers', title: 'Hosting guide'),
+        const SectionHeading(eyebrow: 'For hosts', title: 'Hosting guide'),
         const SizedBox(height: 14),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: Text(
-            'Everything you need to run a game for a class, a house '
-            'competition or a school quiz night.',
+            'Everything you need to run a game for friends, a team, a '
+            'church or youth group, an event or a classroom.',
             style: AppWebText.bodyLarge.copyWith(fontSize: 18),
           ),
         ),
@@ -476,7 +476,7 @@ class _FaqItem extends StatelessWidget {
 /// Brand, links to the sections, and the year.
 class LandingFooter extends StatelessWidget {
   final VoidCallback onHow;
-  final VoidCallback onTeachers;
+  final VoidCallback onHostingGuide;
   final VoidCallback onFaq;
   final VoidCallback onJoin;
   final VoidCallback onHost;
@@ -484,7 +484,7 @@ class LandingFooter extends StatelessWidget {
   const LandingFooter({
     super.key,
     required this.onHow,
-    required this.onTeachers,
+    required this.onHostingGuide,
     required this.onFaq,
     required this.onJoin,
     required this.onHost,
@@ -542,7 +542,7 @@ class LandingFooter extends StatelessWidget {
                 ),
                 column('Product', [
                   ('How it works', onHow),
-                  ('For teachers', onTeachers),
+                  ('Hosting guide', onHostingGuide),
                 ]),
                 column('Play', [
                   ('Join a game', onJoin),

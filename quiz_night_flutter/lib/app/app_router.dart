@@ -35,7 +35,10 @@ GoRouter buildAppRouter({
       path: AppPaths.howItWorks,
       builder: (_, _) => const HowItWorksPage(),
     ),
-    GoRoute(path: AppPaths.teachers, builder: (_, _) => const TeachersPage()),
+    GoRoute(
+      path: AppPaths.hosting,
+      builder: (_, _) => const HostingGuidePage(),
+    ),
     GoRoute(path: AppPaths.faq, builder: (_, _) => const FaqPage()),
     GoRoute(
       path: AppPaths.join,

@@ -2,7 +2,7 @@
 abstract final class AppPaths {
   static const home = '/';
   static const howItWorks = '/how-it-works';
-  static const teachers = '/teachers';
+  static const hosting = '/hosting';
   static const faq = '/faq';
   static const join = '/join';
   static const host = '/host';

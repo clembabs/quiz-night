@@ -210,11 +210,11 @@ class _HostCard extends StatelessWidget {
               style: AppWebText.cardEyebrow.copyWith(color: AppColors.mint),
             ),
             const SizedBox(height: 14),
-            Text('RUN A QUIZ FOR YOUR CLASS', style: AppWebText.cardTitle),
+            Text('RUN A QUIZ NIGHT', style: AppWebText.cardTitle),
             const SizedBox(height: 14),
             Text(
               'Pick how players are knocked out, set the rounds, and open the '
-              'host screen on a laptop connected to a projector.',
+              'host screen on a laptop connected to a TV or projector.',
               style: AppWebText.body,
             ),
             const SizedBox(height: 14),

@@ -13,7 +13,7 @@ import 'landing_parts.dart';
 enum SitePage {
   home('Home', AppPaths.home),
   how('How it works', AppPaths.howItWorks),
-  teachers('For teachers', AppPaths.teachers),
+  hosting('For hosts', AppPaths.hosting),
   faq('FAQ', AppPaths.faq);
 
   final String label;
@@ -36,7 +36,7 @@ class LandingHeader extends StatelessWidget {
     required this.onJoin,
   });
 
-  static const _links = [SitePage.how, SitePage.teachers, SitePage.faq];
+  static const _links = [SitePage.how, SitePage.hosting, SitePage.faq];
 
   @override
   Widget build(BuildContext context) {
