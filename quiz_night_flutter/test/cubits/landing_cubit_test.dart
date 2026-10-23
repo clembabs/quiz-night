@@ -26,15 +26,12 @@ void main() {
     );
 
     blocTest<LandingCubit, LandingState>(
-      'when the hosts tab is picked and the code cleared then the tab stays',
+      'when the hosts tab is picked then the typed code stays',
       build: LandingCubit.new,
       seed: () => const LandingState(code: '12'),
-      act: (c) => c
-        ..pickTab(WalkthroughTab.hosts)
-        ..clearCode(),
+      act: (c) => c.pickTab(WalkthroughTab.hosts),
       expect: () => [
         const LandingState(code: '12', tab: WalkthroughTab.hosts),
-        const LandingState(tab: WalkthroughTab.hosts),
       ],
     );
 

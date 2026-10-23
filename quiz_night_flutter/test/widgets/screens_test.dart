@@ -9,15 +9,13 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/app/quiz_night_app.dart';
 import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
-import 'package:quiz_night_flutter/features/home/home_cubit.dart';
+import 'package:quiz_night_flutter/data/seat.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
 import 'package:quiz_night_flutter/features/join/join_form.dart';
 
 import '../fakes/fakes.dart';
 
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
-
-class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 
 class CountingWakeLock implements ScreenWakeLock {
   int keepOnCalls = 0;
@@ -115,6 +113,31 @@ void main() {
       expect(code.controller!.text, '4821');
     });
 
+    testWidgets('when Back leads from a live game to its join page then the '
+        'game reopens instead of an empty form', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => playerSeat);
+      when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Ada')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join?code=ABCD',
+        ),
+      );
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
+      expect(find.byKey(const Key('join.code')), findsNothing);
+    });
+
     testWidgets('when a room address opens without a seat on this device '
         'then it goes to the join form for that room', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => null);
@@ -149,8 +172,10 @@ void main() {
           initialLocation: '/room/ABCD',
         ),
       );
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
 
       expect(find.text("YOU'RE IN!"), findsOneWidget);
     });
@@ -192,8 +217,10 @@ void main() {
           wakeLock: wakeLock,
         ),
       );
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
 
       expect(find.text("YOU'RE IN!"), findsOneWidget);
       expect(find.text('Lobby'), findsOneWidget);
@@ -203,13 +230,9 @@ void main() {
 
   group('Given the join form', () {
     late MockJoinCubit join;
-    late MockHomeCubit home;
 
     setUp(() {
       join = MockJoinCubit();
-      home = MockHomeCubit();
-      when(() => home.state).thenReturn(const HomeState(loading: false));
-      when(() => home.initialCode).thenReturn(null);
       when(() => join.join(any(), any())).thenAnswer((_) async {});
     });
 
@@ -220,7 +243,6 @@ void main() {
           theme: AppTheme.dark(),
           home: MultiBlocProvider(
             providers: [
-              BlocProvider<HomeCubit>.value(value: home),
               BlocProvider<JoinCubit>.value(value: join),
             ],
             child: Scaffold(body: JoinForm(onHost: () {})),
@@ -307,10 +329,14 @@ void main() {
       ) async {
         final lobby = MockLobbyRepository();
         final game = MockGameRepository();
+        // Remembers what is saved, like the browser's storage.
         final seats = MockSeatRepository();
-        when(() => seats.load()).thenAnswer((_) async => null);
-        when(() => seats.save(any())).thenAnswer((_) async {});
-        when(() => seats.clear()).thenAnswer((_) async {});
+        Seat? stored;
+        when(() => seats.load()).thenAnswer((_) async => stored);
+        when(() => seats.save(any())).thenAnswer(
+          (i) async => stored = i.positionalArguments.single as Seat,
+        );
+        when(() => seats.clear()).thenAnswer((_) async => stored = null);
         when(
           () => lobby.joinRoom('4821', 'Opera'),
         ).thenAnswer((_) async => playerSeat);
@@ -330,8 +356,9 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byKey(const Key('join.nickname')), 'Opera');
         await tester.tap(find.byKey(const Key('join.submit')));
-        await tester.pump(const Duration(seconds: 1));
-        await tester.pump(const Duration(seconds: 1));
+        for (var i = 0; i < 4; i++) {
+          await tester.pump(const Duration(seconds: 1));
+        }
         expect(find.text("YOU'RE IN!"), findsOneWidget);
 
         await tester.tap(find.text('Leave'));

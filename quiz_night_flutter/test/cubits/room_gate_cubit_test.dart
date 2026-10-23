@@ -12,18 +12,7 @@ void main() {
 
   group('Given a room address', () {
     blocTest<RoomGateCubit, RoomGateState>(
-      'when the join screen handed over the seat then it is ready at once',
-      build: () => RoomGateCubit(seats, 'ABCD', known: playerSeat),
-      act: (c) => c.load(),
-      expect: () => <RoomGateState>[],
-      verify: (c) {
-        expect(c.state, const RoomGateState.ready(playerSeat));
-        verifyNever(() => seats.load());
-      },
-    );
-
-    blocTest<RoomGateCubit, RoomGateState>(
-      'when reloaded and this device saved a seat for it then it is ready',
+      'when this device saved a seat for it then it is ready',
       setUp: () => when(() => seats.load()).thenAnswer((_) async => playerSeat),
       build: () => RoomGateCubit(seats, 'ABCD'),
       act: (c) => c.load(),

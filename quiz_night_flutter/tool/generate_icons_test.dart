@@ -8,21 +8,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiz_night_flutter/core/theme/app_colors.dart';
 import 'package:quiz_night_flutter/widgets/brand/crest.dart';
 
-Future<void> _loadFonts() async {
-  for (final (family, file) in [
-    ('Bricolage', 'BricolageGrotesque-ExtraBold.ttf'),
-    ('NotoSansAfr', 'NotoSansAfr-ExtraBold.ttf'),
-  ]) {
-    final bytes = File('assets/fonts/$file').readAsBytesSync();
-    await (FontLoader(family)..addFont(Future.value(ByteData.sublistView(bytes))))
-        .load();
-  }
-}
+import '../test/widgets/harness.dart';
 
 /// One icon: [size] square, crest [crestFraction] of the height, on [bg].
 class _Icon {
@@ -49,7 +39,7 @@ const _icons = [
 
 void main() {
   testWidgets('generate icons', (tester) async {
-    await _loadFonts();
+    await loadRealFonts();
     for (final icon in _icons) {
       final key = GlobalKey();
       final s = icon.size.toDouble();

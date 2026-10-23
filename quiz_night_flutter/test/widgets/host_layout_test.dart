@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
@@ -39,23 +38,6 @@ const windows = {
 /// for checking layouts by eye. Unset (the normal run) it only checks that
 /// nothing overflows.
 final shotDir = Platform.environment['SHOT_DIR'];
-
-Future<void> _loadRealFonts() async {
-  for (final (family, files) in [
-    ('Bricolage', ['BricolageGrotesque-ExtraBold.ttf']),
-    (
-      'Figtree',
-      ['Figtree-Regular.ttf', 'Figtree-Bold.ttf', 'Figtree-ExtraBold.ttf'],
-    ),
-  ]) {
-    final loader = FontLoader(family);
-    for (final file in files) {
-      final bytes = File('assets/fonts/$file').readAsBytesSync();
-      loader.addFont(Future.value(ByteData.sublistView(bytes)));
-    }
-    await loader.load();
-  }
-}
 
 void main() {
   setUpAll(registerFallbacks);
@@ -142,7 +124,7 @@ void main() {
         testWidgets('when the $name screen shows then nothing overflows', (
           t,
         ) async {
-          if (shotDir != null) await _loadRealFonts();
+          if (shotDir != null) await loadRealFonts();
           final cubit = MockRoomCubit();
           when(
             () => cubit.state,

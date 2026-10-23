@@ -101,16 +101,5 @@ void main() {
         ),
       ],
     );
-
-    blocTest<JoinCubit, JoinState>(
-      'when reset after an error then the form state is empty again',
-      seed: () => const JoinState(
-        error: 'That nickname is taken',
-        errorKind: JoinError.nicknameTaken,
-      ),
-      build: () => JoinCubit(lobby, seats),
-      act: (c) => c.reset(),
-      expect: () => [const JoinState()],
-    );
   });
 }

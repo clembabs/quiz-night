@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -12,6 +11,7 @@ import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/landing/landing_screen.dart';
 
 import '../fakes/fakes.dart';
+import 'harness.dart';
 
 /// Window widths the page must fit, with a tall height so the whole page
 /// lays out at once.
@@ -25,35 +25,6 @@ const widths = {
 /// With SHOT_DIR set, renders in the real fonts and saves a full-page PNG
 /// per width, for checking the layout by eye.
 final shotDir = Platform.environment['SHOT_DIR'];
-
-Future<void> _loadRealFonts() async {
-  for (final (family, files) in [
-    ('Bricolage', ['BricolageGrotesque-ExtraBold.ttf']),
-    (
-      'Figtree',
-      ['Figtree-Regular.ttf', 'Figtree-Bold.ttf', 'Figtree-ExtraBold.ttf'],
-    ),
-    (
-      'NotoSansAfr',
-      [
-        'NotoSansAfr-Regular.ttf',
-        'NotoSansAfr-Bold.ttf',
-        'NotoSansAfr-ExtraBold.ttf',
-      ],
-    ),
-    ('NotoSansSymbols', ['NotoSansSymbols-Regular.ttf']),
-  ]) {
-    final loader = FontLoader(family);
-    for (final file in files) {
-      loader.addFont(
-        Future.value(
-          ByteData.sublistView(File('assets/fonts/$file').readAsBytesSync()),
-        ),
-      );
-    }
-    await loader.load();
-  }
-}
 
 /// The whole app at [location], with no saved seat.
 Future<GoRouter> _open(WidgetTester t, Size size, String location) async {
@@ -90,7 +61,7 @@ void main() {
     for (final MapEntry(key: name, value: width) in widths.entries) {
       testWidgets('Given the $page page on a $name ($width wide) when it '
           'shows then nothing overflows', (t) async {
-        if (shotDir != null) await _loadRealFonts();
+        if (shotDir != null) await loadRealFonts();
         final key = GlobalKey();
         t.view.physicalSize = Size(width, 9000);
         t.view.devicePixelRatio = 1;
