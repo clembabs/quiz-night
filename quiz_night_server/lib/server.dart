@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:serverpod_auth_idp_server/core.dart';
-import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
@@ -24,17 +23,12 @@ void run(List<String> args) async {
       // Use JWT for authentication keys towards the server.
       JwtConfigFromPasswords(),
     ],
-    identityProviderBuilders: [
-      // Configure the email identity provider for email/password authentication.
-      // The default setup works with Serverpod Cloud without configuration. In
-      // development the verification codes are logged to the console, and in
-      // staging and production they are sent through the Serverpod Cloud email
-      // service. If you want to use a custom provider for sending emails, use
-      // `EmailIdpConfigFromPasswords`.
-      ServerpodCloudEmailIdpConfig(
-        appDisplayName: 'quiz_night',
-      ),
-    ],
+    // No sign-in methods yet: players and hosts are identified by their
+    // room tokens. The email provider was removed so its public sign-up,
+    // login and password-reset endpoints don't exist (each could send
+    // emails on our account). Add a provider here, plus its endpoint in
+    // lib/src/auth/, when host accounts arrive.
+    identityProviderBuilders: [],
   );
 
   // Serve all files in the web/static relative directory under /web.
