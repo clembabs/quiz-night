@@ -52,7 +52,7 @@ String _path(GoRouter router) =>
 final pages = <String, (Widget, String)>{
   'home': (const HomePage(), 'SURVIVE THE ROUND. WIN THE NIGHT.'),
   'how': (const HowItWorksPage(), 'HOW IT WORKS'),
-  'teachers': (const TeachersPage(), 'HOSTING GUIDE'),
+  'hosting': (const HostingGuidePage(), 'HOSTING GUIDE'),
   'faq': (const FaqPage(), 'QUESTIONS'),
 };
 
@@ -160,7 +160,7 @@ void main() {
   group('Given the header on a desktop', () {
     for (final (key, path, heading) in const [
       ('nav.how', '/how-it-works', 'HOW IT WORKS'),
-      ('nav.teachers', '/teachers', 'HOSTING GUIDE'),
+      ('nav.hosting', '/hosting', 'HOSTING GUIDE'),
       ('nav.faq', '/faq', 'QUESTIONS'),
     ]) {
       testWidgets('when $key is tapped then $path opens', (t) async {
@@ -178,7 +178,7 @@ void main() {
     await _open(t, const Size(1440, 900), '/how-it-works');
     await t.tap(find.byKey(const Key('landing.tab.hosts')));
     await t.pump();
-    expect(find.text('Put it on the projector'), findsOneWidget);
+    expect(find.text('Put it on the big screen'), findsOneWidget);
     expect(find.text('Survive the cut'), findsNothing);
   });
 

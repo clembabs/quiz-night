@@ -53,7 +53,7 @@ class SiteScaffold extends StatelessWidget {
                       ...sections(context),
                       LandingFooter(
                         onHow: () => context.go(AppPaths.howItWorks),
-                        onTeachers: () => context.go(AppPaths.teachers),
+                        onHostingGuide: () => context.go(AppPaths.hosting),
                         onFaq: () => context.go(AppPaths.faq),
                         onJoin: () => context.go(AppPaths.join),
                         onHost: () => context.go(AppPaths.host),
@@ -81,7 +81,7 @@ class HomePage extends StatelessWidget {
       HeroSection(
         onJoin: (code) => context.go(AppPaths.joinWith(code)),
         onHost: () => context.go(AppPaths.host),
-        onReadGuide: () => context.go(AppPaths.teachers),
+        onReadGuide: () => context.go(AppPaths.hosting),
       ),
       const GamePreview(),
       StepsSection(
@@ -107,15 +107,15 @@ class HowItWorksPage extends StatelessWidget {
   );
 }
 
-/// `/teachers`: the hosting guide.
-class TeachersPage extends StatelessWidget {
-  const TeachersPage({super.key});
+/// `/hosting`: the hosting guide.
+class HostingGuidePage extends StatelessWidget {
+  const HostingGuidePage({super.key});
 
   @override
   Widget build(BuildContext context) => SiteScaffold(
-    current: SitePage.teachers,
+    current: SitePage.hosting,
     sections: (context) => [
-      TeachersSection(
+      HostingGuideSection(
         onHost: () => context.go(AppPaths.host),
         onReadFaq: () => context.go(AppPaths.faq),
       ),

@@ -1,0 +1,95 @@
+name: Deploy
+
+# Merging into main deploys to Serverpod Cloud. It can also be run by hand
+# from the Actions tab, e.g. to roll back by deploying an older commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time, and a newer one never cancels a rollout in progress.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.44.4'
+  SERVERPOD_VERSION: '4.0.4'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy:
+    name: deploy
+    needs: ci
+    # Off until the project exists: set the repository variable
+    # SERVERPOD_CLOUD_PROJECT (Settings → Secrets and variables → Actions →
+    # Variables) to the Cloud project ID after the first `make deploy-launch`.
+    if: vars.SERVERPOD_CLOUD_PROJECT != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.site.outputs.url }}
+    env:
+      # A Serverpod Cloud personal access token, stored as a secret of the
+      # `production` environment. Never commit it.
+      SERVERPOD_CLOUD_TOKEN: ${{ secrets.SERVERPOD_CLOUD_TOKEN }}
+      PROJECT: ${{ vars.SERVERPOD_CLOUD_PROJECT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Site address
+        id: site
+        run: echo "url=${{ vars.SITE_URL || format('https://{0}.serverpod.space', vars.SERVERPOD_CLOUD_PROJECT) }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check the setup
+        run: |
+          if [ -z "$SERVERPOD_CLOUD_TOKEN" ]; then
+            echo "::error::Add the SERVERPOD_CLOUD_TOKEN secret to the 'production' environment (see DEPLOY.md)."
+            exit 1
+          fi
+          if [ ! -f quiz_night_server/scloud.yaml ]; then
+            echo "::error::quiz_night_server/scloud.yaml is missing. Run 'make deploy-launch' once and commit it."
+            exit 1
+          fi
+
+      # The deploy's pre-deploy hook builds the Flutter web app, so Flutter
+      # must be on the runner.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install Serverpod CLI
+        run: |
+          dart install serverpod_cli@$SERVERPOD_VERSION
+          echo "${XDG_STATE_HOME:-$HOME/.local/state}/Dart/install/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy to Serverpod Cloud
+        working-directory: quiz_night_server
+        run: serverpod cloud deploy --project "$PROJECT" --non-interactive --yes
+
+      # The rollout can take a moment to reach the CDN; retry before failing.
+      - name: Smoke test the live site
+        env:
+          URL: ${{ steps.site.outputs.url }}
+        run: |
+          check() {
+            local path="$1" expect="$2"
+            local body
+            body=$(curl -fsSL --retry 10 --retry-delay 15 --retry-all-errors "$URL$path")
+            if ! grep -q "$expect" <<<"$body"; then
+              echo "::error::$URL$path did not contain '$expect'."
+              exit 1
+            fi
+            echo "OK  $URL$path"
+          }
+          check /            'Quiz Night'
+          check /faq         'Quiz Night'   # deep links load the app
+          check /assets/assets/config.json 'apiUrl'
+          echo "### Deployed to $URL" >> "$GITHUB_STEP_SUMMARY"

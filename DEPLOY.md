@@ -42,16 +42,51 @@ Your URLs (for project ID `quiz-night`):
 
 ## 3. Redeploy after changes
 
+After the one-time setup below, **merging into `main` deploys automatically** (`.github/workflows/deploy.yml`).
+By hand, from this laptop:
+
 ```bash
 cd quiz_night_server && serverpod cloud deploy
 ```
 
 Every deploy clears the CDN; `index.html` is never cached, so phones pick up a new build on the next load.
 
+## 3a. CI/CD (GitHub Actions)
+
+```
+feature branch ──PR──▶ develop ──PR──▶ main ──merge──▶ deploy to Serverpod Cloud
+                  CI runs          CI must pass        smoke-test the live site
+```
+
+- **CI** (`.github/workflows/ci.yml`) runs on every PR into `develop` or `main` and on pushes to `develop`:
+  - `server`: formatting, generated code up to date, `dart analyze --fatal-infos`, server tests (embedded Postgres)
+  - `app`: Flutter formatting, `flutter analyze`, `flutter test`
+  - `web`: release web build, with the app code's gzipped size in the run summary (budget 1200 KB)
+- **`main` is protected**: changes only through a PR, and `server`, `app` and `web` must pass on an
+  up-to-date branch. No force pushes or deletion.
+- **Deploy** (`.github/workflows/deploy.yml`) runs on every push to `main`, or by hand from the Actions tab
+  (run it on an older commit to roll back). It re-runs CI, deploys with `serverpod cloud deploy`, then
+  checks that `/`, `/faq` and the app config respond on the live site.
+
+**One-time setup (you), after the first `make deploy-launch`:**
+
+1. Commit `quiz_night_server/scloud.yaml` (written by the launch; no secrets in it).
+2. Create a token for GitHub (an expiry is a good idea):
+
+   ```bash
+   serverpod cloud auth create-token --expire-at 2027-06-30T00:00:00Z
+   ```
+
+3. In GitHub: **Settings → Environments → New environment** `production`, then add the secret
+   `SERVERPOD_CLOUD_TOKEN` with that token. Don't paste it anywhere else.
+4. **Settings → Secrets and variables → Actions → Variables**: add `SERVERPOD_CLOUD_PROJECT` with your
+   project ID (e.g. `quiz-night`). Until it exists the deploy job is skipped, so merges before the launch
+   don't fail. Optional: `SITE_URL` if you attach a custom domain.
+
 ## 4. What is already prepared in the code
 
 - The server serves the built Flutter app at `/` (`FlutterRoute` in `lib/server.dart`), so the **QR, the app
-  and the room code all live on one address**. The QR encodes `https://<your-domain>/?code=4821`.
+  and the room code all live on one address**. The QR encodes `https://<your-domain>/join?code=4821` (old `/?code=` links redirect there).
 - **CDN caching is on** for the web build: a day at the edge, one minute in the browser (Flutter's file names
   aren't content-hashed). That keeps first loads fast for judges on mobile data.
 - **No source maps** are shipped; the instant HTML loading screen shows while the ~3 MB first load runs.
@@ -60,12 +95,14 @@ Every deploy clears the CDN; `index.html` is never cached, so phones pick up a n
 ## 5. The day before the demo (checklist)
 
 - [ ] Deploy, open `https://quiz-night.serverpod.space/` on the **laptop you'll present from**, click
-      **Hosting on a big screen? Host a game**, create a room.
+      **Start hosting**, create a room.
 - [ ] On your **phone, on mobile data (Wi-Fi off)**: scan the QR, join. Note the first-load time.
 - [ ] Get 3–4 friends (or extra phones/tabs) in and play a full game: rounds, the cut, back a finalist,
       buzzer final, podium.
 - [ ] Mid-question, **lock a phone for 20 s and unlock it**: it should rejoin and keep its answer.
 - [ ] **Refresh a phone** mid-game: it should reopen straight into the room.
+- [ ] Press **Back** on a phone mid-game: it should return to the game, not an empty join form.
+- [ ] Open `https://quiz-night.serverpod.space/faq` directly: the FAQ page should load (deep links work).
 - [ ] Check the projector: the host screens are designed for 1920×1080 and scale to fit any size.
 - [ ] Optional: attach a custom domain in the Console (TLS is automatic) and redeploy so the QR shows it.
 
