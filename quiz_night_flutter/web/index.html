@@ -24,6 +24,14 @@
   <link rel="manifest" href="manifest.json">
 
   <!--
+    Flutter's rendering engine (CanvasKit, ~2–3 MB) comes from Google's CDN.
+    Opening that connection now, while the page parses, saves the DNS and
+    TLS handshake when the engine is requested. crossorigin because it is
+    fetched with CORS.
+  -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+  <!--
     The design system's "Loading" component, shown instantly while Flutter
     downloads. Plain HTML and CSS (no fonts or images), so it costs almost
     nothing. flutter_bootstrap.js fades it out once the app has painted.
