@@ -92,5 +92,30 @@ void main() {
         throwsQuiz(QuizErrorCode.playerNotFound),
       );
     });
+
+    test('when a nickname has invisible characters then it is stored '
+        'cleaned, and blocks the visible twin', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      await endpoints.room.joinRoom(sb, room.roomCode, 'A\u200Bda');
+      final state = await endpoints.room.watchRoom(sb, room.roomCode).first;
+      expect(state.players.single.nickname, 'Ada');
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'Ada'),
+        throwsQuiz(QuizErrorCode.nicknameTaken),
+      );
+    });
+
+    test('when a nickname is offensive or only invisible then the join is '
+        'refused', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'sh1tlord'),
+        throwsQuiz(QuizErrorCode.invalidInput),
+      );
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, '\u200B\u200B'),
+        throwsQuiz(QuizErrorCode.invalidInput),
+      );
+    });
   });
 }
