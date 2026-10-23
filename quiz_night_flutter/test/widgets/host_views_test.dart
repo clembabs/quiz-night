@@ -121,6 +121,29 @@ void main() {
       expect(find.text('START GAME'), findsOneWidget);
     });
 
+    testWidgets('when the host removes a player then it asks first, then '
+        'removes them', (t) async {
+      when(() => cubit.removePlayer(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.pump(const Duration(seconds: 1));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      expect(find.text('REMOVE P2?'), findsOneWidget);
+      await t.tap(find.text('Keep'));
+      await t.pumpAndSettle();
+      verifyNever(() => cubit.removePlayer(any()));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('remove.confirm')));
+      await t.pumpAndSettle();
+      verify(() => cubit.removePlayer(2)).called(1);
+    });
+
     testWidgets('when players are in then they show and Start starts', (
       t,
     ) async {
