@@ -18,10 +18,16 @@ abstract final class Limits {
   /// trickles in, a script flooding a known code is cut off.
   static const joinPerRoom = RateLimit('joinPerRoom', 20, Duration(minutes: 1));
 
-  /// Wrong room codes per address. Room codes are 4 digits, so this is what
-  /// makes guessing them impractical: 15 a minute would take days to try
-  /// them all, and real typos rarely pass a handful.
-  static const wrongCode = RateLimit('wrongCode', 15, Duration(minutes: 1));
+  /// Wrong room codes per address: more than 6 in a minute blocks joining
+  /// from that address for 5 minutes. Room codes are 4 digits, so this makes
+  /// guessing them impractical (about 7 tries every 5 minutes), while real
+  /// typos rarely pass a couple.
+  static const wrongCode = RateLimit(
+    'wrongCode',
+    6,
+    Duration(minutes: 1),
+    blockFor: Duration(minutes: 5),
+  );
 
   /// Reconnects per address (phones waking up, flaky Wi-Fi).
   static const rejoin = RateLimit('rejoin', 120, Duration(minutes: 1));

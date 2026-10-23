@@ -5,7 +5,11 @@ class RateLimit {
   final int max;
   final Duration window;
 
-  const RateLimit(this.name, this.max, this.window);
+  /// For failure limits: going over [max] blocks the key for this long,
+  /// even after the window resets.
+  final Duration? blockFor;
+
+  const RateLimit(this.name, this.max, this.window, {this.blockFor});
 }
 
 class _Window {
@@ -23,6 +27,9 @@ class _Window {
 /// would move to Redis.
 class RateLimiter {
   final _windows = <String, _Window>{};
+
+  /// Keys blocked by a [RateLimit.blockFor] limit, until when.
+  final _blockedUntil = <String, DateTime>{};
   int _sinceSweep = 0;
 
   /// Sweep expired counters every this many calls, so memory stays bounded
@@ -46,32 +53,47 @@ class RateLimiter {
     return true;
   }
 
-  /// Whether [key] has used up [limit] in the current window, without
-  /// counting anything.
+  /// Whether [key] may not go on, without counting anything: blocked by a
+  /// [RateLimit.blockFor] limit, or (without one) used up this window.
   bool isExhausted(String key, RateLimit limit, DateTime now) {
-    final window = _windows['${limit.name}|$key'];
+    final id = '${limit.name}|$key';
+    if (limit.blockFor != null) {
+      final until = _blockedUntil[id];
+      return until != null && now.isBefore(until);
+    }
+    final window = _windows[id];
     return window != null &&
         !window.expiredAt(now) &&
         window.count >= limit.max;
   }
 
   /// Counts one event for [key], even past the limit (for "failed attempt"
-  /// limits checked separately with [isExhausted]).
+  /// limits checked separately with [isExhausted]). Going over the limit of a
+  /// [RateLimit.blockFor] limit starts the block.
   void record(String key, RateLimit limit, DateTime now) {
     _maybeSweep(now);
-    _current(key, limit, now).count++;
+    final window = _current(key, limit, now);
+    window.count++;
+    final blockFor = limit.blockFor;
+    if (blockFor != null && window.count > limit.max) {
+      _blockedUntil['${limit.name}|$key'] = now.add(blockFor);
+    }
   }
 
   void _maybeSweep(DateTime now) {
     if (++_sinceSweep < sweepEvery) return;
     _sinceSweep = 0;
     _windows.removeWhere((_, w) => w.expiredAt(now));
+    _blockedUntil.removeWhere((_, until) => !now.isBefore(until));
   }
 
   /// Counters currently held; for tests.
   int get size => _windows.length;
 
-  void clear() => _windows.clear();
+  void clear() {
+    _windows.clear();
+    _blockedUntil.clear();
+  }
 }
 
 /// Caps how many long-lived streams one key holds open at once.
