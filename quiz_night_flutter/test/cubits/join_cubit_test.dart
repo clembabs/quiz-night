@@ -73,7 +73,7 @@ void main() {
       'when the room is full then says so, as a room problem',
       setUp: () => when(() => lobby.joinRoom(any(), any())).thenThrow(
         const AppFailure(
-          'This room is full (50 players). Ask the host for another room.',
+          'This room is full (20 players). Ask the host for another room.',
           kind: FailureKind.roomFull,
         ),
       ),
@@ -83,7 +83,7 @@ void main() {
         const JoinState(submitting: true),
         const JoinState(
           error:
-              'This room is full (50 players). Ask the host for another room.',
+              'This room is full (20 players). Ask the host for another room.',
           errorKind: JoinError.roomFull,
         ),
       ],

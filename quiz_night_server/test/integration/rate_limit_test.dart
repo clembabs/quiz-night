@@ -56,6 +56,27 @@ void main() {
       expect(joined.roomCode, room.roomCode);
     });
 
+    test('when one room gets too many join attempts then more are refused, '
+        'while other rooms still take joins', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      final other = await endpoints.room.createRoom(sb, RoomConfig());
+      for (var i = 0; i < Limits.joinPerRoom.max; i++) {
+        // Same nickname: the first joins, the rest fail on the name, but
+        // every attempt counts against the room.
+        try {
+          await endpoints.room.joinRoom(sb, room.roomCode, 'Spam');
+        } on QuizException catch (e) {
+          expect(e.code, QuizErrorCode.nicknameTaken);
+        }
+      }
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'Spam 2'),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+      final ok = await endpoints.room.joinRoom(sb, other.roomCode, 'Ada');
+      expect(ok.roomCode, other.roomCode);
+    });
+
     test('when a host token sends too many controls then it is refused, '
         'without slowing other hosts', () async {
       final a = await endpoints.room.createRoom(sb, RoomConfig());
