@@ -18,6 +18,9 @@ enum FailureKind {
   /// Someone in the room already has this nickname.
   nicknameTaken,
 
+  /// The room already has the most players it allows.
+  roomFull,
+
   /// Anything else; just show the message.
   other,
 }

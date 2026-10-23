@@ -586,6 +586,37 @@ class Endpoints extends _is.EndpointDispatch {
                     params['playerId'],
                   ),
         ),
+        'removePlayer': _is.MethodConnector(
+          name: 'removePlayer',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hostToken': _is.ParameterDescription(
+              name: 'hostToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'playerId': _is.ParameterDescription(
+              name: 'playerId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['room'] as _io7erjyw.RoomEndpoint).removePlayer(
+                    session,
+                    params['code'],
+                    params['hostToken'],
+                    params['playerId'],
+                  ),
+        ),
         'watchRoom': _is.MethodStreamConnector(
           name: 'watchRoom',
           params: {

@@ -24,4 +24,5 @@ room:
   - reveal:
   - endRound:
   - useWildcard:
+  - removePlayer:
   - watchRoom:

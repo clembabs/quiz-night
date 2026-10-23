@@ -68,6 +68,17 @@ class RoomEndpoint extends Endpoint {
     return RoomService.useWildcard(session, code, hostToken, playerId);
   }
 
+  /// Removes a player from the lobby, before the game starts.
+  Future<void> removePlayer(
+    Session session,
+    String code,
+    String hostToken,
+    int playerId,
+  ) {
+    Guard.check(session, Limits.hostAction, key: hostToken);
+    return RoomService.removePlayer(session, code, hostToken, playerId);
+  }
+
   /// Live room updates. The first event is always a full snapshot, so
   /// re-subscribing after a disconnect restores the client's view.
   Stream<RoomState> watchRoom(Session session, String code) async* {

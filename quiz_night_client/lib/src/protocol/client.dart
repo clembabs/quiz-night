@@ -430,6 +430,21 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
+  /// Removes a player from the lobby, before the game starts.
+  _ida.Future<void> removePlayer(
+    String code,
+    String hostToken,
+    int playerId,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'removePlayer',
+    {
+      'code': code,
+      'hostToken': hostToken,
+      'playerId': playerId,
+    },
+  );
+
   /// Live room updates. The first event is always a full snapshot, so
   /// re-subscribing after a disconnect restores the client's view.
   _ida.Stream<_inkt92gq.RoomState> watchRoom(String code) =>

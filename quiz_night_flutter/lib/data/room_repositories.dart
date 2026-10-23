@@ -32,6 +32,9 @@ abstract interface class GameRepository {
   /// Rescues one eliminated player; once per game, before the final.
   Future<void> useWildcard(Seat host, int playerId);
 
+  /// Removes a player from the lobby, before the game starts.
+  Future<void> removePlayer(Seat host, int playerId);
+
   /// Answers [questionId] for [player]. Eliminated players' answers count
   /// as shadow score only.
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
@@ -127,6 +130,11 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   );
 
   @override
+  Future<void> removePlayer(Seat host, int playerId) => _guard(
+    () => _client.room.removePlayer(host.code, host.token, playerId),
+  );
+
+  @override
   Future<BuzzResult> buzz(Seat finalist, int questionId) =>
       _guard(() => _client.buzzer.buzz(finalist.token, questionId));
 
@@ -177,6 +185,7 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     QuizErrorCode.alreadyAnswered => FailureKind.alreadyAnswered,
     QuizErrorCode.tooLate => FailureKind.tooLate,
     QuizErrorCode.nicknameTaken => FailureKind.nicknameTaken,
+    QuizErrorCode.roomFull => FailureKind.roomFull,
     _ => FailureKind.other,
   };
 }

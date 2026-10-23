@@ -42,6 +42,10 @@ class RoomService {
   /// Enabled in `server.dart`; off in tests.
   static bool autoRevealEnabled = false;
 
+  /// Players per room. Every update goes to every phone in the room, so the
+  /// traffic grows with the square of this; 50 keeps a full room cheap.
+  static const maxPlayers = 50;
+
   // ---------------------------------------------------------------- lookup
 
   static Future<Room> _roomByCode(
@@ -190,6 +194,13 @@ class RoomService {
         where: (t) => t.roomId.equals(room.id!),
         transaction: tx,
       );
+      if (players.length >= maxPlayers) {
+        throw _error(
+          QuizErrorCode.roomFull,
+          'This room is full ($maxPlayers players). Ask the host for another '
+          'room.',
+        );
+      }
       if (players.any((p) => p.nickname.toLowerCase() == name.toLowerCase())) {
         throw _error(QuizErrorCode.nicknameTaken, 'That nickname is taken');
       }
@@ -459,6 +470,44 @@ class RoomService {
         room.copyWith(wildcardUsed: true),
         transaction: tx,
       );
+      return room.id!;
+    });
+    await _broadcast(session, roomId);
+  }
+
+  /// Host: removes a player from the lobby (a joke nickname, a duplicate
+  /// phone). Their token stops working, so their phone shows they were
+  /// removed. Only before the game starts: mid-game removals would change
+  /// the cut for everyone else.
+  static Future<void> removePlayer(
+    Session session,
+    String code,
+    String hostToken,
+    int playerId,
+  ) async {
+    final roomId = await session.db.transaction((tx) async {
+      final room = await _hostRoom(
+        session,
+        code,
+        hostToken,
+        tx: tx,
+        lock: true,
+      );
+      if (room.status != RoomStatus.lobby) {
+        throw _error(
+          QuizErrorCode.invalidState,
+          'Players can only be removed before the game starts',
+        );
+      }
+      final player = await Player.db.findById(
+        session,
+        playerId,
+        transaction: tx,
+      );
+      if (player == null || player.roomId != room.id) {
+        throw _error(QuizErrorCode.playerNotFound, 'Player not found');
+      }
+      await Player.db.deleteRow(session, player, transaction: tx);
       return room.id!;
     });
     await _broadcast(session, roomId);

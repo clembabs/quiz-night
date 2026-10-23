@@ -4,9 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
 import '../../app/app_paths.dart';
-import '../../core/platform/site_url.dart';
-
 import '../../core/platform/screen_wake_lock.dart';
+import '../../core/platform/site_url.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
@@ -177,6 +176,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   Widget _phoneBody(RoomState? room, RoomViewState state) {
     if (state.roomGone) return const _Gone();
     if (room == null) return const LoadingView();
+    if (state.removedByHost) return const _Removed();
     final q = room.question;
     final me = state.me;
     final inFinal = q != null && q.isFinal;
@@ -251,6 +251,41 @@ class _Gone extends StatelessWidget {
     child: Text(
       'This room no longer exists.',
       style: large ? AppProjectorText.title : AppTextStyles.title,
+    ),
+  );
+}
+
+/// A player the host removed from the lobby: say so, and offer the way out.
+class _Removed extends StatelessWidget {
+  const _Removed();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'YOU WERE REMOVED',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.displayL,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'The host removed you from this room. You can join again with '
+            'the code on the big screen.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySoft,
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            key: const Key('removed.home'),
+            onPressed: context.read<RoomCubit>().leave,
+            child: const Text('Back home'),
+          ),
+        ],
+      ),
     ),
   );
 }

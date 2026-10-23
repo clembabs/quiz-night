@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
@@ -9,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/host_stage.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/player_chip.dart';
+import '../room_cubit.dart';
 import '../round/host_step_button.dart';
 
 /// The projector lobby: code + QR on the left, players arriving on the right.
@@ -59,6 +61,40 @@ class HostLobby extends StatelessWidget {
         if (scaleDown) FittedBox(fit: BoxFit.scaleDown, child: code) else code,
       ],
     );
+  }
+
+  /// Asks before removing [player] (a joke nickname, a duplicate phone).
+  static Future<void> _confirmRemove(
+    BuildContext context,
+    PlayerView player,
+  ) async {
+    final cubit = context.read<RoomCubit>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove ${player.nickname}?'.toUpperCase()),
+        content: const Text(
+          'Their phone will show that they were removed. They can join again '
+          'with the room code.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep'),
+          ),
+          FilledButton(
+            key: const Key('remove.confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.maroon,
+              foregroundColor: AppColors.white,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await cubit.removePlayer(player.id);
   }
 
   @override
@@ -194,6 +230,7 @@ class HostLobby extends StatelessWidget {
                           child: PlayerChip(
                             nickname: p.nickname,
                             height: 80,
+                            onRemove: () => _confirmRemove(context, p),
                           ),
                         ),
                       ),

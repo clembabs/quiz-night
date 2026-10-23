@@ -10,3 +10,4 @@ values:
   - alreadyAnswered
   - notAllowed
   - rateLimited
+  - roomFull
