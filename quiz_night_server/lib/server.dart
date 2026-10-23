@@ -4,6 +4,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
+import 'src/game/room_cleanup.dart';
 import 'src/game/room_service.dart';
 import 'src/generated/serverpod.dart';
 import 'src/security/guard.dart';
@@ -120,4 +121,7 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // Delete rooms (and their players' data) after a day.
+  RoomCleanup.schedule(pod);
 }
