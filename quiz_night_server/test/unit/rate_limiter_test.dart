@@ -59,6 +59,41 @@ void main() {
     });
   });
 
+  group('Given a failure limit that blocks for 5 minutes', () {
+    const wrong = RateLimit(
+      'wrong',
+      6,
+      Duration(minutes: 1),
+      blockFor: Duration(minutes: 5),
+    );
+
+    test('when a key fails 6 times then it may still go on', () {
+      final limiter = RateLimiter();
+      for (var i = 0; i < 6; i++) {
+        limiter.record('a', wrong, t0);
+      }
+      expect(limiter.isExhausted('a', wrong, t0), isFalse);
+    });
+
+    test('when it fails a 7th time then it is blocked for 5 minutes, even '
+        'after the minute resets', () {
+      final limiter = RateLimiter();
+      for (var i = 0; i < 7; i++) {
+        limiter.record('a', wrong, t0);
+      }
+      expect(limiter.isExhausted('a', wrong, t0), isTrue);
+      expect(
+        limiter.isExhausted('a', wrong, t0.add(const Duration(minutes: 2))),
+        isTrue,
+      );
+      expect(
+        limiter.isExhausted('a', wrong, t0.add(const Duration(minutes: 5))),
+        isFalse,
+      );
+      expect(limiter.isExhausted('b', wrong, t0), isFalse);
+    });
+  });
+
   group('Given many short-lived keys', () {
     test('when their windows expire then the counters are swept', () {
       final limiter = RateLimiter();

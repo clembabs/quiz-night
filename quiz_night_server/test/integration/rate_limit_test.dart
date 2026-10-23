@@ -28,10 +28,12 @@ void main() {
       );
     });
 
-    test('when an address keeps guessing room codes then it is stopped, '
-        'even for a real code', () async {
+    test('when an address tries more than 6 wrong codes in a minute then '
+        'it is blocked for 5 minutes, even for a real code', () async {
       final room = await endpoints.room.createRoom(sb, RoomConfig());
-      for (var i = 0; i < Limits.wrongCode.max; i++) {
+      final t0 = DateTime.now().toUtc();
+      Guard.now = () => t0;
+      for (var i = 0; i <= Limits.wrongCode.max; i++) {
         await expectLater(
           endpoints.room.joinRoom(sb, '0000$i', 'Guesser'),
           throwsQuiz(QuizErrorCode.roomNotFound),
@@ -41,6 +43,20 @@ void main() {
         endpoints.room.joinRoom(sb, room.roomCode, 'Guesser'),
         throwsQuiz(QuizErrorCode.rateLimited),
       );
+
+      Guard.now = () => t0.add(const Duration(minutes: 4));
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'Guesser'),
+        throwsQuiz(QuizErrorCode.rateLimited),
+      );
+
+      Guard.now = () => t0.add(const Duration(minutes: 5));
+      final joined = await endpoints.room.joinRoom(
+        sb,
+        room.roomCode,
+        'Guesser',
+      );
+      expect(joined.roomCode, room.roomCode);
     });
 
     test('when an address mistypes a code a few times then it can still '
