@@ -439,4 +439,28 @@ void main() {
       expect(find.text('0 of 0'), findsNothing);
     });
   });
+
+  group('Given a game that ran out of time', () {
+    testWidgets('when the podium shows then it says why and ranks by score '
+        'so far', (t) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        round: 2,
+        players: [
+          player(1, 'Ada', score: 1000),
+          player(2, 'Bo', score: 3000),
+          player(3, 'Cy', score: 2000),
+        ],
+      ).copyWith(endReason: RoomEndReason.timeUp);
+      await pump(t, HostPodium(room: room));
+      for (var i = 0; i < 4; i++) {
+        await t.pump(const Duration(seconds: 1));
+      }
+      expect(find.byKey(const Key('podium.notice')), findsOneWidget);
+      expect(find.textContaining("Time's up"), findsOneWidget);
+      expect(find.text('Bo'), findsOneWidget);
+      expect(find.text('No final this time'), findsOneWidget);
+      expect(find.text('Everyone made the final'), findsNothing);
+    });
+  });
 }
