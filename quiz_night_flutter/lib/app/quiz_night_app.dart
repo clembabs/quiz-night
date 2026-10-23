@@ -7,9 +7,8 @@ import '../core/platform/screen_wake_lock.dart';
 import '../core/theme/app_theme.dart';
 import '../data/room_repositories.dart';
 import '../data/seat_repository.dart';
-import '../features/home/home_cubit.dart';
-import 'app_paths.dart';
 import 'app_router.dart';
+import 'seat_resume.dart';
 
 /// App root. Takes its repositories from outside, so tests can pass fakes.
 class QuizNightApp extends StatefulWidget {
@@ -41,36 +40,17 @@ class QuizNightApp extends StatefulWidget {
   State<QuizNightApp> createState() => _QuizNightAppState();
 }
 
-/// Stateful only to own the router and the resume check for the app's life.
+/// Stateful only to own the router for the app's life.
 class _QuizNightAppState extends State<QuizNightApp> {
   late final GoRouter _router = buildAppRouter(
+    resume: SeatResume(widget.lobby, widget.seats),
     initialLocation: widget.initialLocation,
   );
 
-  /// The address the app opened at.
-  late final Uri _start = widget.initialLocation == null
-      ? Uri.base
-      : Uri.parse(widget.initialLocation!);
-
-  late final HomeCubit _resume = HomeCubit(
-    widget.lobby,
-    widget.seats,
-    initialCode: _start.queryParameters['code'],
-  )..restore();
-
   @override
   void dispose() {
-    _resume.close();
     _router.dispose();
     super.dispose();
-  }
-
-  /// A reload, a rescanned QR or a phone waking up on the home or join page
-  /// goes straight back into a live game. Other pages stay where they are.
-  void _resumeIfOnTheWayIn(RoomRoute route) {
-    final path = _router.routerDelegate.currentConfiguration.uri.path;
-    if (path != AppPaths.home && path != AppPaths.join) return;
-    _router.go(AppPaths.roomFor(route.seat.code), extra: route.seat);
   }
 
   @override
@@ -85,19 +65,11 @@ class _QuizNightAppState extends State<QuizNightApp> {
           create: (_) => widget.haptics ?? SilentHaptics(),
         ),
       ],
-      child: BlocListener<HomeCubit, HomeState>(
-        bloc: _resume,
-        listenWhen: (a, b) => b.route is RoomRoute && a.route != b.route,
-        listener: (context, state) {
-          _resume.routeHandled();
-          _resumeIfOnTheWayIn(state.route! as RoomRoute);
-        },
-        child: MaterialApp.router(
-          title: 'Quiz Night',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.dark(),
-          routerConfig: _router,
-        ),
+      child: MaterialApp.router(
+        title: 'Quiz Night',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark(),
+        routerConfig: _router,
       ),
     );
   }

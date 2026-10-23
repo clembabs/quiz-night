@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/room_repositories.dart';
-import '../data/seat.dart';
 import '../data/seat_repository.dart';
 import '../features/host_setup/host_setup_cubit.dart';
 import '../features/host_setup/host_setup_screen.dart';
@@ -10,13 +9,19 @@ import '../features/join/join_screen.dart';
 import '../features/landing/landing_screen.dart';
 import '../features/room/room_gate.dart';
 import 'app_paths.dart';
+import 'seat_resume.dart';
 
 /// The app's URLs. Each screen builds its own cubit from the repositories
 /// above the router, so screens never construct their dependencies.
-GoRouter buildAppRouter({String? initialLocation}) => GoRouter(
+GoRouter buildAppRouter({
+  required SeatResume resume,
+  String? initialLocation,
+}) => GoRouter(
   initialLocation: initialLocation,
-  // Old QR links put the code on the home page: `/?code=4821`.
-  redirect: (context, state) {
+  redirect: (context, state) async {
+    final room = await resume.redirectFor(state.uri);
+    if (room != null) return room;
+    // Old QR links put the code on the home page: `/?code=4821`.
     final code = state.uri.queryParameters['code'];
     if (state.uri.path == AppPaths.home && code != null && code.isNotEmpty) {
       return AppPaths.joinWith(code);
@@ -49,11 +54,7 @@ GoRouter buildAppRouter({String? initialLocation}) => GoRouter(
     ),
     GoRoute(
       path: AppPaths.room,
-      builder: (_, state) => RoomGate(
-        code: state.pathParameters['code']!,
-        // Handed over by join or host; null after a refresh.
-        seat: state.extra is Seat ? state.extra! as Seat : null,
-      ),
+      builder: (_, state) => RoomGate(code: state.pathParameters['code']!),
     ),
   ],
 );
