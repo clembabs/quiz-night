@@ -1,0 +1,124 @@
+name: CI
+
+# Every PR into develop or main, and every push to develop. deploy.yml also
+# calls this before shipping, so a broken main never deploys.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_call:
+
+# A new push to the same PR or branch cancels the run it replaces.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.44.4'
+  SERVERPOD_VERSION: '4.0.4'
+
+jobs:
+  server:
+    name: server
+    runs-on: ubuntu-latest
+    env:
+      SERVERPOD_PASSWORD_database: ${{ secrets.SERVERPOD_TEST_DB_PASSWORD || 'ci-only-test-db-password' }}
+      SERVERPOD_PASSWORD_redis: ${{ secrets.SERVERPOD_TEST_REDIS_PASSWORD || 'ci-only-test-redis-password' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      # The test config sets `database.dataPath`, so the tests run against an
+      # embedded PostgreSQL that Serverpod starts itself. No Docker needed.
+      # The binaries change with the Serverpod version, so it is in the key.
+      - name: Cache embedded PostgreSQL binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/serverpod/pg-binaries
+          key: serverpod-pg-binaries-${{ runner.os }}-${{ env.SERVERPOD_VERSION }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install Serverpod CLI
+        run: |
+          dart install serverpod_cli@$SERVERPOD_VERSION
+          # `dart install` puts executables in the Dart data home, which is not
+          # on the PATH of a GitHub runner.
+          echo "${XDG_STATE_HOME:-$HOME/.local/state}/Dart/install/bin" >> "$GITHUB_PATH"
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed quiz_night_server
+
+      - name: Generated code is up to date
+        working-directory: quiz_night_server
+        run: |
+          serverpod generate
+          if [ -n "$(git status --porcelain -- . ../quiz_night_client)" ]; then
+            echo "::error::Generated code is out of date. Run 'make generate' and commit the result."
+            git status --porcelain -- . ../quiz_night_client
+            git diff --stat -- . ../quiz_night_client
+            exit 1
+          fi
+
+      - name: Analyze
+        working-directory: quiz_night_server
+        run: dart analyze --fatal-infos
+
+      - name: Test
+        working-directory: quiz_night_server
+        run: dart test
+
+  app:
+    name: app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: >-
+          dart format --set-exit-if-changed
+          quiz_night_flutter/lib quiz_night_flutter/test quiz_night_flutter/tool
+
+      - name: Analyze
+        working-directory: quiz_night_flutter
+        run: flutter analyze --no-pub
+
+      - name: Test
+        working-directory: quiz_night_flutter
+        run: flutter test --no-pub
+
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Release web build
+        working-directory: quiz_night_flutter
+        run: flutter build web --release --no-pub
+
+      # Judges load the app on mobile data, so the app code has a budget.
+      - name: Check the download size
+        run: .github/scripts/web_size_budget.sh quiz_night_flutter/build/web
