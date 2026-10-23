@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import 'cut_logic.dart';
+import 'nickname.dart';
 import 'question_bank.dart';
 
 /// Answers that arrive this long after the deadline are still accepted, to
@@ -169,11 +170,17 @@ class RoomService {
     String code,
     String nickname,
   ) async {
-    final name = nickname.trim();
-    if (name.isEmpty || name.length > 20) {
+    final name = Nickname.clean(nickname);
+    if (name.isEmpty || name.length > Nickname.maxLength) {
       throw _error(
         QuizErrorCode.invalidInput,
-        'Nickname must be 1-20 characters',
+        'Nickname must be 1-${Nickname.maxLength} characters',
+      );
+    }
+    if (Nickname.isOffensive(name)) {
+      throw _error(
+        QuizErrorCode.invalidInput,
+        'Pick a different nickname: it shows on the big screen.',
       );
     }
     final result = await session.db.transaction((tx) async {
