@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../game/room_service.dart';
 import '../generated/protocol.dart';
+import '../security/guard.dart';
 
 /// The buzzer final.
 class BuzzerEndpoint extends Endpoint {
@@ -10,7 +11,10 @@ class BuzzerEndpoint extends Endpoint {
     Session session,
     String playerToken,
     int questionId,
-  ) => RoomService.buzz(session, playerToken, questionId);
+  ) {
+    Guard.check(session, Limits.playerAction, key: playerToken);
+    return RoomService.buzz(session, playerToken, questionId);
+  }
 
   /// Answers while holding the buzzer. Returns whether it was correct.
   Future<bool> submitBuzzAnswer(
@@ -18,17 +22,23 @@ class BuzzerEndpoint extends Endpoint {
     String playerToken,
     int questionId,
     int choiceIndex,
-  ) => RoomService.submitBuzzAnswer(
-    session,
-    playerToken,
-    questionId,
-    choiceIndex,
-  );
+  ) {
+    Guard.check(session, Limits.playerAction, key: playerToken);
+    return RoomService.submitBuzzAnswer(
+      session,
+      playerToken,
+      questionId,
+      choiceIndex,
+    );
+  }
 
   /// An eliminated player picks the finalist they think will win.
   Future<void> backFinalist(
     Session session,
     String playerToken,
     int finalistId,
-  ) => RoomService.backFinalist(session, playerToken, finalistId);
+  ) {
+    Guard.check(session, Limits.playerAction, key: playerToken);
+    return RoomService.backFinalist(session, playerToken, finalistId);
+  }
 }

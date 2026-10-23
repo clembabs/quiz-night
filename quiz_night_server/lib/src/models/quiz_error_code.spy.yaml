@@ -9,3 +9,4 @@ values:
   - tooLate
   - alreadyAnswered
   - notAllowed
+  - rateLimited

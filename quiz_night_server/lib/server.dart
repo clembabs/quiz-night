@@ -7,6 +7,7 @@ import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 import 'src/cache_busting.dart';
 import 'src/game/room_service.dart';
 import 'src/generated/serverpod.dart';
+import 'src/security/guard.dart';
 import 'src/web/routes/app_config_route.dart';
 
 /// The starting point of the Serverpod server.
@@ -112,6 +113,9 @@ void run(List<String> args) async {
 
   // Reveal questions server-side when their deadline passes.
   RoomService.autoRevealEnabled = true;
+
+  // Rate limits on every endpoint (see lib/src/security/guard.dart).
+  Guard.enabled = true;
 
   // Start the server.
   await pod.start();

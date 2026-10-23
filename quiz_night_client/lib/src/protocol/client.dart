@@ -325,7 +325,8 @@ class EndpointBuzzer extends _isc.EndpointRef {
 }
 
 /// Room lifecycle. Host-only methods take the `hostToken` returned by
-/// [createRoom]; the server rejects them without it.
+/// [createRoom]; the server rejects them without it. Every method is rate
+/// limited (see [Limits]).
 /// {@category Endpoint}
 class EndpointRoom extends _isc.EndpointRef {
   EndpointRoom(_isc.EndpointCaller caller) : super(caller);
