@@ -21,7 +21,8 @@ class AppConfigRoute extends WidgetRoute {
   }
 }
 
-extension on ServerConfig {
+/// The API server's public address, as phones reach it.
+extension ServerConfigUrl on ServerConfig {
   Uri get apiUrl => Uri(
     scheme: publicScheme,
     host: publicHost,

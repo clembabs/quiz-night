@@ -8,6 +8,7 @@ import 'src/game/room_service.dart';
 import 'src/generated/serverpod.dart';
 import 'src/security/guard.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/security_headers.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -36,6 +37,12 @@ void run(List<String> args) async {
   pod.webServer.addRoute(
     StaticRoute.withCacheBusting(cacheBustingConfig),
     cacheBustingConfig.mountPrefix,
+  );
+
+  // Protective headers (CSP, HSTS, no framing...) on every web page.
+  pod.webServer.addMiddleware(
+    SecurityHeadersMiddleware(apiOrigin: pod.config.apiServer.apiUrl).call,
+    '/',
   );
 
   // Setup the app config route.
