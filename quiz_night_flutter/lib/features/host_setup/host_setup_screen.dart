@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
-import '../../app/app_routes.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/app_paths.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
@@ -40,7 +42,7 @@ class HostSetupScreen extends StatelessWidget {
           (b.error != null && a.error != b.error),
       listener: (context, state) {
         if (state.seat != null) {
-          Navigator.of(context).pushReplacement(AppRoutes.room(state.seat!));
+          context.go(AppPaths.roomFor(state.seat!.code));
         } else if (state.error != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -53,146 +55,194 @@ class HostSetupScreen extends StatelessWidget {
           actions: [
             HostTextButton(
               label: 'Back',
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () => context.go(AppPaths.home),
             ),
           ],
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                flex: 14,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          child: Builder(
+            builder: (context) {
+              final portrait = HostLayout.isPortrait(context);
+              final form = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'NEW GAME',
+                    style: AppTextStyles.displayXl.copyWith(fontSize: 96),
+                  ),
+                  const SizedBox(height: 28),
+                  const _Label('Elimination rule'),
+                  const SizedBox(height: 16),
+                  Flex(
+                    direction: portrait ? Axis.vertical : Axis.horizontal,
+                    crossAxisAlignment: portrait
+                        ? CrossAxisAlignment.stretch
+                        : CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'NEW GAME',
-                        style: AppTextStyles.displayXl.copyWith(fontSize: 96),
-                      ),
-                      const SizedBox(height: 28),
-                      const _Label('Elimination rule'),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          for (final (rule, name, desc) in rules) ...[
-                            if (rule != rules.first.$1)
-                              const SizedBox(width: 16),
-                            Expanded(
-                              child: _RuleCard(
-                                key: Key('rule.${rule.name}'),
-                                name: name,
-                                description: desc,
-                                selected: state.rule == rule,
-                                onTap: () => cubit.setRule(rule),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 28),
-                      Wrap(
-                        spacing: 48,
-                        runSpacing: 32,
-                        children: [
-                          _Picker(
-                            label: 'Questions per round',
-                            values: HostSetupLimits.questionsChoices,
-                            selected: state.questionsPerRound,
-                            onPick: cubit.setQuestionsPerRound,
-                          ),
-                          _Picker(
-                            label: 'Finalists',
-                            values: HostSetupLimits.finalistChoices,
-                            selected: state.finalists,
-                            onPick: cubit.setFinalists,
-                          ),
-                          _Picker(
-                            label: 'Seconds',
-                            values: HostSetupLimits.secondsChoices,
-                            selected: state.secondsPerQuestion,
-                            onPick: cubit.setSecondsPerQuestion,
-                          ),
-                          _Toggle(
-                            label: 'Question on phones',
-                            value: state.showQuestionOnPhones,
-                            onChanged: cubit.setShowQuestionOnPhones,
-                          ),
-                          if (state.rule == EliminationRule.autoScaled)
-                            _Picker(
-                              label: 'Rounds before final',
-                              values: const [2, 3, 4],
-                              selected: state.roundsBeforeFinal,
-                              onPick: cubit.setRoundsBeforeFinal,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 28),
-                      const _Label('Topic · questions generated by AI'),
-                      const SizedBox(height: 16),
-                      Container(
-                        height: 96,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
-                        decoration: BoxDecoration(
-                          color: AppColors.boardDeep,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.chalk.withValues(alpha: 0.3),
-                            width: 3,
+                      for (final (rule, name, desc) in rules) ...[
+                        if (rule != rules.first.$1)
+                          const SizedBox(width: 16, height: 16),
+                        _flexible(
+                          portrait,
+                          _RuleCard(
+                            key: Key('rule.${rule.name}'),
+                            name: name,
+                            description: desc,
+                            selected: state.rule == rule,
+                            onTap: () => cubit.setRule(rule),
                           ),
                         ),
-                        child: Text(
-                          'Coming soon · built-in question bank for now',
-                          style: AppProjectorText.body.copyWith(
-                            color: AppColors.faint,
-                          ),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(width: 64),
-              Expanded(
-                flex: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(48),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(28),
+                  const SizedBox(height: 28),
+                  Wrap(
+                    spacing: 48,
+                    runSpacing: 32,
+                    children: [
+                      _Picker(
+                        label: 'Questions per round',
+                        values: HostSetupLimits.questionsChoices,
+                        selected: state.questionsPerRound,
+                        onPick: cubit.setQuestionsPerRound,
+                      ),
+                      _Picker(
+                        label: 'Finalists',
+                        values: HostSetupLimits.finalistChoices,
+                        selected: state.finalists,
+                        onPick: cubit.setFinalists,
+                      ),
+                      _Picker(
+                        label: 'Seconds',
+                        values: HostSetupLimits.secondsChoices,
+                        selected: state.secondsPerQuestion,
+                        onPick: cubit.setSecondsPerQuestion,
+                      ),
+                      _Toggle(
+                        label: 'Question on phones',
+                        value: state.showQuestionOnPhones,
+                        onChanged: cubit.setShowQuestionOnPhones,
+                      ),
+                      if (state.rule == EliminationRule.autoScaled)
+                        _Picker(
+                          label: 'Rounds before final',
+                          values: const [2, 3, 4],
+                          selected: state.roundsBeforeFinal,
+                          onPick: cubit.setRoundsBeforeFinal,
+                        ),
+                    ],
                   ),
+                  const SizedBox(height: 28),
+                  const _Label('Topic · questions generated by AI'),
+                  const SizedBox(height: 16),
+                  Container(
+                    constraints: const BoxConstraints(minHeight: 96),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.boardDeep,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.chalk.withValues(alpha: 0.3),
+                        width: 3,
+                      ),
+                    ),
+                    child: Text(
+                      'Coming soon · built-in question bank for now',
+                      style: AppProjectorText.body.copyWith(
+                        color: AppColors.faint,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+              final items = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final item in cubit.summary) _SummaryRow(item: item),
+                ],
+              );
+              final summary = Container(
+                padding: EdgeInsets.all(portrait ? 36 : 48),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: Column(
+                  mainAxisSize: portrait ? MainAxisSize.min : MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _Label('Summary'),
+                    const SizedBox(height: 20),
+                    if (portrait)
+                      items
+                    else
+                      Expanded(child: SingleChildScrollView(child: items)),
+                    const SizedBox(height: 24),
+                    HostButton(
+                      buttonKey: const Key('create.submit'),
+                      label: state.submitting ? 'Creating…' : 'Create room',
+                      onPressed: state.submitting ? null : cubit.create,
+                    ),
+                  ],
+                ),
+              );
+              // A phone scrolls one column: the form, then the summary.
+              if (portrait) {
+                return SingleChildScrollView(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _Label('Summary'),
-                      const SizedBox(height: 24),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Text(
-                            cubit.summary,
-                            style: AppProjectorText.body.copyWith(
-                              fontSize: 40,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      HostButton(
-                        buttonKey: const Key('create.submit'),
-                        label: state.submitting ? 'Creating…' : 'Create room',
-                        onPressed: state.submitting ? null : cubit.create,
-                      ),
-                    ],
+                    children: [form, const SizedBox(height: 40), summary],
                   ),
-                ),
-              ),
-            ],
+                );
+              }
+              return HostSplit(
+                firstFlex: 14,
+                secondFlex: 10,
+                first: SingleChildScrollView(child: form),
+                second: summary,
+              );
+            },
           ),
         ),
       ),
     );
   }
+
+  /// Rule cards share the row on the projector and stack on a phone.
+  static Widget _flexible(bool portrait, Widget child) =>
+      portrait ? child : Expanded(child: child);
+}
+
+/// A picked setting in gold, with what it means underneath.
+class _SummaryRow extends StatelessWidget {
+  final SummaryItem item;
+
+  const _SummaryRow({required this.item});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 22),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item.title,
+          style: AppProjectorText.body.copyWith(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: AppColors.gold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          item.detail,
+          style: AppProjectorText.bodySoft.copyWith(fontSize: 23, height: 1.35),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {

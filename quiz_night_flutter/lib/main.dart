@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app/quiz_night_app.dart';
 import 'core/platform/haptics.dart';
@@ -11,10 +12,12 @@ import 'data/seat_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Real paths (`/faq`, `/room/4821`) instead of `/#/faq`. The server
+  // answers unknown paths with index.html, so deep links and reloads work.
+  usePathUrlStrategy();
   _registerFontLicenses();
   await initializeClient();
   final rooms = ServerpodRoomRepository(client);
-  final code = Uri.base.queryParameters['code']?.trim().toUpperCase();
   runApp(
     QuizNightApp(
       lobby: rooms,
@@ -22,7 +25,6 @@ void main() async {
       seats: PrefsSeatRepository(),
       wakeLock: createScreenWakeLock(),
       haptics: createHaptics(),
-      initialCode: (code == null || code.isEmpty) ? null : code,
     ),
   );
 }

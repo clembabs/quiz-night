@@ -145,3 +145,85 @@ abstract final class AppProjectorText {
   );
   static final numeric = _display(96, 1.0);
 }
+
+/// The website type scale (landing page). Sizes that grow with the window
+/// take its width, like CSS `clamp(min, vw, max)`.
+abstract final class AppWebText {
+  static double _fluid(double width, double min, double vw, double max) =>
+      (width * vw).clamp(min, max);
+
+  /// Gold small capitals above a heading. 13 / 800 / +14%.
+  static final eyebrow = _body(
+    13,
+    1.2,
+    FontWeight.w800,
+    tracking: 0.14,
+    color: AppColors.gold,
+  );
+
+  /// Small capitals naming a card ("I'm playing"). 13 / 800 / +12%.
+  static final cardEyebrow = _body(13, 1.2, FontWeight.w800, tracking: 0.12);
+
+  /// The hero headline: 44 to 84.
+  static TextStyle hero(double width) => _display(
+    _fluid(width, 44, 0.07, 84),
+    0.95,
+    tracking: -0.02,
+  );
+
+  /// Section headings: 30 to 44.
+  static TextStyle section(double width) =>
+      _display(_fluid(width, 30, 0.04, 44), 1.0);
+
+  /// The hero paragraph: 17 to 20.
+  static TextStyle lead(double width) => _body(
+    _fluid(width, 17, 0.016, 20),
+    1.5,
+    FontWeight.w400,
+    color: AppColors.chalkSoft,
+  );
+
+  /// Card headlines. 26 / 1.05.
+  static final cardTitle = _display(26, 1.05);
+
+  /// Numbers in the step cards. 40, gold.
+  static final stepNumber = _display(40, 1.0).copyWith(color: AppColors.gold);
+
+  static final stepTitle = _body(19, 1.25, FontWeight.w800);
+  static final itemTitle = _body(20, 1.25, FontWeight.w800);
+  static final body = _body(
+    15,
+    1.5,
+    FontWeight.w400,
+    color: AppColors.chalkSoft,
+  );
+  static final bodyLarge = _body(
+    17,
+    1.5,
+    FontWeight.w400,
+    color: AppColors.chalkSoft,
+  );
+  static final navLink = _body(15, 1.0, FontWeight.w600);
+  static final button = _body(17, 1.0, FontWeight.w800);
+  static final link = _body(
+    15,
+    1.3,
+    FontWeight.w700,
+    color: AppColors.gold,
+  );
+  static final faqQuestion = _body(17, 1.35, FontWeight.w700);
+  static final footerHeading = _body(
+    12,
+    1.2,
+    FontWeight.w800,
+    tracking: 0.12,
+    color: AppColors.muted,
+  );
+  static final small = _body(
+    13,
+    1.4,
+    FontWeight.w400,
+    color: AppColors.muted,
+  );
+  static final brand = _display(21, 1.0, tracking: -0.01);
+}

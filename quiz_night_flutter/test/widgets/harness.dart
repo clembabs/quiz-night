@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
@@ -64,3 +67,32 @@ Future<void> pumpHost(
   cubit: cubit,
   size: hostCanvas,
 );
+
+/// Loads the app's bundled fonts (and their fallbacks) so renders match the
+/// real app, instead of the test font's blocks. For screenshot runs only:
+/// layout tests keep the wider test font, which catches more overflows.
+Future<void> loadRealFonts() async {
+  for (final (family, files) in [
+    ('Bricolage', ['BricolageGrotesque-ExtraBold.ttf']),
+    (
+      'Figtree',
+      ['Figtree-Regular.ttf', 'Figtree-Bold.ttf', 'Figtree-ExtraBold.ttf'],
+    ),
+    (
+      'NotoSansAfr',
+      [
+        'NotoSansAfr-Regular.ttf',
+        'NotoSansAfr-Bold.ttf',
+        'NotoSansAfr-ExtraBold.ttf',
+      ],
+    ),
+    ('NotoSansSymbols', ['NotoSansSymbols-Regular.ttf']),
+  ]) {
+    final loader = FontLoader(family);
+    for (final file in files) {
+      final bytes = File('assets/fonts/$file').readAsBytesSync();
+      loader.addFont(Future.value(ByteData.sublistView(bytes)));
+    }
+    await loader.load();
+  }
+}

@@ -6,8 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
-import 'package:quiz_night_flutter/features/home/home_cubit.dart';
-import 'package:quiz_night_flutter/features/home/home_screen.dart';
+import 'package:quiz_night_flutter/features/join/join_form.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
@@ -20,8 +19,6 @@ import 'package:quiz_night_flutter/widgets/qn/phone_frame.dart';
 
 import '../fakes/fakes.dart';
 import 'harness.dart';
-
-class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
 
@@ -98,11 +95,10 @@ void main() {
       );
 
   group('Given a 360x640 phone', () {
-    testWidgets('when on the landing page then nothing overflows', (t) async {
-      final home = MockHomeCubit();
+    testWidgets('when on the join form with a warning then nothing overflows', (
+      t,
+    ) async {
       final join = MockJoinCubit();
-      when(() => home.state).thenReturn(const HomeState(loading: false));
-      when(() => home.initialCode).thenReturn(null);
       when(() => join.state).thenReturn(
         const JoinState(
           error: 'This game already started. Ask the host to open a new room.',
@@ -117,10 +113,13 @@ void main() {
           theme: AppTheme.dark(),
           home: MultiBlocProvider(
             providers: [
-              BlocProvider<HomeCubit>.value(value: home),
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: const HomeScreen(),
+            child: Scaffold(
+              body: PhoneFrame(
+                child: JoinForm(onHost: () {}, onBack: () {}),
+              ),
+            ),
           ),
         ),
       );

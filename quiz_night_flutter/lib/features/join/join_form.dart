@@ -2,64 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../app/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/brand/crest.dart';
 import '../../widgets/qn/notices.dart';
-import '../../widgets/qn/phone_frame.dart';
-import '../join/join_cubit.dart';
-import 'home_cubit.dart';
-
-/// The landing page is the join form (prototype "Join"): crest lockup, room
-/// code, nickname, JOIN GAME. Hosts on a laptop use the link underneath.
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  Future<void> _open(BuildContext context, Route<void> route) async {
-    final home = context.read<HomeCubit>();
-    await Navigator.of(context).push(route);
-    await home.refresh();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<HomeCubit, HomeState>(
-          listenWhen: (a, b) => b.route != null && a.route != b.route,
-          listener: (context, state) {
-            final route = state.route!;
-            context.read<HomeCubit>().routeHandled();
-            // A QR link only pre-fills the code; a live seat goes straight in.
-            if (route is RoomRoute) _open(context, AppRoutes.room(route.seat));
-          },
-        ),
-        BlocListener<JoinCubit, JoinState>(
-          listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
-          listener: (context, state) =>
-              _open(context, AppRoutes.room(state.seat!)),
-        ),
-      ],
-      child: Scaffold(
-        body: PhoneFrame(
-          child: JoinForm(
-            initialCode: context.read<HomeCubit>().initialCode,
-            onHost: () => _open(context, AppRoutes.hostSetup()),
-          ),
-        ),
-      ),
-    );
-  }
-}
+import 'join_cubit.dart';
 
 /// Room code + nickname + JOIN GAME.
 class JoinForm extends StatefulWidget {
   final String? initialCode;
   final VoidCallback onHost;
 
-  const JoinForm({super.key, this.initialCode, required this.onHost});
+  /// Shows a Back link to the landing page.
+  final VoidCallback? onBack;
+
+  const JoinForm({
+    super.key,
+    this.initialCode,
+    required this.onHost,
+    this.onBack,
+  });
 
   @override
   State<JoinForm> createState() => _JoinFormState();
@@ -97,11 +60,24 @@ class _JoinFormState extends State<JoinForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: Align(
+                    if (widget.onBack != null)
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: QuizNightLockup(
+                        child: TextButton(
+                          key: const Key('join.back'),
+                          onPressed: widget.onBack,
+                          child: Text(
+                            '← About Quiz Night',
+                            style: AppTextStyles.buttonSecondary.copyWith(
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 32),
+                      child: Center(
+                        child: QuizNightStackedMark(
                           subtitle: 'Survive the round, or go home.',
                         ),
                       ),

@@ -112,6 +112,40 @@ class Crest extends StatelessWidget {
   );
 }
 
+/// The stacked mark: crest above "QUIZ NIGHT", centred (design system
+/// "Crest mark · stacked").
+class QuizNightStackedMark extends StatelessWidget {
+  final double crestWidth;
+  final String? subtitle;
+
+  const QuizNightStackedMark({super.key, this.crestWidth = 72, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Crest(width: crestWidth, withDiamond: true),
+      SizedBox(height: crestWidth * 0.22),
+      Text(
+        'QUIZ NIGHT',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.headline.copyWith(
+          fontSize: crestWidth * 0.5,
+          height: 1.0,
+        ),
+      ),
+      if (subtitle != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          subtitle!,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.caption.copyWith(fontSize: 15),
+        ),
+      ],
+    ],
+  );
+}
+
 /// Crest plus "QUIZ NIGHT" wordmark, side by side.
 class QuizNightLockup extends StatelessWidget {
   final double crestWidth;

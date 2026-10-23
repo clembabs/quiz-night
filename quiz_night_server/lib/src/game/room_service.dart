@@ -174,6 +174,11 @@ class RoomService {
     }
     final result = await session.db.transaction((tx) async {
       final room = await _roomByCode(session, code, tx: tx, lock: true);
+      // A finished game is over for good: to someone holding its code it no
+      // longer exists. A running one only turns away late joiners.
+      if (room.status == RoomStatus.finished) {
+        throw _error(QuizErrorCode.roomNotFound, 'This game session has ended');
+      }
       if (room.status != RoomStatus.lobby) {
         throw _error(
           QuizErrorCode.invalidState,

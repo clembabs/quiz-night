@@ -71,7 +71,8 @@ class JoinCubit extends Cubit<JoinState> {
 
   /// The design system's wording for the errors players actually hit.
   static String _messageFor(AppFailure f) => switch (f.kind) {
-    FailureKind.roomGone => 'Room not found. Check the code on the big screen.',
+    FailureKind.roomGone =>
+      "This game session doesn't exist. Check the code on the big screen.",
     FailureKind.gameStarted =>
       'This game already started. Ask the host to open a new room.',
     _ => f.message,

@@ -58,7 +58,9 @@ void main() {
     setUp(() {
       setup = MockSetupCubit();
       when(() => setup.state).thenReturn(const HostSetupState());
-      when(() => setup.summary).thenReturn('Bottom 30% elimination…');
+      when(
+        () => setup.summary,
+      ).thenReturn(const [SummaryItem('Bottom 30%', 'Lowest 30% go home.')]);
       when(() => setup.create()).thenAnswer((_) async {});
     });
 
@@ -134,17 +136,20 @@ void main() {
       verify(() => cubit.startGame()).called(1);
     });
 
-    test('when building the join link then the code is in the query', () {
-      final url = HostLobby.joinUrl(
-        Uri.parse('https://quiz.example.com/#/old'),
-        '4821',
-      );
-      expect(url.toString(), 'https://quiz.example.com/?code=4821');
-      expect(
-        HostLobby.shortAddress(Uri.parse('https://quiznight.ng/')),
-        'quiznight.ng',
-      );
-    });
+    test(
+      'when building the join link then it opens the join page with the code',
+      () {
+        final url = HostLobby.joinUrl(
+          Uri.parse('https://quiz.example.com/#/old'),
+          '4821',
+        );
+        expect(url.toString(), 'https://quiz.example.com/join?code=4821');
+        expect(
+          HostLobby.shortAddress(Uri.parse('https://quiznight.ng/')),
+          'quiznight.ng',
+        );
+      },
+    );
   });
 
   group('Given a question on the projector', () {
@@ -367,6 +372,27 @@ void main() {
       expect(find.text('Shadow champion: Dee (900)'), findsOneWidget);
       await t.tap(find.text('End and leave'));
       verify(() => cubit.leave()).called(1);
+    });
+  });
+
+  group('Given everyone made the final', () {
+    testWidgets('when the podium shows then it says so instead of 0 of 0', (
+      t,
+    ) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        players: [
+          player(1, 'Aya', status: f, finalScore: 3000),
+          player(2, 'Clem', status: f, finalScore: 2000),
+          player(3, 'Opera', status: f),
+        ],
+      );
+      await pump(t, HostPodium(room: room));
+      for (var i = 0; i < 4; i++) {
+        await t.pump(const Duration(seconds: 1));
+      }
+      expect(find.text('Everyone made the final'), findsOneWidget);
+      expect(find.text('0 of 0'), findsNothing);
     });
   });
 }

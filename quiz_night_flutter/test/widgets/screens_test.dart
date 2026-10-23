@@ -9,15 +9,13 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/app/quiz_night_app.dart';
 import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
-import 'package:quiz_night_flutter/features/home/home_cubit.dart';
-import 'package:quiz_night_flutter/features/home/home_screen.dart';
+import 'package:quiz_night_flutter/data/seat.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
+import 'package:quiz_night_flutter/features/join/join_form.dart';
 
 import '../fakes/fakes.dart';
 
 class MockJoinCubit extends MockCubit<JoinState> implements JoinCubit {}
-
-class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 
 class CountingWakeLock implements ScreenWakeLock {
   int keepOnCalls = 0;
@@ -44,19 +42,40 @@ void main() {
       seats = MockSeatRepository();
     });
 
-    testWidgets('when there is no saved seat then the landing page is the '
-        'join form', (tester) async {
+    testWidgets('when there is no saved seat then the landing page shows '
+        'with both ways in', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => null);
       await tester.pumpWidget(
         QuizNightApp(lobby: lobby, game: game, seats: seats),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('QUIZ NIGHT'), findsOneWidget);
-      expect(find.text('Survive the round, or go home.'), findsOneWidget);
-      expect(find.byKey(const Key('join.code')), findsOneWidget);
-      expect(find.text('JOIN GAME'), findsOneWidget);
-      expect(find.byKey(const Key('home.host')), findsOneWidget);
+      expect(find.text('SURVIVE THE ROUND. WIN THE NIGHT.'), findsOneWidget);
+      expect(find.byKey(const Key('landing.code')), findsOneWidget);
+      expect(find.byKey(const Key('landing.host')), findsOneWidget);
+      expect(find.byKey(const Key('join.code')), findsNothing);
+    });
+
+    testWidgets('when a code is typed on the landing page then Join game '
+        'opens the join form with it, and Back returns', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(lobby: lobby, game: game, seats: seats),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('landing.code')), '4821');
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('landing.join')));
+      await tester.tap(find.byKey(const Key('landing.join')));
+      await tester.pumpAndSettle();
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+
+      await tester.tap(find.byKey(const Key('join.back')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('join.code')), findsNothing);
+      expect(find.byKey(const Key('landing.code')), findsOneWidget);
     });
 
     testWidgets('when opened from a QR link then the code is pre-filled', (
@@ -68,13 +87,97 @@ void main() {
           lobby: lobby,
           game: game,
           seats: seats,
-          initialCode: '4821',
+          initialLocation: '/join?code=4821',
         ),
       );
       await tester.pumpAndSettle();
 
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when opened from an old QR link on the home page then it '
+        'redirects to the join form with the code', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/?code=4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when Back leads from a live game to its join page then the '
+        'game reopens instead of an empty form', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => playerSeat);
+      when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Ada')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join?code=ABCD',
+        ),
+      );
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
+      expect(find.byKey(const Key('join.code')), findsNothing);
+    });
+
+    testWidgets('when a room address opens without a seat on this device '
+        'then it goes to the join form for that room', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/room/4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
+      expect(code.controller!.text, '4821');
+      verifyNever(() => game.watchRoom(any()));
+    });
+
+    testWidgets('when a room address is reloaded with this device\'s seat '
+        'then the room opens again', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => playerSeat);
+      when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
+      final live = StreamController<RoomState>()
+        ..add(roomState(players: [player(1, 'Ada')]));
+      addTearDown(live.close);
+      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/room/ABCD',
+        ),
+      );
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(find.text("YOU'RE IN!"), findsOneWidget);
     });
 
     testWidgets('when the host link is tapped then the create screen opens', (
@@ -89,7 +192,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('home.host')));
+      await tester.ensureVisible(find.byKey(const Key('landing.host')));
+      await tester.tap(find.byKey(const Key('landing.host')));
       await tester.pumpAndSettle();
       expect(find.text('NEW GAME'), findsOneWidget);
     });
@@ -113,8 +217,10 @@ void main() {
           wakeLock: wakeLock,
         ),
       );
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump(const Duration(seconds: 1));
+      // The resume redirect is async: a few frames to settle the route.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
 
       expect(find.text("YOU'RE IN!"), findsOneWidget);
       expect(find.text('Lobby'), findsOneWidget);
@@ -124,13 +230,9 @@ void main() {
 
   group('Given the join form', () {
     late MockJoinCubit join;
-    late MockHomeCubit home;
 
     setUp(() {
       join = MockJoinCubit();
-      home = MockHomeCubit();
-      when(() => home.state).thenReturn(const HomeState(loading: false));
-      when(() => home.initialCode).thenReturn(null);
       when(() => join.join(any(), any())).thenAnswer((_) async {});
     });
 
@@ -141,10 +243,9 @@ void main() {
           theme: AppTheme.dark(),
           home: MultiBlocProvider(
             providers: [
-              BlocProvider<HomeCubit>.value(value: home),
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: const HomeScreen(),
+            child: Scaffold(body: JoinForm(onHost: () {})),
           ),
         ),
       );
@@ -175,12 +276,15 @@ void main() {
       await pump(
         tester,
         const JoinState(
-          error: 'Room not found. Check the code on the big screen.',
+          error:
+              "This game session doesn't exist. Check the code on the big screen.",
           errorKind: JoinError.roomNotFound,
         ),
       );
       expect(
-        find.text('✕ Room not found. Check the code on the big screen.'),
+        find.text(
+          "✕ This game session doesn't exist. Check the code on the big screen.",
+        ),
         findsOneWidget,
       );
     });
@@ -215,5 +319,61 @@ void main() {
       );
       expect(find.text('That nickname is taken'), findsOneWidget);
     });
+  });
+
+  group('Given a player comes back from a game', () {
+    testWidgets(
+      'when they leave the room then the landing page is back with an empty code',
+      (
+        tester,
+      ) async {
+        final lobby = MockLobbyRepository();
+        final game = MockGameRepository();
+        // Remembers what is saved, like the browser's storage.
+        final seats = MockSeatRepository();
+        Seat? stored;
+        when(() => seats.load()).thenAnswer((_) async => stored);
+        when(() => seats.save(any())).thenAnswer(
+          (i) async => stored = i.positionalArguments.single as Seat,
+        );
+        when(() => seats.clear()).thenAnswer((_) async => stored = null);
+        when(
+          () => lobby.joinRoom('4821', 'Opera'),
+        ).thenAnswer((_) async => playerSeat);
+        final live = StreamController<RoomState>()
+          ..add(roomState(players: [player(1, 'Opera')]));
+        addTearDown(live.close);
+        when(() => game.watchRoom(any())).thenAnswer((_) => live.stream);
+
+        await tester.pumpWidget(
+          QuizNightApp(lobby: lobby, game: game, seats: seats),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('landing.code')), '4821');
+        await tester.pump();
+        await tester.ensureVisible(find.byKey(const Key('landing.join')));
+        await tester.tap(find.byKey(const Key('landing.join')));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('join.nickname')), 'Opera');
+        await tester.tap(find.byKey(const Key('join.submit')));
+        for (var i = 0; i < 4; i++) {
+          await tester.pump(const Duration(seconds: 1));
+        }
+        expect(find.text("YOU'RE IN!"), findsOneWidget);
+
+        await tester.tap(find.text('Leave'));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.tap(find.widgetWithText(FilledButton, 'Leave'));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump(const Duration(seconds: 1));
+
+        // Back on the landing page, with the old code gone.
+        final code = tester.widget<TextField>(
+          find.byKey(const Key('landing.code')),
+        );
+        expect(code.controller!.text, isEmpty);
+        expect(find.byKey(const Key('join.nickname')), findsNothing);
+      },
+    );
   });
 }

@@ -79,7 +79,8 @@ void main() {
       skip: 1,
       expect: () => [
         const JoinState(
-          error: 'Room not found. Check the code on the big screen.',
+          error:
+              "This game session doesn't exist. Check the code on the big screen.",
           errorKind: JoinError.roomNotFound,
         ),
       ],

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/standings_row.dart';
+import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
@@ -65,6 +66,42 @@ class HostStandings extends StatelessWidget {
       ],
     );
 
+    final title = Text(
+      'AFTER ROUND ${room.round}',
+      style: AppTextStyles.displayXl.copyWith(fontSize: 80),
+    );
+    final summary = Text(
+      cutSummary(room),
+      style: AppProjectorText.body.copyWith(color: AppColors.muted),
+    );
+
+    // Phone: one column, the step button at the bottom.
+    if (HostLayout.isPortrait(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: title,
+          ),
+          const SizedBox(height: 12),
+          summary,
+          const SizedBox(height: 28),
+          Expanded(
+            child: SingleChildScrollView(
+              child: column(shown, delayOffset: 0),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Align(
+            alignment: Alignment.centerRight,
+            child: HostStepButton(room: room),
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -72,17 +109,9 @@ class HostStandings extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              'AFTER ROUND ${room.round}',
-              style: AppTextStyles.displayXl.copyWith(fontSize: 80),
-            ),
+            title,
             const SizedBox(width: 24),
-            Expanded(
-              child: Text(
-                cutSummary(room),
-                style: AppProjectorText.body.copyWith(color: AppColors.muted),
-              ),
-            ),
+            Expanded(child: summary),
             HostStepButton(room: room),
           ],
         ),

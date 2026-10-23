@@ -6,6 +6,7 @@ import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/answer_button.dart';
 import '../../../widgets/qn/countdown.dart';
+import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import '../round/question_header.dart';
 import '../round_logic.dart';
@@ -26,64 +27,78 @@ class HostQuestion extends StatelessWidget {
   Widget build(BuildContext context) {
     final q = room.question!;
     final endsAt = room.questionEndsAt;
+    final portrait = HostLayout.isPortrait(context);
+    final prompt = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          QuestionHeader.textFor(room),
+          style: AppProjectorText.label.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 3.2,
+            color: AppColors.mint,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          q.text,
+          style: AppProjectorText.title.copyWith(
+            fontSize: portrait ? 56 : 76,
+            height: 1.12,
+          ),
+        ),
+      ],
+    );
+    final answered = Text(
+      '${answeredCount(room)}/${activeCount(room)} answered',
+      key: const Key('host.answered'),
+      style: AppProjectorText.label.copyWith(
+        fontSize: 32,
+        color: AppColors.chalk,
+        letterSpacing: 0,
+      ),
+    );
+    Widget ring(double size) => endsAt == null
+        ? SizedBox.square(dimension: size)
+        : CountdownBuilder(
+            endsAt: endsAt,
+            totalSeconds: q.timeLimitSeconds,
+            clockOffset: clockOffset,
+            builder: (context, frame) =>
+                CountdownRing(frame: frame, size: size),
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    QuestionHeader.textFor(room),
-                    style: AppProjectorText.label.copyWith(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 3.2,
-                      color: AppColors.mint,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    q.text,
-                    style: AppProjectorText.title.copyWith(
-                      fontSize: 76,
-                      height: 1.12,
-                    ),
-                  ),
-                ],
+        if (portrait) ...[
+          // Phone: the clock and count above the question, full width.
+          Row(
+            children: [
+              ring(160),
+              const SizedBox(width: 28),
+              Expanded(child: answered),
+            ],
+          ),
+          const SizedBox(height: 28),
+          prompt,
+        ] else
+          Row(
+            children: [
+              Expanded(child: prompt),
+              const SizedBox(width: 56),
+              SizedBox(
+                width: 260,
+                child: Column(
+                  children: [ring(240), const SizedBox(height: 16), answered],
+                ),
               ),
-            ),
-            const SizedBox(width: 56),
-            SizedBox(
-              width: 260,
-              child: Column(
-                children: [
-                  if (endsAt != null)
-                    CountdownBuilder(
-                      endsAt: endsAt,
-                      totalSeconds: q.timeLimitSeconds,
-                      clockOffset: clockOffset,
-                      builder: (context, frame) => CountdownRing(frame: frame),
-                    ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${answeredCount(room)}/${activeCount(room)} answered',
-                    key: const Key('host.answered'),
-                    style: AppProjectorText.label.copyWith(
-                      fontSize: 32,
-                      color: AppColors.chalk,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         const SizedBox(height: 40),
-        Expanded(child: OptionGrid(question: q)),
+        Expanded(
+          child: OptionGrid(question: q, columns: portrait ? 1 : 2),
+        ),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerRight,
@@ -98,7 +113,10 @@ class HostQuestion extends StatelessWidget {
 class OptionGrid extends StatelessWidget {
   final QuestionView question;
 
-  const OptionGrid({super.key, required this.question});
+  /// 2 on the projector (2×2); 1 on a portrait phone (a stack of four).
+  final int columns;
+
+  const OptionGrid({super.key, required this.question, this.columns = 2});
 
   @override
   Widget build(BuildContext context) {
@@ -116,20 +134,21 @@ class OptionGrid extends StatelessWidget {
       ),
     );
     final rows = <Widget>[];
-    for (var r = 0; r < q.options.length; r += 2) {
+    for (var r = 0; r < q.options.length; r += columns) {
       if (r > 0) rows.add(const SizedBox(height: 24));
       rows.add(
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: tile(r)),
-              const SizedBox(width: 24),
-              Expanded(
-                child: r + 1 < q.options.length
-                    ? tile(r + 1)
-                    : const SizedBox.shrink(),
-              ),
+              for (var c = 0; c < columns; c++) ...[
+                if (c > 0) const SizedBox(width: 24),
+                Expanded(
+                  child: r + c < q.options.length
+                      ? tile(r + c)
+                      : const SizedBox.shrink(),
+                ),
+              ],
             ],
           ),
         ),

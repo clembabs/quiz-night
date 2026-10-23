@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
+
+import '../../app/app_paths.dart';
+import '../../core/platform/site_url.dart';
 
 import '../../core/platform/screen_wake_lock.dart';
 import '../../core/theme/app_colors.dart';
@@ -99,7 +103,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         ),
         BlocListener<RoomCubit, RoomViewState>(
           listenWhen: (a, b) => !a.left && b.left,
-          listener: (context, _) => Navigator.of(context).pop(),
+          listener: (context, _) => context.go(AppPaths.home),
         ),
       ],
       child: BlocBuilder<RoomCubit, RoomViewState>(
@@ -136,7 +140,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final q = room.question;
     final inFinal = q != null && q.isFinal;
     return switch (room.status) {
-      RoomStatus.lobby => HostLobby(room: room, appUrl: Uri.base),
+      RoomStatus.lobby => HostLobby(room: room, appUrl: siteRoot()),
       RoomStatus.question when q != null && !inFinal => HostQuestion(
         room: room,
         clockOffset: state.clockOffset,

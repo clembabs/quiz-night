@@ -31,6 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_web_plugins:
+    sdk: flutter
+  go_router: ^18.1.1
   qr_flutter: ^4.1.0
   quiz_night_client:
     path: ../quiz_night_client

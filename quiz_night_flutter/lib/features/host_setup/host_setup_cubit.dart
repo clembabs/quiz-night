@@ -102,6 +102,17 @@ class HostSetupState extends Equatable {
   ];
 }
 
+/// One setting in the summary: what was picked, and what it means.
+class SummaryItem extends Equatable {
+  final String title;
+  final String detail;
+
+  const SummaryItem(this.title, this.detail);
+
+  @override
+  List<Object?> get props => [title, detail];
+}
+
 class HostSetupCubit extends Cubit<HostSetupState> {
   final LobbyRepository _lobby;
   final SeatRepository _seats;
@@ -133,19 +144,51 @@ class HostSetupCubit extends Cubit<HostSetupState> {
   void setShowQuestionOnPhones(bool show) =>
       emit(state.copyWith(showQuestionOnPhones: show));
 
-  /// One line describing the game, for the summary panel.
-  String get summary {
+  /// What each choice means for the game, for the summary panel.
+  List<SummaryItem> get summary {
     final s = state;
-    final rule = switch (s.rule) {
-      EliminationRule.bottomPercent => 'Bottom 30%',
-      EliminationRule.autoScaled => 'Auto-scaled',
-      EliminationRule.suddenDeath => 'Sudden death',
-    };
-    return '$rule elimination, ${s.questionsPerRound} questions per round, '
-        '${s.finalists} finalists in a buzzer final. '
-        '${s.secondsPerQuestion}s per question; questions '
-        '${s.showQuestionOnPhones ? 'on phones and' : 'only on'} the big '
-        'screen.';
+    final finalQuestions = s.toConfig().finalQuestionCount;
+    return [
+      switch (s.rule) {
+        EliminationRule.bottomPercent => const SummaryItem(
+          'Bottom 30%',
+          'After each round the lowest 30% go home; ties go to the faster '
+              'player.',
+        ),
+        EliminationRule.autoScaled => SummaryItem(
+          'Auto-scaled',
+          'Each cut is sized so any room reaches ${s.finalists} finalists in '
+              '${s.roundsBeforeFinal} rounds, however many join.',
+        ),
+        EliminationRule.suddenDeath => const SummaryItem(
+          'Sudden death',
+          'A wrong or missed answer knocks you out on the spot. Two players '
+              'always survive.',
+        ),
+      },
+      SummaryItem(
+        '${s.questionsPerRound} questions a round, ${s.secondsPerQuestion}s each',
+        'Correct answers score 500 to 1000; faster scores more.',
+      ),
+      SummaryItem(
+        'Top ${s.finalists} go to the buzzer final',
+        '$finalQuestions questions. First to buzz answers; a wrong answer '
+            'locks them out.',
+      ),
+      s.showQuestionOnPhones
+          ? const SummaryItem(
+              'Question on phones',
+              'Phones show the question and the options too.',
+            )
+          : const SummaryItem(
+              'Question on the big screen only',
+              'Phones show just the answer buttons, so everyone looks up.',
+            ),
+      const SummaryItem(
+        'Knocked out? Keep playing',
+        'They answer for a shadow score and back a finalist.',
+      ),
+    ];
   }
 
   Future<void> create() async {

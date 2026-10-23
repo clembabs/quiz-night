@@ -387,6 +387,22 @@ void main() {
   });
 
   withServerpod('Given a new room', (sb, endpoints) {
+    test(
+      'when the game has finished then joining says it does not exist',
+      () async {
+        final g = await setUpGame(sb, endpoints, players: 2);
+        final room = await roomOf(sb, g.code);
+        await Room.db.updateRow(
+          sb.build(),
+          room.copyWith(status: RoomStatus.finished),
+        );
+        await expectLater(
+          endpoints.room.joinRoom(sb, g.code, 'Late'),
+          throwsQuiz(QuizErrorCode.roomNotFound),
+        );
+      },
+    );
+
     test('when created then the code is 4 digits', () async {
       for (var i = 0; i < 5; i++) {
         final created = await endpoints.room.createRoom(sb, RoomConfig());
