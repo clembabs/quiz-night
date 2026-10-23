@@ -144,6 +144,27 @@ void main() {
       verify(() => cubit.removePlayer(2)).called(1);
     });
 
+    testWidgets('when the host locks the room then it asks the server, and a '
+        'locked room offers to unlock', (t) async {
+      when(() => cubit.setLocked(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(true)).called(1);
+
+      final locked = lobby(3).copyWith(locked: true);
+      await pump(
+        t,
+        HostLobby(room: locked, appUrl: Uri.parse('https://q.ng/')),
+      );
+      expect(find.text('Unlock room'), findsOneWidget);
+      expect(find.text('No new players can join'), findsOneWidget);
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(false)).called(1);
+    });
+
     testWidgets('when players are in then they show and Start starts', (
       t,
     ) async {

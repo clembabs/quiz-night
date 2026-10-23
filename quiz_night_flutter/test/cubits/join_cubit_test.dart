@@ -90,6 +90,25 @@ void main() {
     );
 
     blocTest<JoinCubit, JoinState>(
+      'when the room is locked then says so, as a room problem',
+      setUp: () => when(() => lobby.joinRoom(any(), any())).thenThrow(
+        const AppFailure(
+          'The host has locked this room. Ask them to unlock it.',
+          kind: FailureKind.roomLocked,
+        ),
+      ),
+      build: () => JoinCubit(lobby, seats),
+      act: (c) => c.join('4821', 'Ada'),
+      expect: () => [
+        const JoinState(submitting: true),
+        const JoinState(
+          error: 'The host has locked this room. Ask them to unlock it.',
+          errorKind: JoinError.roomLocked,
+        ),
+      ],
+    );
+
+    blocTest<JoinCubit, JoinState>(
       'when the code is unknown then says to check the big screen',
       setUp: () => when(() => lobby.joinRoom(any(), any())).thenThrow(
         const AppFailure('Room not found', kind: FailureKind.roomGone),

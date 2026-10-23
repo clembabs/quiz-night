@@ -689,6 +689,43 @@ class _RoomEndpoint {
     });
   }
 
+  _ida.Future<void> setLocked(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+    String hostToken,
+    bool locked,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'room',
+            method: 'setLocked',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'room',
+          methodName: 'setLocked',
+          parameters: _ist.testObjectToJson({
+            'code': code,
+            'hostToken': hostToken,
+            'locked': locked,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<void> removePlayer(
     _ist.TestSessionBuilder sessionBuilder,
     String code,

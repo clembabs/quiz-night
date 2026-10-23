@@ -54,6 +54,10 @@ void main() {
       room: roomState(code: '4821', players: crowd(9)),
       appUrl: Uri.parse('https://quiz-night.serverpod.space/'),
     ),
+    'lobby-locked': () => HostLobby(
+      room: roomState(code: '4821', players: crowd(20)).copyWith(locked: true),
+      appUrl: Uri.parse('https://quiz-night.serverpod.space/'),
+    ),
     'question': () => HostQuestion(
       room: roomState(
         status: RoomStatus.question,

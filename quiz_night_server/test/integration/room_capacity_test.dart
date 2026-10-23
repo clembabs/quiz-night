@@ -117,5 +117,33 @@ void main() {
         throwsQuiz(QuizErrorCode.invalidInput),
       );
     });
+
+    test('when the host locks the room then nobody new can join, everyone '
+        'sees it locked, and unlocking lets them in again', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
+
+      await endpoints.room.setLocked(sb, room.roomCode, room.hostToken, true);
+      final locked = await endpoints.room.watchRoom(sb, room.roomCode).first;
+      expect(locked.locked, isTrue);
+      await expectLater(
+        endpoints.room.joinRoom(sb, room.roomCode, 'Late'),
+        throwsQuiz(QuizErrorCode.roomLocked),
+      );
+
+      await endpoints.room.setLocked(sb, room.roomCode, room.hostToken, false);
+      final joined = await endpoints.room.joinRoom(sb, room.roomCode, 'Late');
+      expect(joined.roomCode, room.roomCode);
+    });
+
+    test('when someone without the host token locks the room then it is '
+        'refused', () async {
+      final room = await endpoints.room.createRoom(sb, RoomConfig());
+      final ada = await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
+      await expectLater(
+        endpoints.room.setLocked(sb, room.roomCode, ada.playerToken, true),
+        throwsQuiz(QuizErrorCode.notHost),
+      );
+    });
   });
 }
