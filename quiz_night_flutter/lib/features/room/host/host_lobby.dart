@@ -172,7 +172,7 @@ class HostLobby extends StatelessWidget {
               Text(
                 '$count',
                 style: AppProjectorText.displayXl.copyWith(
-                  fontSize: 160,
+                  fontSize: portrait ? 120 : 160,
                   letterSpacing: 0,
                 ),
               ),

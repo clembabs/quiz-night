@@ -25,6 +25,9 @@ class PhoneFrame extends StatelessWidget {
   final bool reconnecting;
   final VoidCallback? onLeave;
 
+  /// Time left in the game, in a slim row under the header.
+  final Widget? clock;
+
   const PhoneFrame({
     super.key,
     required this.child,
@@ -33,6 +36,7 @@ class PhoneFrame extends StatelessWidget {
     this.background = AppColors.board,
     this.reconnecting = false,
     this.onLeave,
+    this.clock,
   });
 
   @override
@@ -57,6 +61,11 @@ class PhoneFrame extends StatelessWidget {
                           code: code!,
                           phase: phase ?? '',
                           onLeave: onLeave,
+                        ),
+                      if (code != null && clock != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Center(child: clock),
                         ),
                       Expanded(child: child),
                     ],

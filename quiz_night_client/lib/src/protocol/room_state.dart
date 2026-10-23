@@ -16,6 +16,7 @@ import 'elimination_event.dart' as _i044r49r;
 import 'elimination_rule.dart' as _ix1rmfwn;
 import 'player_view.dart' as _ijz1mobl;
 import 'question_view.dart' as _irhyxwad;
+import 'room_end_reason.dart' as _i1z47hfo;
 import 'room_status.dart' as _ilj1at52;
 
 /// Snapshot pushed to every client in a room.
@@ -32,6 +33,8 @@ abstract class RoomState
     required this.eliminationRule,
     required this.wildcardUsed,
     bool? locked,
+    this.sessionEndsAt,
+    this.endReason,
     this.question,
     this.questionEndsAt,
     required this.serverTime,
@@ -55,6 +58,8 @@ abstract class RoomState
     required _ix1rmfwn.EliminationRule eliminationRule,
     required bool wildcardUsed,
     bool? locked,
+    DateTime? sessionEndsAt,
+    _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     required DateTime serverTime,
@@ -86,6 +91,16 @@ abstract class RoomState
       locked: jsonSerialization['locked'] == null
           ? null
           : _isc.BoolJsonExtension.fromJson(jsonSerialization['locked']),
+      sessionEndsAt: jsonSerialization['sessionEndsAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['sessionEndsAt'],
+            ),
+      endReason: jsonSerialization['endReason'] == null
+          ? null
+          : _i1z47hfo.RoomEndReason.fromJson(
+              (jsonSerialization['endReason'] as String),
+            ),
       question: jsonSerialization['question'] == null
           ? null
           : _ibnz9izf.Protocol().deserialize<_irhyxwad.QuestionView>(
@@ -139,6 +154,13 @@ abstract class RoomState
   /// Host has closed the room to new players.
   bool locked;
 
+  /// When the game's 30 minutes run out (server clock); null before the
+  /// game starts and once it has ended.
+  DateTime? sessionEndsAt;
+
+  /// Why the game ended, once it has.
+  _i1z47hfo.RoomEndReason? endReason;
+
   _irhyxwad.QuestionView? question;
 
   DateTime? questionEndsAt;
@@ -176,6 +198,8 @@ abstract class RoomState
     _ix1rmfwn.EliminationRule? eliminationRule,
     bool? wildcardUsed,
     bool? locked,
+    DateTime? sessionEndsAt,
+    _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     DateTime? serverTime,
@@ -200,6 +224,8 @@ abstract class RoomState
       'eliminationRule': eliminationRule.toJson(),
       'wildcardUsed': wildcardUsed,
       'locked': locked,
+      if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
@@ -226,6 +252,8 @@ abstract class RoomState
       'eliminationRule': eliminationRule.toJson(),
       'wildcardUsed': wildcardUsed,
       'locked': locked,
+      if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJsonForProtocol(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
@@ -259,6 +287,8 @@ class _RoomStateImpl extends RoomState {
     required _ix1rmfwn.EliminationRule eliminationRule,
     required bool wildcardUsed,
     bool? locked,
+    DateTime? sessionEndsAt,
+    _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     required DateTime serverTime,
@@ -279,6 +309,8 @@ class _RoomStateImpl extends RoomState {
          eliminationRule: eliminationRule,
          wildcardUsed: wildcardUsed,
          locked: locked,
+         sessionEndsAt: sessionEndsAt,
+         endReason: endReason,
          question: question,
          questionEndsAt: questionEndsAt,
          serverTime: serverTime,
@@ -305,6 +337,8 @@ class _RoomStateImpl extends RoomState {
     _ix1rmfwn.EliminationRule? eliminationRule,
     bool? wildcardUsed,
     bool? locked,
+    Object? sessionEndsAt = _Undefined,
+    Object? endReason = _Undefined,
     Object? question = _Undefined,
     Object? questionEndsAt = _Undefined,
     DateTime? serverTime,
@@ -326,6 +360,12 @@ class _RoomStateImpl extends RoomState {
       eliminationRule: eliminationRule ?? this.eliminationRule,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
       locked: locked ?? this.locked,
+      sessionEndsAt: sessionEndsAt is DateTime?
+          ? sessionEndsAt
+          : this.sessionEndsAt,
+      endReason: endReason is _i1z47hfo.RoomEndReason?
+          ? endReason
+          : this.endReason,
       question: question is _irhyxwad.QuestionView?
           ? question
           : this.question?.copyWith(),

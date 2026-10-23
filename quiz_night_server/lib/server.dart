@@ -5,6 +5,7 @@ import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
 import 'src/game/room_cleanup.dart';
+import 'src/game/room_expiry.dart';
 import 'src/game/room_service.dart';
 import 'src/generated/serverpod.dart';
 import 'src/security/guard.dart';
@@ -124,4 +125,7 @@ void run(List<String> args) async {
 
   // Delete rooms (and their players' data) after a day.
   RoomCleanup.schedule(pod);
+
+  // End games after 30 minutes, and rooms idle for 30 minutes.
+  RoomExpiry.schedule(pod);
 }

@@ -14,6 +14,7 @@ import 'package:quiz_night_client/src/protocol/protocol.dart' as _ibnz9izf;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'elimination_event.dart' as _i044r49r;
 import 'elimination_rule.dart' as _ix1rmfwn;
+import 'room_end_reason.dart' as _i1z47hfo;
 import 'room_status.dart' as _ilj1at52;
 import 'tiebreak_mode.dart' as _ixk2jfuv;
 
@@ -45,6 +46,9 @@ abstract class Room
     this.buzzerHolderId,
     this.lastElimination,
     DateTime? createdAt,
+    this.startedAt,
+    DateTime? lastActivityAt,
+    this.endReason,
   }) : status = status ?? _ilj1at52.RoomStatus.lobby,
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
@@ -53,7 +57,8 @@ abstract class Room
        locked = locked ?? false,
        lastCutRound = lastCutRound ?? 0,
        finalQuestionsPlayed = finalQuestionsPlayed ?? 0,
-       createdAt = createdAt ?? DateTime.now();
+       createdAt = createdAt ?? DateTime.now(),
+       lastActivityAt = lastActivityAt ?? DateTime.now();
 
   factory Room({
     int? id,
@@ -81,6 +86,9 @@ abstract class Room
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   }) = _RoomImpl;
 
   factory Room.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -141,6 +149,19 @@ abstract class Room
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      startedAt: jsonSerialization['startedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['startedAt']),
+      lastActivityAt: jsonSerialization['lastActivityAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastActivityAt'],
+            ),
+      endReason: jsonSerialization['endReason'] == null
+          ? null
+          : _i1z47hfo.RoomEndReason.fromJson(
+              (jsonSerialization['endReason'] as String),
+            ),
     );
   }
 
@@ -200,6 +221,16 @@ abstract class Room
 
   DateTime createdAt;
 
+  /// When the host started the game; the 30-minute game clock runs from here.
+  DateTime? startedAt;
+
+  /// Last change in the room (a join, an answer, a host action). Rooms idle
+  /// for 30 minutes are closed.
+  DateTime lastActivityAt;
+
+  /// Set when the game ends.
+  _i1z47hfo.RoomEndReason? endReason;
+
   /// Returns a shallow copy of this [Room]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -229,6 +260,9 @@ abstract class Room
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -261,6 +295,9 @@ abstract class Room
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (lastElimination != null) 'lastElimination': lastElimination?.toJson(),
       'createdAt': createdAt.toJson(),
+      if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      'lastActivityAt': lastActivityAt.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
     };
   }
 
@@ -296,6 +333,9 @@ abstract class Room
       if (lastElimination != null)
         'lastElimination': lastElimination?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
+      if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      'lastActivityAt': lastActivityAt.toJson(),
+      if (endReason != null) 'endReason': endReason?.toJson(),
     };
   }
 
@@ -334,6 +374,9 @@ class _RoomImpl extends Room {
     int? buzzerHolderId,
     _i044r49r.EliminationEvent? lastElimination,
     DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? lastActivityAt,
+    _i1z47hfo.RoomEndReason? endReason,
   }) : super._(
          id: id,
          code: code,
@@ -360,6 +403,9 @@ class _RoomImpl extends Room {
          buzzerHolderId: buzzerHolderId,
          lastElimination: lastElimination,
          createdAt: createdAt,
+         startedAt: startedAt,
+         lastActivityAt: lastActivityAt,
+         endReason: endReason,
        );
 
   /// Returns a shallow copy of this [Room]
@@ -392,6 +438,9 @@ class _RoomImpl extends Room {
     Object? buzzerHolderId = _Undefined,
     Object? lastElimination = _Undefined,
     DateTime? createdAt,
+    Object? startedAt = _Undefined,
+    DateTime? lastActivityAt,
+    Object? endReason = _Undefined,
   }) {
     return Room(
       id: id is int? ? id : this.id,
@@ -431,6 +480,11 @@ class _RoomImpl extends Room {
           ? lastElimination
           : this.lastElimination?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
+      startedAt: startedAt is DateTime? ? startedAt : this.startedAt,
+      lastActivityAt: lastActivityAt ?? this.lastActivityAt,
+      endReason: endReason is _i1z47hfo.RoomEndReason?
+          ? endReason
+          : this.endReason,
     );
   }
 }

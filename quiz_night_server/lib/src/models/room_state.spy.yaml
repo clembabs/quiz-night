@@ -12,6 +12,11 @@ fields:
   wildcardUsed: bool
   ### Host has closed the room to new players.
   locked: bool, default=false
+  ### When the game's 30 minutes run out (server clock); null before the
+  ### game starts and once it has ended.
+  sessionEndsAt: DateTime?
+  ### Why the game ended, once it has.
+  endReason: RoomEndReason?
   question: QuestionView?
   questionEndsAt: DateTime?
   serverTime: DateTime

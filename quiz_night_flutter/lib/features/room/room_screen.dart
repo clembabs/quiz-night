@@ -11,6 +11,8 @@ import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
 import '../../widgets/qn/loaders.dart';
 import '../../widgets/qn/phone_frame.dart';
+import '../../widgets/qn/session_clock.dart';
+import 'final/final_logic.dart';
 import 'host/host_cut.dart';
 import 'host/host_final.dart';
 import 'host/host_lobby.dart';
@@ -115,6 +117,17 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     );
   }
 
+  /// Time left in the game's 30 minutes, once it has started.
+  Widget? _clock(RoomState? room, RoomViewState state, {bool large = false}) {
+    final endsAt = room?.sessionEndsAt;
+    if (endsAt == null) return null;
+    return SessionClock(
+      endsAt: endsAt,
+      clockOffset: state.clockOffset,
+      large: large,
+    );
+  }
+
   bool _reconnecting(RoomViewState s) =>
       s.connection == ConnectionStatus.reconnecting && !s.roomGone;
 
@@ -126,6 +139,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       topLabel: room == null ? 'Connecting' : hostTopLabel(room, state),
       code: state.seat.code,
       reconnecting: _reconnecting(state),
+      clock: _clock(room, state, large: true),
       actions: [
         HostTextButton(label: 'Leave', onPressed: () => _confirmLeave(context)),
       ],
@@ -153,6 +167,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         room: room,
         clockOffset: state.clockOffset,
       ),
+      RoomStatus.finished when closedBeforeStart(room) => const _Closed(
+        large: true,
+      ),
       RoomStatus.finished => HostPodium(room: room),
       _ => const _Waiting(),
     };
@@ -169,6 +186,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       phase: room == null ? null : phoneHeaderLabel(room, state.me),
       reconnecting: _reconnecting(state),
       onLeave: () => _confirmLeave(context),
+      clock: _clock(room, state),
       child: _phoneBody(room, state),
     );
   }
@@ -210,6 +228,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 buzzing: state.buzzing,
               )
             : PhoneWatching(room: room, me: me, myBackedId: state.myBackedId),
+      RoomStatus.finished when closedBeforeStart(room) => const _Closed(),
       RoomStatus.finished => PhonePlacement(room: room, me: me),
       _ => const _Waiting(),
     };
@@ -251,6 +270,39 @@ class _Gone extends StatelessWidget {
     child: Text(
       'This room no longer exists.',
       style: large ? AppProjectorText.title : AppTextStyles.title,
+    ),
+  );
+}
+
+/// A lobby closed after 30 minutes with nobody doing anything: no results
+/// to show, just why the room is gone.
+class _Closed extends StatelessWidget {
+  final bool large;
+
+  const _Closed({this.large = false});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'ROOM CLOSED',
+            textAlign: TextAlign.center,
+            style: large ? AppProjectorText.displayL : AppTextStyles.displayL,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Nothing happened here for 30 minutes, so the room closed. '
+            'Start a new one any time.',
+            key: const Key('room.closed'),
+            textAlign: TextAlign.center,
+            style: large ? AppProjectorText.bodySoft : AppTextStyles.bodySoft,
+          ),
+        ],
+      ),
     ),
   );
 }

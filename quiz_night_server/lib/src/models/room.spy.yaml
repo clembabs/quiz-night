@@ -29,6 +29,13 @@ fields:
   buzzerHolderId: int?
   lastElimination: EliminationEvent?
   createdAt: DateTime, default=now
+  ### When the host started the game; the 30-minute game clock runs from here.
+  startedAt: DateTime?
+  ### Last change in the room (a join, an answer, a host action). Rooms idle
+  ### for 30 minutes are closed.
+  lastActivityAt: DateTime, default=now
+  ### Set when the game ends.
+  endReason: RoomEndReason?
 indexes:
   room_code_idx:
     fields: code

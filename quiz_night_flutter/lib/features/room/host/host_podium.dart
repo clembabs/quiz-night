@@ -19,6 +19,9 @@ class HostPodium extends StatelessWidget {
   const HostPodium({super.key, required this.room});
 
   /// Display order left to right (2nd, 1st, 3rd), heights and rise delays.
+  /// Height the podium is laid out at before scaling.
+  static const _podiumHeight = 560.0;
+
   static const _slots = [
     (place: 2, height: 230.0, delay: Duration(milliseconds: 900)),
     (place: 1, height: 320.0, delay: Duration(milliseconds: 1700)),
@@ -36,29 +39,47 @@ class HostPodium extends StatelessWidget {
         .where((p) => p.status == PlayerStatus.eliminated)
         .length;
     final shadow = shadowChampion(room);
+    // Stopped (time up, or idle) before anyone reached the final.
+    final noFinal =
+        endedEarly(room) &&
+        !room.players.any((p) => p.status == PlayerStatus.finalist);
     final portrait = HostLayout.isPortrait(context);
-    return HostSplit(
+    final split = HostSplit(
       firstFlex: 15,
       secondFlex: 10,
-      first: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (final s in _slots)
-            if (s.place <= standings.length) ...[
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: PodiumBlock(
-                    place: s.place,
-                    nickname: standings[s.place - 1].nickname,
-                    score: formatScore(standings[s.place - 1].finalScore),
-                    height: s.height,
-                    delay: s.delay,
-                  ),
-                ),
-              ),
-            ],
-        ],
+      // The tallest stack (avatar, name, the winner's block) needs about
+      // [_podiumHeight]; with less room the podium scales down to fit.
+      first: LayoutBuilder(
+        builder: (context, c) => FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.bottomCenter,
+          child: SizedBox(
+            width: c.maxWidth,
+            height: c.maxHeight < _podiumHeight ? _podiumHeight : c.maxHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (final s in _slots)
+                  if (s.place <= standings.length) ...[
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: PodiumBlock(
+                          place: s.place,
+                          nickname: standings[s.place - 1].nickname,
+                          score: formatScore(
+                            podiumScore(standings[s.place - 1]),
+                          ),
+                          height: s.height,
+                          delay: s.delay,
+                        ),
+                      ),
+                    ),
+                  ],
+              ],
+            ),
+          ),
+        ),
       ),
       second: _FadeInLate(
         child: Container(
@@ -77,17 +98,22 @@ class HostPodium extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Text(
-                spectators == 0
+                noFinal
+                    ? 'No final this time'
+                    : spectators == 0
                     ? 'Everyone made the final'
                     : '${backers.length} of $spectators',
                 key: const Key('podium.backers'),
                 style: AppTextStyles.displayXl.copyWith(
-                  fontSize: spectators == 0 ? 56 : 72,
+                  fontSize: noFinal || spectators == 0 ? 56 : 72,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                spectators == 0
+                noFinal
+                    ? 'The game stopped before the final, so there were no '
+                          'finalists to back.'
+                    : spectators == 0
                     ? 'Nobody was knocked out, so there was no one left '
                           'to back a finalist.'
                     : winner == null
@@ -129,6 +155,21 @@ class HostPodium extends StatelessWidget {
           ),
         ),
       ),
+    );
+    // Ended early: say why, so nobody wonders where the final went.
+    final notice = endNoticeFor(room);
+    if (notice == null) return split;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          notice,
+          key: const Key('podium.notice'),
+          style: AppProjectorText.bodySoft.copyWith(color: AppColors.goldLight),
+        ),
+        const SizedBox(height: 24),
+        Expanded(child: split),
+      ],
     );
   }
 }
