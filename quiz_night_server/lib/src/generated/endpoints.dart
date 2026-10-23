@@ -399,6 +399,37 @@ class Endpoints extends _is.EndpointDispatch {
                     params['playerId'],
                   ),
         ),
+        'setLocked': _is.MethodConnector(
+          name: 'setLocked',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hostToken': _is.ParameterDescription(
+              name: 'hostToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'locked': _is.ParameterDescription(
+              name: 'locked',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['room'] as _io7erjyw.RoomEndpoint).setLocked(
+                    session,
+                    params['code'],
+                    params['hostToken'],
+                    params['locked'],
+                  ),
+        ),
         'removePlayer': _is.MethodConnector(
           name: 'removePlayer',
           params: {

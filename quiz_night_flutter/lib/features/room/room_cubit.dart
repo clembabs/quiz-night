@@ -277,6 +277,10 @@ class RoomCubit extends Cubit<RoomViewState> {
   Future<void> useWildcard(int playerId) =>
       _act(() => _game.useWildcard(state.seat, playerId));
 
+  /// Host: closes the room to new players, or opens it again.
+  Future<void> setLocked(bool locked) =>
+      _act(() => _game.setLocked(state.seat, locked));
+
   /// Host: removes a player from the lobby.
   Future<void> removePlayer(int playerId) =>
       _act(() => _game.removePlayer(state.seat, playerId));

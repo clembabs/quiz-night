@@ -36,6 +36,7 @@ abstract class Room
     required this.timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     this.startingPlayerCount,
     this.questionStartedAt,
     this.questionEndsAt,
@@ -49,6 +50,7 @@ abstract class Room
        currentQuestionIndex = currentQuestionIndex ?? 0,
        showQuestionOnPhones = showQuestionOnPhones ?? true,
        wildcardUsed = wildcardUsed ?? false,
+       locked = locked ?? false,
        lastCutRound = lastCutRound ?? 0,
        finalQuestionsPlayed = finalQuestionsPlayed ?? 0,
        createdAt = createdAt ?? DateTime.now();
@@ -70,6 +72,7 @@ abstract class Room
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -113,6 +116,9 @@ abstract class Room
       wildcardUsed: jsonSerialization['wildcardUsed'] == null
           ? null
           : _isc.BoolJsonExtension.fromJson(jsonSerialization['wildcardUsed']),
+      locked: jsonSerialization['locked'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['locked']),
       startingPlayerCount: jsonSerialization['startingPlayerCount'] as int?,
       questionStartedAt: jsonSerialization['questionStartedAt'] == null
           ? null
@@ -174,6 +180,9 @@ abstract class Room
 
   bool wildcardUsed;
 
+  /// Host has closed the room to new players.
+  bool locked;
+
   int? startingPlayerCount;
 
   DateTime? questionStartedAt;
@@ -211,6 +220,7 @@ abstract class Room
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -240,6 +250,7 @@ abstract class Room
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
       if (questionStartedAt != null)
@@ -273,6 +284,7 @@ abstract class Room
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (startingPlayerCount != null)
         'startingPlayerCount': startingPlayerCount,
       if (questionStartedAt != null)
@@ -313,6 +325,7 @@ class _RoomImpl extends Room {
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     int? startingPlayerCount,
     DateTime? questionStartedAt,
     DateTime? questionEndsAt,
@@ -338,6 +351,7 @@ class _RoomImpl extends Room {
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
          wildcardUsed: wildcardUsed,
+         locked: locked,
          startingPlayerCount: startingPlayerCount,
          questionStartedAt: questionStartedAt,
          questionEndsAt: questionEndsAt,
@@ -369,6 +383,7 @@ class _RoomImpl extends Room {
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
     bool? wildcardUsed,
+    bool? locked,
     Object? startingPlayerCount = _Undefined,
     Object? questionStartedAt = _Undefined,
     Object? questionEndsAt = _Undefined,
@@ -397,6 +412,7 @@ class _RoomImpl extends Room {
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
+      locked: locked ?? this.locked,
       startingPlayerCount: startingPlayerCount is int?
           ? startingPlayerCount
           : this.startingPlayerCount,

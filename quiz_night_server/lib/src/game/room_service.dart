@@ -203,6 +203,12 @@ class RoomService {
         where: (t) => t.roomId.equals(room.id!),
         transaction: tx,
       );
+      if (room.locked) {
+        throw _error(
+          QuizErrorCode.roomLocked,
+          'The host has locked this room. Ask them to unlock it.',
+        );
+      }
       if (players.length >= maxPlayers) {
         throw _error(
           QuizErrorCode.roomFull,
@@ -477,6 +483,32 @@ class RoomService {
       await Room.db.updateRow(
         session,
         room.copyWith(wildcardUsed: true),
+        transaction: tx,
+      );
+      return room.id!;
+    });
+    await _broadcast(session, roomId);
+  }
+
+  /// Host: stops (or allows again) new players joining, e.g. once everyone
+  /// in the room is in, so nobody else can join with the code on screen.
+  static Future<void> setLocked(
+    Session session,
+    String code,
+    String hostToken,
+    bool locked,
+  ) async {
+    final roomId = await session.db.transaction((tx) async {
+      final room = await _hostRoom(
+        session,
+        code,
+        hostToken,
+        tx: tx,
+        lock: true,
+      );
+      await Room.db.updateRow(
+        session,
+        room.copyWith(locked: locked),
         transaction: tx,
       );
       return room.id!;
@@ -1114,6 +1146,7 @@ class RoomService {
       finalQuestionsPlayed: room.finalQuestionsPlayed,
       eliminationRule: room.eliminationRule,
       wildcardUsed: room.wildcardUsed,
+      locked: room.locked,
       showQuestionOnPhones: room.showQuestionOnPhones,
       projectedSurvivors: _projectedSurvivors(room, question, players),
       question: question == null

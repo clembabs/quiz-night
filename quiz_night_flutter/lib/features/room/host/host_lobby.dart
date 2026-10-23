@@ -177,11 +177,14 @@ class HostLobby extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 20),
-              Text(
-                count == 1 ? 'player in' : 'players in',
-                style: AppProjectorText.title.copyWith(
-                  fontSize: 48,
-                  color: AppColors.chalkSoft,
+              Flexible(
+                child: Text(
+                  count == 1 ? 'player in' : 'players in',
+                  maxLines: 2,
+                  style: AppProjectorText.title.copyWith(
+                    fontSize: 48,
+                    color: AppColors.chalkSoft,
+                  ),
                 ),
               ),
             ],
@@ -241,9 +244,34 @@ class HostLobby extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: HostStepButton(room: room, height: 120),
+          // Lock once everyone's in, so nobody else can use the code on
+          // screen; Start stays the main action. Wraps on a narrow phone.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 20,
+            runSpacing: 16,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 20,
+                runSpacing: 8,
+                children: [
+                  HostTextButton(
+                    key: const Key('lobby.lock'),
+                    label: room.locked ? 'Unlock room' : 'Lock room',
+                    onPressed: () =>
+                        context.read<RoomCubit>().setLocked(!room.locked),
+                  ),
+                  if (room.locked)
+                    Text(
+                      'No new players can join',
+                      style: AppProjectorText.bodySoft.copyWith(fontSize: 28),
+                    ),
+                ],
+              ),
+              HostStepButton(room: room, height: 120),
+            ],
           ),
         ],
       ),

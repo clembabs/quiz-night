@@ -12,6 +12,7 @@ enum JoinError {
   roomNotFound,
   gameStarted,
   roomFull,
+  roomLocked,
   nicknameTaken,
   other,
 }
@@ -67,6 +68,7 @@ class JoinCubit extends Cubit<JoinState> {
     FailureKind.roomGone => JoinError.roomNotFound,
     FailureKind.gameStarted => JoinError.gameStarted,
     FailureKind.roomFull => JoinError.roomFull,
+    FailureKind.roomLocked => JoinError.roomLocked,
     FailureKind.nicknameTaken => JoinError.nicknameTaken,
     _ => JoinError.other,
   };

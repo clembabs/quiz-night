@@ -31,6 +31,7 @@ abstract class RoomState
     required this.finalQuestionsPlayed,
     required this.eliminationRule,
     required this.wildcardUsed,
+    bool? locked,
     this.question,
     this.questionEndsAt,
     required this.serverTime,
@@ -40,7 +41,8 @@ abstract class RoomState
     this.buzzWinnerId,
     bool? showQuestionOnPhones,
     this.projectedSurvivors,
-  }) : showQuestionOnPhones = showQuestionOnPhones ?? true;
+  }) : locked = locked ?? false,
+       showQuestionOnPhones = showQuestionOnPhones ?? true;
 
   factory RoomState({
     required String code,
@@ -52,6 +54,7 @@ abstract class RoomState
     required int finalQuestionsPlayed,
     required _ix1rmfwn.EliminationRule eliminationRule,
     required bool wildcardUsed,
+    bool? locked,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     required DateTime serverTime,
@@ -80,6 +83,9 @@ abstract class RoomState
       wildcardUsed: _is.BoolJsonExtension.fromJson(
         jsonSerialization['wildcardUsed'],
       ),
+      locked: jsonSerialization['locked'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['locked']),
       question: jsonSerialization['question'] == null
           ? null
           : _izn0xfae.Protocol().deserialize<_irhyxwad.QuestionView>(
@@ -130,6 +136,9 @@ abstract class RoomState
 
   bool wildcardUsed;
 
+  /// Host has closed the room to new players.
+  bool locked;
+
   _irhyxwad.QuestionView? question;
 
   DateTime? questionEndsAt;
@@ -166,6 +175,7 @@ abstract class RoomState
     int? finalQuestionsPlayed,
     _ix1rmfwn.EliminationRule? eliminationRule,
     bool? wildcardUsed,
+    bool? locked,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     DateTime? serverTime,
@@ -189,6 +199,7 @@ abstract class RoomState
       'finalQuestionsPlayed': finalQuestionsPlayed,
       'eliminationRule': eliminationRule.toJson(),
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (question != null) 'question': question?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
@@ -214,6 +225,7 @@ abstract class RoomState
       'finalQuestionsPlayed': finalQuestionsPlayed,
       'eliminationRule': eliminationRule.toJson(),
       'wildcardUsed': wildcardUsed,
+      'locked': locked,
       if (question != null) 'question': question?.toJsonForProtocol(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
@@ -246,6 +258,7 @@ class _RoomStateImpl extends RoomState {
     required int finalQuestionsPlayed,
     required _ix1rmfwn.EliminationRule eliminationRule,
     required bool wildcardUsed,
+    bool? locked,
     _irhyxwad.QuestionView? question,
     DateTime? questionEndsAt,
     required DateTime serverTime,
@@ -265,6 +278,7 @@ class _RoomStateImpl extends RoomState {
          finalQuestionsPlayed: finalQuestionsPlayed,
          eliminationRule: eliminationRule,
          wildcardUsed: wildcardUsed,
+         locked: locked,
          question: question,
          questionEndsAt: questionEndsAt,
          serverTime: serverTime,
@@ -290,6 +304,7 @@ class _RoomStateImpl extends RoomState {
     int? finalQuestionsPlayed,
     _ix1rmfwn.EliminationRule? eliminationRule,
     bool? wildcardUsed,
+    bool? locked,
     Object? question = _Undefined,
     Object? questionEndsAt = _Undefined,
     DateTime? serverTime,
@@ -310,6 +325,7 @@ class _RoomStateImpl extends RoomState {
       finalQuestionsPlayed: finalQuestionsPlayed ?? this.finalQuestionsPlayed,
       eliminationRule: eliminationRule ?? this.eliminationRule,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
+      locked: locked ?? this.locked,
       question: question is _irhyxwad.QuestionView?
           ? question
           : this.question?.copyWith(),

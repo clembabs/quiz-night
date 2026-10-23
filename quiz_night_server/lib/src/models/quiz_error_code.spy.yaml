@@ -11,3 +11,4 @@ values:
   - notAllowed
   - rateLimited
   - roomFull
+  - roomLocked

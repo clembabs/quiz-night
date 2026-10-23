@@ -10,6 +10,8 @@ fields:
   finalQuestionsPlayed: int
   eliminationRule: EliminationRule
   wildcardUsed: bool
+  ### Host has closed the room to new players.
+  locked: bool, default=false
   question: QuestionView?
   questionEndsAt: DateTime?
   serverTime: DateTime

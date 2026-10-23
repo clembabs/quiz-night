@@ -21,6 +21,9 @@ enum FailureKind {
   /// The room already has the most players it allows.
   roomFull,
 
+  /// The host has closed the room to new players.
+  roomLocked,
+
   /// Anything else; just show the message.
   other,
 }

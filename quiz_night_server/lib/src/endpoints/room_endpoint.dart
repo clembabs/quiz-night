@@ -69,6 +69,17 @@ class RoomEndpoint extends Endpoint {
     return RoomService.useWildcard(session, code, hostToken, playerId);
   }
 
+  /// Locks the room to new players, or unlocks it.
+  Future<void> setLocked(
+    Session session,
+    String code,
+    String hostToken,
+    bool locked,
+  ) {
+    Guard.check(session, Limits.hostAction, key: hostToken);
+    return RoomService.setLocked(session, code, hostToken, locked);
+  }
+
   /// Removes a player from the lobby, before the game starts.
   Future<void> removePlayer(
     Session session,

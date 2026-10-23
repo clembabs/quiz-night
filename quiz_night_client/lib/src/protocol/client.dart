@@ -247,6 +247,21 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
+  /// Locks the room to new players, or unlocks it.
+  _ida.Future<void> setLocked(
+    String code,
+    String hostToken,
+    bool locked,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'setLocked',
+    {
+      'code': code,
+      'hostToken': hostToken,
+      'locked': locked,
+    },
+  );
+
   /// Removes a player from the lobby, before the game starts.
   _ida.Future<void> removePlayer(
     String code,

@@ -18,6 +18,8 @@ fields:
   timeLimitSeconds: int
   showQuestionOnPhones: bool, default=true
   wildcardUsed: bool, default=false
+  ### Host has closed the room to new players.
+  locked: bool, default=false
   startingPlayerCount: int?
   questionStartedAt: DateTime?
   questionEndsAt: DateTime?
