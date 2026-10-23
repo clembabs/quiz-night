@@ -44,9 +44,10 @@ class RoomService {
   /// Enabled in `server.dart`; off in tests.
   static bool autoRevealEnabled = false;
 
-  /// Players per room. Every update goes to every phone in the room, so the
-  /// traffic grows with the square of this; 50 keeps a full room cheap.
-  static const maxPlayers = 50;
+  /// Players per room (the MVP size). Every update goes to every phone in
+  /// the room, so traffic grows with the square of this; raise it once
+  /// mid-question updates are batched.
+  static const maxPlayers = 20;
 
   // ---------------------------------------------------------------- lookup
 

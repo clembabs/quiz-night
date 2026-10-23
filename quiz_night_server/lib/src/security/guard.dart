@@ -10,8 +10,13 @@ abstract final class Limits {
   /// New rooms per address.
   static const createRoom = RateLimit('createRoom', 20, Duration(hours: 1));
 
-  /// Joins per address: a whole room of 50 joining at once, with retries.
-  static const joinRoom = RateLimit('joinRoom', 120, Duration(minutes: 1));
+  /// Joins per address: a room's worth of phones on one Wi-Fi, with retries,
+  /// but not a script hopping between rooms.
+  static const joinRoom = RateLimit('joinRoom', 60, Duration(minutes: 1));
+
+  /// Join attempts per room, from any number of addresses: a real group
+  /// trickles in, a script flooding a known code is cut off.
+  static const joinPerRoom = RateLimit('joinPerRoom', 20, Duration(minutes: 1));
 
   /// Wrong room codes per address. Room codes are 4 digits, so this is what
   /// makes guessing them impractical: 15 a minute would take days to try
@@ -36,7 +41,7 @@ abstract final class Limits {
 
   /// Room streams one address may hold open at once: a full room of phones
   /// plus the host, with room for reconnect overlap.
-  static const maxOpenStreams = 150;
+  static const maxOpenStreams = 60;
 }
 
 /// Applies [Limits] in the endpoints. Off by default, so tests of game logic

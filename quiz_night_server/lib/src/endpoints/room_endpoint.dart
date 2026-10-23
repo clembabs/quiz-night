@@ -21,6 +21,7 @@ class RoomEndpoint extends Endpoint {
     // Too many wrong codes from this address: stop it guessing room codes.
     Guard.checkFailures(session, Limits.wrongCode);
     Guard.check(session, Limits.joinRoom);
+    Guard.check(session, Limits.joinPerRoom, key: 'room:${code.trim()}');
     try {
       return await RoomService.joinRoom(session, code, nickname);
     } on QuizException catch (e) {
