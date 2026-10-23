@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
+import '../security/tokens.dart';
 import 'cut_logic.dart';
 import 'nickname.dart';
 import 'question_bank.dart';
@@ -75,7 +76,7 @@ class RoomService {
     bool lock = false,
   }) async {
     final room = await _roomByCode(session, code, tx: tx, lock: lock);
-    if (room.hostToken != hostToken) {
+    if (!tokensMatch(room.hostToken, hostToken)) {
       throw _error(QuizErrorCode.notHost, 'Only the host can do that');
     }
     return room;
