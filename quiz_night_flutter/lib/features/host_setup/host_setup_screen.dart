@@ -10,6 +10,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/brand/chalk_background.dart';
 import '../../widgets/qn/loaders.dart';
+import '../../widgets/qn/notices.dart';
 import '../landing/widgets/landing_header.dart';
 import '../landing/widgets/landing_parts.dart';
 import 'host_setup_cubit.dart';
@@ -57,13 +58,14 @@ class HostSetupScreen extends StatelessWidget {
         if (state.seat != null) {
           context.go(AppPaths.roomFor(state.seat!.code));
         } else if (state.error != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.error!)));
+          showToast(context, state.error!);
         }
       },
       builder: (context, state) =>
-          BlocBuilder<QuestionPackCubit, QuestionPackState>(
+          BlocConsumer<QuestionPackCubit, QuestionPackState>(
+            // Also shown under the topic box.
+            listenWhen: (a, b) => b.error != null && a.error != b.error,
+            listener: (context, pack) => showToast(context, pack.error!),
             builder: (context, pack) {
               final packCubit = context.read<QuestionPackCubit>();
               final readyPack = pack.status == PackStatus.ready
@@ -81,19 +83,21 @@ class HostSetupScreen extends StatelessWidget {
                 for (final item in cubit.summary) _SummaryRow(item: item),
                 _SummaryRow(item: packCubit.summaryItem),
               ];
+              final wide = MediaQuery.sizeOf(context).width >= wideLayout;
               return Scaffold(
                 backgroundColor: AppColors.board,
+                // On phones CREATE ROOM sits in the Scaffold's bottom bar, so
+                // toasts float above it instead of covering it.
+                bottomNavigationBar: wide ? null : _bottomBar(context, create),
                 body: ChalkBackground(
                   spacing: 7,
                   child: Column(
                     children: [
                       const SafeArea(bottom: false, child: _SetupHeader()),
                       Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, box) => box.maxWidth >= wideLayout
-                              ? _wide(context, state, summary, create)
-                              : _narrow(context, state, summary, create),
-                        ),
+                        child: wide
+                            ? _wide(context, state, summary, create)
+                            : _narrow(state, summary),
                       ),
                     ],
                   ),
@@ -170,57 +174,48 @@ class HostSetupScreen extends StatelessWidget {
     );
   }
 
-  /// One column, the summary after the form, and CREATE ROOM always in
-  /// reach along the bottom.
-  Widget _narrow(
-    BuildContext context,
-    HostSetupState state,
-    List<Widget> summary,
-    Widget create,
-  ) {
-    final gutter = AppWebLayout.gutter(MediaQuery.sizeOf(context).width);
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            key: const Key('setup.scroll'),
-            child: LandingSection(
-              top: 28,
-              bottom: 40,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Form(state: state),
-                  const SizedBox(height: 32),
-                  LandingCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _Label('Summary'),
-                        const SizedBox(height: 20),
-                        ...summary,
-                      ],
-                    ),
-                  ),
-                ],
+  /// One column, the summary after the form.
+  Widget _narrow(HostSetupState state, List<Widget> summary) =>
+      SingleChildScrollView(
+        key: const Key('setup.scroll'),
+        child: LandingSection(
+          top: 28,
+          bottom: 40,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Form(state: state),
+              const SizedBox(height: 32),
+              LandingCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _Label('Summary'),
+                    const SizedBox(height: 20),
+                    ...summary,
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
-        DecoratedBox(
-          decoration: const BoxDecoration(
-            color: AppColors.headerGlass,
-            border: Border(top: BorderSide(color: AppColors.line)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 12),
-              child: SizedBox(width: double.infinity, child: create),
-            ),
-          ),
+      );
+
+  /// CREATE ROOM along the bottom of a phone, always in reach.
+  Widget _bottomBar(BuildContext context, Widget create) {
+    final gutter = AppWebLayout.gutter(MediaQuery.sizeOf(context).width);
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.headerGlass,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 12),
+          child: SizedBox(width: double.infinity, child: create),
         ),
-      ],
+      ),
     );
   }
 }

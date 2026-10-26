@@ -140,3 +140,75 @@ class OutStamp extends StatelessWidget {
     ),
   );
 }
+
+/// What a toast is telling the user; sets its colour and glyph, like the
+/// inline banners.
+enum ToastKind {
+  /// Something failed: a wrong code, no connection.
+  error,
+
+  /// It worked out, but not as asked: game already started, room full.
+  warning,
+
+  /// Just so you know.
+  info,
+
+  /// Done.
+  success,
+}
+
+/// Widest a toast gets, so it stays a pill on a desktop screen.
+const _toastMaxWidth = 480.0;
+
+/// Shows [message] as a toast at the bottom of the screen (above the
+/// keyboard on phones), replacing any toast already showing.
+void showToast(
+  BuildContext context,
+  String message, {
+  ToastKind kind = ToastKind.error,
+}) {
+  final (bg, fg, glyph) = switch (kind) {
+    ToastKind.error => (AppColors.maroonDeep, AppColors.maroonPale, '✕'),
+    ToastKind.warning => (AppColors.goldDeep, AppColors.goldPale, '!'),
+    ToastKind.info => (AppColors.info, AppColors.infoText, 'i'),
+    ToastKind.success => (AppColors.green, AppColors.mintPale, '✓'),
+  };
+  final screen = MediaQuery.sizeOf(context).width;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        key: Key('toast.${kind.name}'),
+        backgroundColor: bg,
+        behavior: SnackBarBehavior.floating,
+        width: screen > _toastMaxWidth + 32 ? _toastMaxWidth : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          side: BorderSide(color: fg.withValues(alpha: 0.25)),
+        ),
+        content: Semantics(
+          liveRegion: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                glyph,
+                style: AppTextStyles.toast.copyWith(
+                  color: fg,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTextStyles.toast.copyWith(color: fg, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+}

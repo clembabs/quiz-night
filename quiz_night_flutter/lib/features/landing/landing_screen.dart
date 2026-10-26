@@ -45,20 +45,31 @@ class SiteScaffold extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  key: const Key('landing.scroll'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ...sections(context),
-                      LandingFooter(
-                        onHow: () => context.go(AppPaths.howItWorks),
-                        onHostingGuide: () => context.go(AppPaths.hosting),
-                        onFaq: () => context.go(AppPaths.faq),
-                        onJoin: () => context.go(AppPaths.join),
-                        onHost: () => context.go(AppPaths.host),
+                child: LayoutBuilder(
+                  builder: (context, box) => SingleChildScrollView(
+                    key: const Key('landing.scroll'),
+                    child: ConstrainedBox(
+                      // At least the window's height, so on a short page
+                      // the footer sits at the bottom, not mid-screen.
+                      constraints: BoxConstraints(minHeight: box.maxHeight),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: sections(context),
+                          ),
+                          LandingFooter(
+                            onHow: () => context.go(AppPaths.howItWorks),
+                            onHostingGuide: () => context.go(AppPaths.hosting),
+                            onFaq: () => context.go(AppPaths.faq),
+                            onJoin: () => context.go(AppPaths.join),
+                            onHost: () => context.go(AppPaths.host),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
