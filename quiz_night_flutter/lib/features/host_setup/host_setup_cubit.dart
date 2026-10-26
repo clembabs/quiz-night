@@ -79,7 +79,9 @@ class HostSetupState extends Equatable {
     seat: seat,
   );
 
-  RoomConfig toConfig() => RoomConfig(
+  RoomConfig toConfig({PackDraft? pack}) => RoomConfig(
+    packId: pack?.packId,
+    packToken: pack?.packToken,
     eliminationRule: rule,
     questionsPerRound: questionsPerRound,
     finalistTarget: finalists,
@@ -191,11 +193,12 @@ class HostSetupCubit extends Cubit<HostSetupState> {
     ];
   }
 
-  Future<void> create() async {
+  /// Creates the room, playing [pack] (AI questions) when given.
+  Future<void> create({PackDraft? pack}) async {
     if (state.submitting) return;
     emit(state.withStatus(submitting: true));
     try {
-      final seat = await _lobby.createRoom(state.toConfig());
+      final seat = await _lobby.createRoom(state.toConfig(pack: pack));
       await _seats.save(seat);
       emit(state.withStatus(seat: seat));
     } on AppFailure catch (f) {
