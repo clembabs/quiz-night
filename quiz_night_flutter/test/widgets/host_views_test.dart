@@ -190,6 +190,31 @@ void main() {
       verify(() => setup.create(pack: pack)).called(1);
     });
 
+    testWidgets('when writing questions fails then the error shows under '
+        'the topic and as a toast', (t) async {
+      const idle = QuestionPackState(status: PackStatus.idle, topic: 'Lagos');
+      const failed = QuestionPackState(
+        status: PackStatus.idle,
+        topic: 'Lagos',
+        error: 'The free AI quota is used up for now.',
+      );
+      whenListen(
+        packCubit,
+        Stream.value(failed),
+        initialState: idle,
+      );
+      await pumpSetup(t);
+      await t.pump();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('toast.error')),
+          matching: find.text(failed.error!),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('topic.error')), findsOneWidget);
+    });
+
     testWidgets('when AI questions are not set up then it says so and the '
         'game uses the built-in ones', (t) async {
       when(
