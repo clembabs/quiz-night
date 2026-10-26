@@ -42,39 +42,58 @@ void main() {
     blocTest<QuestionPackCubit, QuestionPackState>(
       'when Write questions succeeds then the pack is ready to preview',
       setUp: () => when(
-        () =>
-            questions.generatePack('Nollywood', QuestionDifficulty.hard, any()),
+        () => questions.generatePack(
+          'Nollywood',
+          QuestionDifficulty.hard,
+          30,
+          any(),
+        ),
       ).thenAnswer((_) async => pack),
       build: () => QuestionPackCubit(questions),
       seed: () => const QuestionPackState(status: PackStatus.idle),
       act: (c) => c
         ..setTopic('  Nollywood ')
         ..setDifficulty(QuestionDifficulty.hard)
+        ..setCount(30)
         ..generate(RoomConfig()),
-      skip: 2,
+      skip: 3,
       expect: () => [
         const QuestionPackState(
           status: PackStatus.generating,
           topic: '  Nollywood ',
           difficulty: QuestionDifficulty.hard,
+          count: 30,
         ),
         QuestionPackState(
           status: ready,
           topic: '  Nollywood ',
           difficulty: QuestionDifficulty.hard,
+          count: 30,
           pack: pack,
         ),
       ],
       verify: (c) {
         expect(c.summaryItem.title, '6 AI questions on “Nollywood”');
-        expect(c.summaryItem.detail, contains('a few spare'));
+        expect(c.summaryItem.detail, contains('every round'));
       },
+    );
+
+    blocTest<QuestionPackCubit, QuestionPackState>(
+      'when the count is set outside 10–40 then it is kept within them',
+      build: () => QuestionPackCubit(questions),
+      act: (c) => c
+        ..setCount(5)
+        ..setCount(45),
+      expect: () => [
+        const QuestionPackState(count: 10),
+        const QuestionPackState(count: 40),
+      ],
     );
 
     blocTest<QuestionPackCubit, QuestionPackState>(
       'when writing fails again then the earlier pack is kept, with the error',
       setUp: () => when(
-        () => questions.generatePack(any(), any(), any()),
+        () => questions.generatePack(any(), any(), any(), any()),
       ).thenThrow(const AppFailure('The free AI quota is used up for now.')),
       build: () => QuestionPackCubit(questions),
       seed: () =>
@@ -102,7 +121,7 @@ void main() {
       act: (c) => c.generate(RoomConfig()),
       expect: () => <QuestionPackState>[],
       verify: (_) =>
-          verifyNever(() => questions.generatePack(any(), any(), any())),
+          verifyNever(() => questions.generatePack(any(), any(), any(), any())),
     );
   });
 

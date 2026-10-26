@@ -212,7 +212,7 @@ void main() {
       final questions = MockQuestionsRepository();
       when(() => questions.aiAvailable()).thenAnswer((_) async => true);
       when(
-        () => questions.generatePack(any(), any(), any()),
+        () => questions.generatePack(any(), any(), any(), any()),
       ).thenAnswer((_) async => samplePack(rounds: 25, finals: 7));
       final packs = QuestionPackCubit(questions)..setTopic('Nollywood');
       addTearDown(packs.close);

@@ -132,6 +132,41 @@ void main() {
       verify(() => packCubit.generate(any())).called(1);
     });
 
+    testWidgets('when the count slider moves then the pack cubit gets a '
+        'count between 10 and 40', (t) async {
+      when(() => packCubit.state).thenReturn(
+        const QuestionPackState(status: PackStatus.idle, topic: 'Nollywood'),
+      );
+      await pumpSetup(t);
+      expect(find.text('Write 20 questions'), findsOneWidget);
+      final slider = find.byKey(const Key('topic.count'));
+      await t.ensureVisible(slider);
+      // The right end of the track is the maximum.
+      await t.tapAt(t.getRect(slider).centerRight - const Offset(4, 0));
+      verify(() => packCubit.setCount(40)).called(1);
+    });
+
+    testWidgets('when the page scrolls on a wide screen then the summary and '
+        'Create room stay in view', (t) async {
+      when(() => packCubit.state).thenReturn(
+        QuestionPackState(
+          status: PackStatus.ready,
+          topic: 'Nollywood',
+          pack: samplePack(rounds: 25, finals: 7),
+        ),
+      );
+      await pumpSetup(t);
+      final create = find.byKey(const Key('create.submit'));
+      final before = t.getRect(create);
+      await t.drag(
+        find.byKey(const Key('setup.scroll')),
+        const Offset(0, -800),
+      );
+      await t.pump();
+      expect(t.getRect(create), before);
+      expect(create.hitTestable(), findsOneWidget);
+    });
+
     testWidgets('when a pack is ready then the host previews it, can remove '
         'a question, and Create room plays it', (t) async {
       final pack = samplePack();
