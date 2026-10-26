@@ -145,7 +145,7 @@ class EndpointBuzzer extends _isc.EndpointRef {
 }
 
 /// AI-written questions for the host's setup screen. Rate limited inside
-/// [QuestionPacks.generate] (5 an hour per address, 300 a day overall).
+/// [QuestionPacks.generate] (3 an hour per address, 150 a day overall).
 /// {@category Endpoint}
 class EndpointQuestions extends _isc.EndpointRef {
   EndpointQuestions(_isc.EndpointCaller caller) : super(caller);
@@ -160,10 +160,12 @@ class EndpointQuestions extends _isc.EndpointRef {
     {},
   );
 
-  /// Writes a question pack on [topic] sized for a game with [config].
+  /// Writes [questionCount] questions (10-40) on [topic] for a game with
+  /// [config].
   _ida.Future<_i1m5kpiv.PackDraft> generatePack(
     String topic,
     _ih0atpad.QuestionDifficulty difficulty,
+    int questionCount,
     _i2v75h2f.RoomConfig config,
   ) => caller.callServerEndpoint<_i1m5kpiv.PackDraft>(
     'questions',
@@ -171,6 +173,7 @@ class EndpointQuestions extends _isc.EndpointRef {
     {
       'topic': topic,
       'difficulty': difficulty,
+      'questionCount': questionCount,
       'config': config,
     },
   );

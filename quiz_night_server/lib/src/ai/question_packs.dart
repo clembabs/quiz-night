@@ -22,20 +22,25 @@ abstract final class QuestionPacks {
   static QuestionGenerator? generator;
 
   /// Generations per address: a host trying a few topics.
-  static const perAddress = RateLimit('aiPerAddress', 5, Duration(hours: 1));
+  static const perAddress = RateLimit('aiPerAddress', 3, Duration(hours: 1));
 
-  /// Generations across the whole server per day, under the free tier.
-  static const perDay = RateLimit('aiPerDay', 300, Duration(hours: 24));
+  /// Generations across the whole server per day. Each can take two model
+  /// calls (the fallback), so this stays near 300 calls, under the free tier.
+  static const perDay = RateLimit('aiPerDay', 150, Duration(hours: 24));
 
   static const minTopic = 2;
   static const maxTopic = 100;
 
-  /// Extra questions beyond the estimate, so the host can remove a few.
-  static const roundSpares = 3;
-  static const finalSpares = 2;
+  /// How many questions the host may ask for (rounds and final together).
+  static const minQuestions = 10;
+  static const maxQuestions = 40;
 
-  /// Most round questions to ask for in one go.
-  static const maxRoundQuestions = 40;
+  /// Splits the host's [count] into round and final questions: the game's
+  /// final questions, but no more than a third of the pack.
+  static ({int rounds, int finals}) split(int count, RoomConfig config) {
+    final finals = min(config.finalQuestionCount, count ~/ 3);
+    return (rounds: count - finals, finals: finals);
+  }
 
   static final _rng = Random.secure();
 
@@ -70,19 +75,21 @@ abstract final class QuestionPacks {
     final fitInTime =
         RoomService.sessionLength.inSeconds ~/ (config.timeLimitSeconds + 25);
     final roundQuestions = min<int>(
-      min<int>(config.questionsPerRound * max(rounds, 1), fitInTime),
-      maxRoundQuestions,
+      config.questionsPerRound * max(rounds, 1),
+      fitInTime,
     );
     return (rounds: roundQuestions, finals: config.finalQuestionCount);
   }
 
   static bool get available => generator != null;
 
-  /// Writes, checks and saves a pack for [topic].
+  /// Writes, checks and saves a pack of [questionCount] questions on
+  /// [topic].
   static Future<PackDraft> generate(
     Session session,
     String topic,
     QuestionDifficulty difficulty,
+    int questionCount,
     RoomConfig config,
   ) async {
     final gen = generator;
@@ -98,6 +105,12 @@ abstract final class QuestionPacks {
       throw _error(
         QuizErrorCode.invalidInput,
         'Describe the topic in $minTopic-$maxTopic characters.',
+      );
+    }
+    if (questionCount < minQuestions || questionCount > maxQuestions) {
+      throw _error(
+        QuizErrorCode.invalidInput,
+        'Pick $minQuestions to $maxQuestions questions.',
       );
     }
     if (Nickname.isOffensive(cleanTopic)) {
@@ -120,14 +133,15 @@ abstract final class QuestionPacks {
     }
 
     final need = questionsNeeded(config);
+    final ask = split(questionCount, config);
     final List<DraftQuestion> drafts;
     try {
       drafts = await gen.generate(
         GenerationRequest(
           topic: cleanTopic,
           difficulty: difficulty,
-          roundCount: need.rounds + roundSpares,
-          finalCount: need.finals + finalSpares,
+          roundCount: ask.rounds,
+          finalCount: ask.finals,
         ),
       );
     } on GenerationRefused {

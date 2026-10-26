@@ -235,6 +235,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<_i4ozqmvk.QuestionDifficulty>(),
               nullable: false,
             ),
+            'questionCount': _is.ParameterDescription(
+              name: 'questionCount',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
             'config': _is.ParameterDescription(
               name: 'config',
               type: _is.getType<_i3izb6ro.RoomConfig>(),
@@ -250,6 +255,7 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['topic'],
                     params['difficulty'],
+                    params['questionCount'],
                     params['config'],
                   ),
         ),
