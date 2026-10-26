@@ -6,6 +6,7 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 import '../../app/app_paths.dart';
 import '../../core/platform/screen_wake_lock.dart';
 import '../../core/platform/site_url.dart';
+import '../../core/platform/sounds.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
@@ -141,6 +142,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       reconnecting: _reconnecting(state),
       clock: _clock(room, state, large: true),
       actions: [
+        const _SoundToggle(),
         HostTextButton(label: 'Leave', onPressed: () => _confirmLeave(context)),
       ],
       child: _hostBody(room, state),
@@ -258,6 +260,28 @@ String hostTopLabel(RoomState room, RoomViewState state) {
     RoomStatus.finished => 'Results',
     _ => '',
   };
+}
+
+/// The projector's Sound on / Muted switch for the cut's sounds.
+class _SoundToggle extends StatefulWidget {
+  const _SoundToggle();
+
+  @override
+  State<_SoundToggle> createState() => _SoundToggleState();
+}
+
+class _SoundToggleState extends State<_SoundToggle> {
+  late final Sounds _sounds = Sounds.of(context);
+
+  @override
+  Widget build(BuildContext context) => HostTextButton(
+    key: const Key('host.sound'),
+    label: _sounds.enabled ? 'Sound on' : 'Muted',
+    onPressed: () => setState(() {
+      _sounds.enabled = !_sounds.enabled;
+      if (!_sounds.enabled) _sounds.stop();
+    }),
+  );
 }
 
 class _Gone extends StatelessWidget {

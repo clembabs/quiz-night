@@ -7,9 +7,14 @@ import '../fakes/fakes.dart';
 
 const intro = Duration(seconds: 2);
 const step = Duration(seconds: 1);
+const lastHold = Duration(seconds: 3);
 
-RevealSequenceCubit sequence(int total) =>
-    RevealSequenceCubit(total: total, intro: intro, step: step);
+RevealSequenceCubit sequence(int total) => RevealSequenceCubit(
+  total: total,
+  intro: intro,
+  step: step,
+  lastHold: lastHold,
+);
 
 void main() {
   group('Given a cut with three players out', () {
@@ -25,9 +30,14 @@ void main() {
 
         time.elapse(step);
         expect(cubit.state.revealed, 2);
+        expect(cubit.state.waitingForLast, isTrue);
 
+        // The last name waits longer.
         time.elapse(step);
+        expect(cubit.state.revealed, 2);
+        time.elapse(lastHold - step);
         expect(cubit.state.revealed, 3);
+        expect(cubit.state.waitingForLast, isFalse);
         expect(cubit.state.isDone, isFalse, reason: 'holds on the last name');
 
         time.elapse(step);

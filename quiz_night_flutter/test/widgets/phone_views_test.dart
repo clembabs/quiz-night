@@ -264,7 +264,8 @@ void main() {
       await t.pump(const Duration(seconds: 1));
 
       expect(find.text('YOU\nSURVIVED'), findsOneWidget);
-      expect(haptics.played, [HapticToken.celebrate]);
+      // A buzz as the name dropped, then the celebration.
+      expect(haptics.played, [HapticToken.medium, HapticToken.celebrate]);
     });
 
     testWidgets('when you are out then the stamp, and you can keep watching', (
