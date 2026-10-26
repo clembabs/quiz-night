@@ -10,13 +10,11 @@ import '../brand/chalk_background.dart';
 import '../brand/crest.dart';
 import 'notices.dart';
 
-/// The phone layout: a centred column (480 max on tablets and desktops),
-/// safe areas, an optional header and the reconnecting overlay.
+/// Phone layout: centred column (max 480), safe areas, header, overlay.
 class PhoneFrame extends StatelessWidget {
   final Widget child;
 
-  /// Room code and phase label ("Lobby", "Round 2", "Spectating"…); no
-  /// header when null.
+  /// Room code and phase label ("Lobby", "Round 2"…); null hides header.
   final String? code;
   final String? phase;
 

@@ -1,7 +1,5 @@
 name: quiz_night_server
-description: Starting point for a Serverpod server.
-# version: 1.0.0
-# homepage: https://www.example.com
+description: Quiz Night server (rooms, cuts, the buzzer final, AI questions).
 
 environment:
   sdk: '^3.12.2'
@@ -37,25 +35,7 @@ serverpod:
         set -- web --base-href / --output ../quiz_night_server/web/app
         flutter build "$@" || { flutter clean && flutter build "$@"; }
 
-  # Companion Flutter apps that `serverpod start` can launch (Ctrl+R), keyed
-  # by a display alias. The default device is the web server, opening the
-  # machine's default browser when ready. All non-reserved properties are
-  # forwarded to `flutter run`. For the best IDE debugging experience, use
-  # `chrome` or a native target as the device. See the example below:
-  #
-  # Admin:
-  #   path: ../apps/admin_flutter
-  #   displayName: "Admin app"
-  #   auto_launch: true
-  #   device: chrome
-  #   target: lib/main.dart
-  #   web-hostname: 0.0.0.0
-  #   web-port: 8090
-  #   release: true
-  #   pub: false
-  #   dart-define:
-  #     API_URL=https://admin.example.com
-  #     FLAVOR=production
+  # The app `serverpod start` launches alongside the server (Ctrl+R).
   flutter_apps:
     quiz_night:
       path: ../quiz_night_flutter

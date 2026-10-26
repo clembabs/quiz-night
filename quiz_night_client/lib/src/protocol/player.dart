@@ -26,6 +26,7 @@ abstract class Player
     _iarmrzsm.PlayerStatus? status,
     this.eliminatedInRound,
     this.backedPlayerId,
+    this.exitLine,
     DateTime? joinedAt,
   }) : score = score ?? 0,
        shadowScore = shadowScore ?? 0,
@@ -45,6 +46,7 @@ abstract class Player
     _iarmrzsm.PlayerStatus? status,
     int? eliminatedInRound,
     int? backedPlayerId,
+    String? exitLine,
     DateTime? joinedAt,
   }) = _PlayerImpl;
 
@@ -64,6 +66,7 @@ abstract class Player
             ),
       eliminatedInRound: jsonSerialization['eliminatedInRound'] as int?,
       backedPlayerId: jsonSerialization['backedPlayerId'] as int?,
+      exitLine: jsonSerialization['exitLine'] as String?,
       joinedAt: jsonSerialization['joinedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['joinedAt']),
@@ -93,6 +96,9 @@ abstract class Player
 
   int? backedPlayerId;
 
+  /// The host's line when this player was cut (AI-written or built-in).
+  String? exitLine;
+
   DateTime joinedAt;
 
   /// Returns a shallow copy of this [Player]
@@ -109,6 +115,7 @@ abstract class Player
     _iarmrzsm.PlayerStatus? status,
     int? eliminatedInRound,
     int? backedPlayerId,
+    String? exitLine,
     DateTime? joinedAt,
   });
   @override
@@ -125,6 +132,7 @@ abstract class Player
       'status': status.toJson(),
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
+      if (exitLine != null) 'exitLine': exitLine,
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -143,6 +151,7 @@ abstract class Player
       'status': status.toJson(),
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
+      if (exitLine != null) 'exitLine': exitLine,
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -167,6 +176,7 @@ class _PlayerImpl extends Player {
     _iarmrzsm.PlayerStatus? status,
     int? eliminatedInRound,
     int? backedPlayerId,
+    String? exitLine,
     DateTime? joinedAt,
   }) : super._(
          id: id,
@@ -179,6 +189,7 @@ class _PlayerImpl extends Player {
          status: status,
          eliminatedInRound: eliminatedInRound,
          backedPlayerId: backedPlayerId,
+         exitLine: exitLine,
          joinedAt: joinedAt,
        );
 
@@ -197,6 +208,7 @@ class _PlayerImpl extends Player {
     _iarmrzsm.PlayerStatus? status,
     Object? eliminatedInRound = _Undefined,
     Object? backedPlayerId = _Undefined,
+    Object? exitLine = _Undefined,
     DateTime? joinedAt,
   }) {
     return Player(
@@ -214,6 +226,7 @@ class _PlayerImpl extends Player {
       backedPlayerId: backedPlayerId is int?
           ? backedPlayerId
           : this.backedPlayerId,
+      exitLine: exitLine is String? ? exitLine : this.exitLine,
       joinedAt: joinedAt ?? this.joinedAt,
     );
   }

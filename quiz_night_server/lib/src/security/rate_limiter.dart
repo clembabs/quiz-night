@@ -5,8 +5,7 @@ class RateLimit {
   final int max;
   final Duration window;
 
-  /// For failure limits: going over [max] blocks the key for this long,
-  /// even after the window resets.
+  /// Failure limits: over [max] blocks the key this long, even past the window.
   final Duration? blockFor;
 
   const RateLimit(this.name, this.max, this.window, {this.blockFor});
@@ -22,9 +21,7 @@ class _Window {
   bool expiredAt(DateTime now) => now.difference(start) >= length;
 }
 
-/// Fixed-window counters held in memory. Fine for one server instance; with
-/// several behind a load balancer each would count separately, and this
-/// would move to Redis.
+/// In-memory fixed windows: fine for one instance; several would need Redis.
 class RateLimiter {
   final _windows = <String, _Window>{};
 
@@ -32,8 +29,7 @@ class RateLimiter {
   final _blockedUntil = <String, DateTime>{};
   int _sinceSweep = 0;
 
-  /// Sweep expired counters every this many calls, so memory stays bounded
-  /// by the number of recently active keys.
+  /// Sweep expired counters every N calls to bound memory to active keys.
   static const sweepEvery = 1000;
 
   _Window _current(String key, RateLimit limit, DateTime now) {
@@ -43,8 +39,7 @@ class RateLimiter {
     return _windows[id] = _Window(now, limit.window);
   }
 
-  /// Counts one event for [key]; false (and nothing counted) once the limit
-  /// is reached for the current window.
+  /// Counts one event for [key]; false (counting nothing) once at the limit.
   bool tryAcquire(String key, RateLimit limit, DateTime now) {
     _maybeSweep(now);
     final window = _current(key, limit, now);
@@ -53,8 +48,7 @@ class RateLimiter {
     return true;
   }
 
-  /// Whether [key] may not go on, without counting anything: blocked by a
-  /// [RateLimit.blockFor] limit, or (without one) used up this window.
+  /// Whether [key] is blocked or used up this window, without counting.
   bool isExhausted(String key, RateLimit limit, DateTime now) {
     final id = '${limit.name}|$key';
     if (limit.blockFor != null) {
@@ -67,9 +61,8 @@ class RateLimiter {
         window.count >= limit.max;
   }
 
-  /// Counts one event for [key], even past the limit (for "failed attempt"
-  /// limits checked separately with [isExhausted]). Going over the limit of a
-  /// [RateLimit.blockFor] limit starts the block.
+  /// Counts an event even past the limit (failure limits; see [isExhausted]).
+  /// Going over a [RateLimit.blockFor] limit starts the block.
   void record(String key, RateLimit limit, DateTime now) {
     _maybeSweep(now);
     final window = _current(key, limit, now);

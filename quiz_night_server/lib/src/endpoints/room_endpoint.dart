@@ -4,9 +4,7 @@ import '../game/room_service.dart';
 import '../generated/protocol.dart';
 import '../security/guard.dart';
 
-/// Room lifecycle. Host-only methods take the `hostToken` returned by
-/// [createRoom]; the server rejects them without it. Every method is rate
-/// limited (see [Limits]).
+/// Room lifecycle. Host-only methods need the `hostToken`; all rate limited.
 class RoomEndpoint extends Endpoint {
   Future<CreateRoomResult> createRoom(Session session, RoomConfig config) {
     Guard.check(session, Limits.createRoom);
@@ -91,8 +89,7 @@ class RoomEndpoint extends Endpoint {
     return RoomService.removePlayer(session, code, hostToken, playerId);
   }
 
-  /// Live room updates. The first event is always a full snapshot, so
-  /// re-subscribing after a disconnect restores the client's view.
+  /// Live updates; always starts with a full snapshot so reconnects recover.
   Stream<RoomState> watchRoom(Session session, String code) async* {
     Guard.check(session, Limits.watch);
     final release = Guard.openStream(session);

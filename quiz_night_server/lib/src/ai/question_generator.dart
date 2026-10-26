@@ -46,8 +46,7 @@ class GenerationFailed implements Exception {
   String toString() => 'GenerationFailed: $reason';
 }
 
-/// Writes quiz questions on a topic. Swappable, so the provider is a
-/// setting and tests use a fake that never calls a paid or rate-limited API.
+/// Writes questions on a topic; swappable so tests avoid the paid API.
 abstract interface class QuestionGenerator {
   Future<List<DraftQuestion>> generate(GenerationRequest request);
 }

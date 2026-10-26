@@ -42,15 +42,13 @@ String deskStatusLabel(DeskState s) => switch (s) {
   ),
 };
 
-/// The projector's finalist desk: status pill, big avatar, desk with name and
-/// score. Sized for the 1920×1080 canvas.
+/// The projector's finalist desk (pill, avatar, name, score) at 1920×1080.
 class FinalistDesk extends StatelessWidget {
   final String nickname;
   final String score;
   final DeskState state;
 
-  /// Width the desk is laid out at before scaling; narrower on a phone,
-  /// where three desks share 800 px, so they scale down less.
+  /// Layout width before scaling; narrower on phones so desks shrink less.
   final double layoutWidth;
 
   const FinalistDesk({
@@ -64,8 +62,7 @@ class FinalistDesk extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = deskColors(state);
-    // Laid out at a fixed design width and scaled down to whatever space the
-    // screen gives it (the final has less room than "Meet your finalists").
+    // Laid out at a fixed width, then scaled down to the space available.
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.bottomCenter,

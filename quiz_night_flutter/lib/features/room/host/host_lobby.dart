@@ -244,8 +244,7 @@ class HostLobby extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 24),
-          // Lock once everyone's in, so nobody else can use the code on
-          // screen; Start stays the main action. Wraps on a narrow phone.
+          // Lock stops strangers using the code on screen; Start stays main.
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,

@@ -6,6 +6,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'app/quiz_night_app.dart';
 import 'core/platform/haptics.dart';
 import 'core/platform/screen_wake_lock.dart';
+import 'core/platform/sounds.dart';
 import 'client.dart';
 import 'data/questions_repository.dart';
 import 'data/room_repositories.dart';
@@ -13,8 +14,7 @@ import 'data/seat_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Real paths (`/faq`, `/room/4821`) instead of `/#/faq`. The server
-  // answers unknown paths with index.html, so deep links and reloads work.
+  // Path URLs, not `/#/`; the server serves index.html for unknown paths.
   usePathUrlStrategy();
   _registerFontLicenses();
   await initializeClient();
@@ -27,12 +27,12 @@ void main() async {
       questions: ServerpodQuestionsRepository(client),
       wakeLock: createScreenWakeLock(),
       haptics: createHaptics(),
+      sounds: createSounds(),
     ),
   );
 }
 
-/// The bundled fonts are SIL Open Font License; list them in the app's
-/// licence page alongside the package licences.
+/// Lists the bundled SIL OFL fonts on the licence page.
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
     for (final (name, file) in [

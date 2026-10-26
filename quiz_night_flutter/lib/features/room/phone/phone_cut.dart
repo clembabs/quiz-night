@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/crest.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/celebrations.dart';
+import '../../../widgets/qn/host_line.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
@@ -33,8 +34,7 @@ Color cutBackground(
   };
 }
 
-/// The phone during a cut: suspense until your fate shows, then You
-/// survived / Eliminated, then (for spectators) back a finalist.
+/// The phone during a cut: suspense, your fate, then back a finalist.
 class PhoneCut extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;
@@ -145,45 +145,66 @@ class _FateHapticState extends State<_FateHaptic> {
   Widget build(BuildContext context) => widget.child;
 }
 
-class _Suspense extends StatelessWidget {
+/// "Are you safe?", with a buzz each time a name drops on the big screen.
+class _Suspense extends StatefulWidget {
   final RevealSequenceState sequence;
 
   const _Suspense({required this.sequence});
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Crest(width: 72),
-          const SizedBox(height: 24),
-          Text(
-            'ARE YOU SAFE?',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.displayL.copyWith(color: AppColors.gold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const PulsingDots(),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  sequence.phase == RevealPhase.intro
-                      ? 'Look at the big screen…'
-                      : '${sequence.revealed} of ${sequence.total} revealed',
-                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
+  State<_Suspense> createState() => _SuspenseState();
+}
+
+class _SuspenseState extends State<_Suspense> {
+  @override
+  void didUpdateWidget(_Suspense old) {
+    super.didUpdateWidget(old);
+    if (widget.sequence.revealed > old.sequence.revealed) {
+      context.read<Haptics>().play(HapticToken.medium);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sequence = widget.sequence;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Crest(width: 72),
+            const SizedBox(height: 24),
+            Text(
+              'ARE YOU SAFE?',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.displayL.copyWith(color: AppColors.gold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const PulsingDots(),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    switch (sequence) {
+                      RevealSequenceState(phase: RevealPhase.intro) =>
+                        'Look at the big screen…',
+                      RevealSequenceState(waitingForLast: true) =>
+                        'One name left…',
+                      _ => '${sequence.revealed} of ${sequence.total} revealed',
+                    },
+                    style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _Survived extends StatelessWidget {
@@ -305,6 +326,13 @@ class _Eliminated extends StatelessWidget {
                       fontSize: 17,
                       color: AppColors.maroonPale,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  HostLine(
+                    key: const Key('cut.hostLine'),
+                    line: me.exitLine,
+                    fontSize: 18,
+                    maxLines: 4,
                   ),
                 ],
               ),

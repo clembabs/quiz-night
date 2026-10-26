@@ -13,8 +13,7 @@ void main() {
     });
 
     test('when hashing then it matches the design system algorithm', () {
-      // Sum of code points mod 8, as in the prototype: "Ab" = 65 + 98 = 163,
-      // 163 % 8 = 3.
+      // Sum of code points mod 8: "Ab" = 65 + 98 = 163, 163 % 8 = 3.
       expect(badgeToneFor('Ab'), AppColors.badgeTones[3]);
     });
 

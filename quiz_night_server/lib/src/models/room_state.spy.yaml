@@ -12,8 +12,7 @@ fields:
   wildcardUsed: bool
   ### Host has closed the room to new players.
   locked: bool, default=false
-  ### When the game's 30 minutes run out (server clock); null before the
-  ### game starts and once it has ended.
+  ### When the 30-minute game ends (server clock); null if not running.
   sessionEndsAt: DateTime?
   ### Why the game ended, once it has.
   endReason: RoomEndReason?
@@ -27,7 +26,5 @@ fields:
   buzzWinnerId: int?
   ### Whether phones show the question text (host setting).
   showQuestionOnPhones: bool, default=true
-  ### How many players would survive if the round ended now: the danger line.
-  ### Null when there is no end-of-round cut to predict (lobby, sudden death,
-  ### the final).
+  ### Danger line: survivors if the round ended now; null with no round cut.
   projectedSurvivors: int?

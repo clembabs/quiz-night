@@ -1,12 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
+import '../../../core/platform/sounds.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/finalist_desk.dart';
+import '../../../widgets/qn/host_line.dart';
 import '../../../widgets/qn/host_stage.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
@@ -16,8 +20,7 @@ import '../final/final_logic.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
 
-/// The projector cut: a suspense beat, names stamped OUT one by one, then
-/// "13 SURVIVE" (or the finalists' desks when the final is next).
+/// The projector cut as a show: face-down cards flip to names stamped OUT.
 class HostCut extends StatelessWidget {
   final RoomState room;
 
@@ -45,55 +48,141 @@ class HostCut extends StatelessWidget {
         final title = switch (seq.phase) {
           RevealPhase.intro =>
             out.isEmpty ? 'Is anyone going home?' : 'Who’s going home?',
+          RevealPhase.revealing when seq.waitingForLast =>
+            'And the last one going home…',
           RevealPhase.revealing => 'Going home…',
           RevealPhase.done =>
             finalists ? 'Meet your finalists' : 'Round ${room.round} is over',
         };
         final showDesks = seq.isDone && finalists;
         final portrait = HostLayout.isPortrait(context);
-        return Column(
-          children: [
-            Text(
-              title.toUpperCase(),
-              key: const Key('cut.title'),
-              textAlign: TextAlign.center,
-              style: AppTextStyles.displayXl.copyWith(
-                fontSize: portrait ? 72 : 96,
-              ),
-            ),
-            SizedBox(height: portrait ? 40 : 56),
-            Expanded(
-              child: showDesks
-                  ? _Desks(room: room)
-                  : _Cards(
-                      players: out,
-                      stamped: seq.revealed,
-                      wildcard: seq.isDone && canUseWildcard(room),
-                    ),
-            ),
-            if (seq.isDone && !showDesks) ...[
-              _Survive(count: event?.survivorsCount ?? 0),
-              if (event?.tieBrokenBySpeed ?? false)
-                Text(
-                  'A tie at the cutoff was broken by answer speed.',
-                  style: AppProjectorText.caption,
+        return _CutSounds(
+          sequence: seq,
+          anyoneOut: out.isNotEmpty,
+          finalists: finalists,
+          child: Column(
+            children: [
+              Text(
+                title.toUpperCase(),
+                key: const Key('cut.title'),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.displayXl.copyWith(
+                  fontSize: portrait ? 72 : 96,
                 ),
+              ),
+              SizedBox(height: portrait ? 40 : 56),
+              Expanded(
+                child: showDesks
+                    ? _Desks(room: room)
+                    : _Shake(
+                        trigger: seq.revealed,
+                        child: _Cards(
+                          players: out,
+                          stamped: seq.revealed,
+                          wildcard: seq.isDone && canUseWildcard(room),
+                        ),
+                      ),
+              ),
+              if (seq.isDone && !showDesks) ...[
+                _Survive(count: event?.survivorsCount ?? 0),
+                if (event?.tieBrokenBySpeed ?? false)
+                  Text(
+                    'A tie at the cutoff was broken by answer speed.',
+                    style: AppProjectorText.caption,
+                  ),
+              ],
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: seq.isDone
+                    ? HostStepButton(room: room)
+                    : HostTextButton(
+                        label: 'Skip',
+                        onPressed: context.read<RevealSequenceCubit>().skip,
+                      ),
+              ),
             ],
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: seq.isDone
-                  ? HostStepButton(room: room)
-                  : HostTextButton(
-                      label: 'Skip',
-                      onPressed: context.read<RevealSequenceCubit>().skip,
-                    ),
-            ),
-          ],
+          ),
         );
       },
     );
   }
+}
+
+/// Plays the cut's drumroll, stamps and closing chime as [sequence] moves.
+class _CutSounds extends StatefulWidget {
+  final RevealSequenceState sequence;
+  final bool anyoneOut;
+  final bool finalists;
+  final Widget child;
+
+  const _CutSounds({
+    required this.sequence,
+    required this.anyoneOut,
+    required this.finalists,
+    required this.child,
+  });
+
+  @override
+  State<_CutSounds> createState() => _CutSoundsState();
+}
+
+class _CutSoundsState extends State<_CutSounds> {
+  late final Sounds _sounds = Sounds.of(context);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sequence.phase == RevealPhase.intro && widget.anyoneOut) {
+      _sounds.play(SoundCue.drumroll);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_CutSounds old) {
+    super.didUpdateWidget(old);
+    final was = old.sequence;
+    final now = widget.sequence;
+    if (now.isDone && !was.isDone) {
+      _sounds
+        ..stop()
+        ..play(widget.finalists ? SoundCue.fanfare : SoundCue.survive);
+    } else if (now.revealed > was.revealed) {
+      _sounds.play(SoundCue.stamp);
+      if (now.waitingForLast) _sounds.play(SoundCue.drumroll);
+    }
+  }
+
+  @override
+  void dispose() {
+    _sounds.stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Jolts [child] sideways each time [trigger] goes up: the stamp landing.
+class _Shake extends StatelessWidget {
+  final int trigger;
+  final Widget child;
+
+  const _Shake({required this.trigger, required this.child});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    // A new key per stamp restarts the shake from the start.
+    key: ValueKey(trigger),
+    tween: Tween(begin: trigger == 0 ? 1 : 0, end: 1),
+    duration: const Duration(milliseconds: 380),
+    builder: (context, t, child) => Transform.translate(
+      // A decaying wobble: three swings, gone by the end.
+      offset: Offset(sin(t * pi * 6) * 14 * (1 - t), 0),
+      child: child,
+    ),
+    child: child,
+  );
 }
 
 class _Cards extends StatelessWidget {
@@ -121,7 +210,8 @@ class _Cards extends StatelessWidget {
     final cols = portrait
         ? (players.length <= 6 ? 2 : 3)
         : (players.length <= 10 ? 5 : 8);
-    final height = players.length <= (portrait ? 4 : 5) ? 300.0 : 220.0;
+    // Taller than the name needs: every cut player gets a host line.
+    final height = players.length <= (portrait ? 4 : 5) ? 380.0 : 290.0;
     return LayoutBuilder(
       builder: (context, c) {
         const gap = 28.0;
@@ -140,7 +230,7 @@ class _Cards extends StatelessWidget {
                     player: players[i],
                     out: i < stamped,
                     wildcard: wildcard,
-                    compact: height < 300,
+                    compact: height < 380,
                   ),
                 ),
             ],
@@ -187,17 +277,43 @@ class _OutCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 420),
+    transitionBuilder: _flip,
+    child: out
+        ? KeyedSubtree(key: const ValueKey('front'), child: _front(context))
+        : _FaceDown(key: const ValueKey('back'), compact: compact),
+  );
+
+  /// Turns the card over: the old face folds away, the new one unfolds.
+  static Widget _flip(Widget child, Animation<double> animation) =>
+      AnimatedBuilder(
+        animation: animation,
+        child: child,
+        builder: (context, child) {
+          // Each face shows for its half of the turn only.
+          final t = animation.value;
+          final angle = (1 - t) * pi;
+          return Opacity(
+            opacity: t < 0.5 ? 0 : 1,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY(angle > pi / 2 ? 0 : angle),
+              child: child,
+            ),
+          );
+        },
+      );
+
+  Widget _front(BuildContext context) {
     final badge = compact ? 80.0 : 110.0;
-    return AnimatedContainer(
-      duration: AppDurations.normal,
+    return Container(
       decoration: BoxDecoration(
-        color: out ? AppColors.maroonDarkest : AppColors.surface,
+        color: AppColors.maroonDarkest,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: out ? AppColors.maroon : AppColors.line,
-          width: 4,
-        ),
+        border: Border.all(color: AppColors.maroon, width: 4),
       ),
       child: Stack(
         children: [
@@ -208,7 +324,7 @@ class _OutCard extends StatelessWidget {
                 InitialBadge(
                   nickname: player.nickname,
                   size: badge,
-                  eliminated: out,
+                  eliminated: true,
                 ),
                 SizedBox(height: compact ? 12 : 20),
                 Padding(
@@ -220,7 +336,7 @@ class _OutCard extends StatelessWidget {
                     style: AppTextStyles.chip.copyWith(
                       fontSize: compact ? 32 : 44,
                       fontWeight: FontWeight.w800,
-                      decoration: out ? TextDecoration.lineThrough : null,
+                      decoration: TextDecoration.lineThrough,
                       decorationColor: AppColors.wrong,
                       decorationThickness: 3,
                     ),
@@ -230,27 +346,44 @@ class _OutCard extends StatelessWidget {
                   formatScore(player.score),
                   style: AppProjectorText.caption.copyWith(fontSize: 26),
                 ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: HostLine(
+                      key: Key('cut.line.${player.id}'),
+                      line: player.exitLine,
+                      fontSize: compact ? 20 : 24,
+                      maxLines: compact ? 2 : 3,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+          // The stamp slams down just after the card has turned.
           Positioned.fill(
             child: IgnorePointer(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 120),
-                opacity: out ? 1 : 0,
-                child: AnimatedScale(
-                  duration:
-                      AppDurations.normal + const Duration(milliseconds: 50),
-                  curve: AppCurves.stamp,
-                  scale: out ? 1 : 1.6,
-                  child: Center(
-                    child: OutStamp(fontSize: compact ? 36 : 48, tilt: -12),
-                  ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 700),
+                builder: (context, t, child) {
+                  final s = const Interval(
+                    0.45,
+                    1,
+                    curve: AppCurves.stamp,
+                  ).transform(t);
+                  return Opacity(
+                    opacity: t < 0.45 ? 0 : 1,
+                    child: Transform.scale(scale: 1.8 - 0.8 * s, child: child),
+                  );
+                },
+                child: Center(
+                  child: OutStamp(fontSize: compact ? 36 : 48, tilt: -12),
                 ),
               ),
             ),
           ),
-          if (wildcard && out)
+          if (wildcard)
             Positioned(
               right: 12,
               top: 12,
@@ -284,6 +417,31 @@ class _OutCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A card not yet turned: who is on it stays secret until their turn.
+class _FaceDown extends StatelessWidget {
+  final bool compact;
+
+  const _FaceDown({super.key, required this.compact});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: AppColors.line, width: 4),
+    ),
+    child: Center(
+      child: Text(
+        '?',
+        style: AppTextStyles.displayXl.copyWith(
+          fontSize: compact ? 88 : 120,
+          color: AppColors.chalk.withValues(alpha: 0.25),
+        ),
+      ),
+    ),
+  );
 }
 
 class _Survive extends StatelessWidget {

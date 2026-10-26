@@ -16,10 +16,7 @@ import '../landing/widgets/landing_parts.dart';
 import 'host_setup_cubit.dart';
 import 'question_pack_cubit.dart';
 
-/// Host "New game", laid out like the website: a header bar, the form in
-/// the page column, and the summary with CREATE ROOM beside it on wide
-/// screens (it stays put while the form scrolls) or in a bar along the
-/// bottom on phones.
+/// Host "New game": form, with summary + CREATE ROOM beside it (or below).
 class HostSetupScreen extends StatelessWidget {
   const HostSetupScreen({super.key});
 
@@ -86,8 +83,7 @@ class HostSetupScreen extends StatelessWidget {
               final wide = MediaQuery.sizeOf(context).width >= wideLayout;
               return Scaffold(
                 backgroundColor: AppColors.board,
-                // On phones CREATE ROOM sits in the Scaffold's bottom bar, so
-                // toasts float above it instead of covering it.
+                // In the bottom bar on phones, so toasts float above it.
                 bottomNavigationBar: wide ? null : _bottomBar(context, create),
                 body: ChalkBackground(
                   spacing: 7,
@@ -627,8 +623,7 @@ class _Choice extends StatelessWidget {
   );
 }
 
-/// Topic box, difficulty, how many, "Write questions", and the preview of
-/// what the AI wrote. Stateful only to own the text controller.
+/// AI topic, difficulty, count and preview. Stateful for the text controller.
 class _TopicSection extends StatefulWidget {
   /// The game as currently set up, so the pack is sized for it.
   final RoomConfig config;
@@ -645,8 +640,7 @@ class _TopicSectionState extends State<_TopicSection> {
   @override
   void initState() {
     super.initState();
-    // Here, not lazily: when AI is unavailable the field is never built,
-    // and a first use in dispose() would read a torn-down context.
+    // Not lazy: if AI is off, a first use in dispose() hits a dead context.
     _topic = TextEditingController(
       text: context.read<QuestionPackCubit>().state.topic,
     );
@@ -863,8 +857,7 @@ class _CountSlider extends StatelessWidget {
   );
 }
 
-/// What the AI wrote, with answers, so the host can drop any they don't
-/// like before the game.
+/// The AI's questions with answers, so the host can drop any before the game.
 class _PackPreview extends StatelessWidget {
   final PackDraft pack;
   final RoomConfig config;

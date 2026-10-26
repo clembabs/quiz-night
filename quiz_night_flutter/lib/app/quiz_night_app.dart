@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/platform/haptics.dart';
 import '../core/platform/screen_wake_lock.dart';
+import '../core/platform/sounds.dart';
 import '../core/theme/app_theme.dart';
 import '../data/questions_repository.dart';
 import '../data/room_repositories.dart';
@@ -26,8 +27,10 @@ class QuizNightApp extends StatefulWidget {
   /// Vibration feedback; main.dart passes the browser's Vibration API.
   final Haptics? haptics;
 
-  /// Where to start, e.g. `/join?code=4821`. Null on the web: the router
-  /// reads the browser's address bar.
+  /// The cut's sounds on the projector; main.dart passes Web Audio.
+  final Sounds? sounds;
+
+  /// Where to start, e.g. `/join?code=4821`; null on web (uses address bar).
   final String? initialLocation;
 
   const QuizNightApp({
@@ -38,6 +41,7 @@ class QuizNightApp extends StatefulWidget {
     this.questions = const NoQuestionsRepository(),
     this.wakeLock = const NoopScreenWakeLock(),
     this.haptics,
+    this.sounds,
     this.initialLocation,
   });
 
@@ -47,6 +51,7 @@ class QuizNightApp extends StatefulWidget {
 
 /// Stateful only to own the router for the app's life.
 class _QuizNightAppState extends State<QuizNightApp> {
+  late final Sounds _sounds = widget.sounds ?? SilentSounds();
   late final GoRouter _router = buildAppRouter(
     resume: SeatResume(widget.lobby, widget.seats),
     initialLocation: widget.initialLocation,
@@ -72,12 +77,17 @@ class _QuizNightAppState extends State<QuizNightApp> {
         RepositoryProvider<Haptics>(
           create: (_) => widget.haptics ?? SilentHaptics(),
         ),
+        RepositoryProvider<Sounds>.value(value: _sounds),
       ],
-      child: MaterialApp.router(
-        title: 'Quiz Night',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
-        routerConfig: _router,
+      // Browsers only start audio after a tap, so every tap unlocks it.
+      child: Listener(
+        onPointerDown: (_) => _sounds.unlock(),
+        child: MaterialApp.router(
+          title: 'Quiz Night',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.dark(),
+          routerConfig: _router,
+        ),
       ),
     );
   }

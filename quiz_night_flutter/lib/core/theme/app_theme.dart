@@ -5,8 +5,7 @@ import 'app_motion.dart';
 import 'app_spacing.dart';
 import 'app_text_styles.dart';
 
-/// Builds the app's [ThemeData] from the design-system tokens. Dark is the
-/// default for both the projector and phones.
+/// The app's [ThemeData] from design tokens; dark for projector and phones.
 abstract final class AppTheme {
   static ThemeData dark() {
     final buttonShape = RoundedRectangleBorder(

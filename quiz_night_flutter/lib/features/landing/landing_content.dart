@@ -1,5 +1,4 @@
-/// The landing page's words, kept apart from its layout. Everything here
-/// describes the game as it works today; planned features say "coming soon".
+/// The landing page's words; planned features say "coming soon".
 abstract final class LandingContent {
   static const eyebrow = 'The live elimination quiz for any crowd';
   static const headline = 'Survive the round. Win the night.';

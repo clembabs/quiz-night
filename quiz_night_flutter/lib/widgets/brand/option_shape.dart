@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// The shape that marks each answer option, so options never rely on colour
-/// alone: A triangle, B diamond, C circle, D square.
+/// Option shapes beyond colour: A triangle, B diamond, C circle, D square.
 enum OptionShapeKind { triangle, diamond, circle, square }
 
 OptionShapeKind optionShapeFor(int index) =>

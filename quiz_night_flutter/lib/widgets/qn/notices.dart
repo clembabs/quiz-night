@@ -141,8 +141,7 @@ class OutStamp extends StatelessWidget {
   );
 }
 
-/// What a toast is telling the user; sets its colour and glyph, like the
-/// inline banners.
+/// What a toast is telling the user; sets its colour and glyph.
 enum ToastKind {
   /// Something failed: a wrong code, no connection.
   error,
@@ -160,8 +159,7 @@ enum ToastKind {
 /// Widest a toast gets, so it stays a pill on a desktop screen.
 const _toastMaxWidth = 480.0;
 
-/// Shows [message] as a toast at the bottom of the screen (above the
-/// keyboard on phones), replacing any toast already showing.
+/// Shows [message] as a bottom toast (above the keyboard), replacing any.
 void showToast(
   BuildContext context,
   String message, {

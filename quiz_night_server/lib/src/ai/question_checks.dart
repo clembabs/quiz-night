@@ -25,10 +25,7 @@ abstract final class QuestionLimits {
 
 final _spaces = RegExp(r'\s+');
 
-/// The question names its own answer ("…pioneered by Afrobeat legend Fela
-/// Kuti?" with the answer "Afrobeat"). Answers under 4 characters are left
-/// alone to avoid false alarms; longer ones count when they appear as a
-/// whole word or phrase.
+/// Whether the question names its answer (whole word, answers of 4+ chars).
 bool _givesAnswerAway(String question, String answer) {
   final a = answer.toLowerCase().trim();
   if (a.length < 4) return false;
@@ -41,10 +38,8 @@ bool _givesAnswerAway(String question, String answer) {
 
 String _tidy(String s) => s.replaceAll(_spaces, ' ').trim();
 
-/// Keeps only well-formed questions: text of a sensible length, exactly four
-/// distinct non-empty options, a valid answer, and no repeats (of the
-/// question, ignoring case). Options are shuffled, because models tend to
-/// put the right answer in the same place.
+/// Keeps well-formed, non-repeated questions with four distinct options.
+/// Shuffles options, since models tend to put the answer in the same place.
 List<CheckedQuestion> checkQuestions(
   Iterable<DraftQuestion> drafts, {
   Random? random,

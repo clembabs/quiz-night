@@ -29,26 +29,33 @@ class RevealSequenceState extends Equatable {
 
   bool get isDone => phase == RevealPhase.done;
 
+  /// All names but the last are out: the bubble, the cruellest moment.
+  bool get waitingForLast =>
+      phase == RevealPhase.revealing && total > 1 && revealed == total - 1;
+
   @override
   List<Object?> get props => [phase, revealed, total];
 }
 
-/// Drives the dramatic one-by-one elimination reveal.
-///
-/// Every screen runs its own copy from the same cut, so the projector and
-/// phones stay roughly in step without extra server messages.
+/// Drives the one-by-one elimination reveal.
+/// Each screen runs its own copy, so they stay in step without server messages.
 class RevealSequenceCubit extends Cubit<RevealSequenceState> {
   final Duration intro;
   final Duration step;
+
+  /// The longer pause before the last name.
+  final Duration lastHold;
   Timer? _timer;
 
   static const defaultIntro = Duration(milliseconds: 2500);
   static const defaultStep = Duration(milliseconds: 1800);
+  static const defaultLastHold = Duration(milliseconds: 3200);
 
   RevealSequenceCubit({
     required int total,
     this.intro = defaultIntro,
     this.step = defaultStep,
+    this.lastHold = defaultLastHold,
   }) : super(
          RevealSequenceState(
            phase: RevealPhase.intro,
@@ -75,15 +82,14 @@ class RevealSequenceCubit extends Cubit<RevealSequenceState> {
       );
       return;
     }
-    emit(
-      RevealSequenceState(
-        phase: RevealPhase.revealing,
-        revealed: s.revealed + 1,
-        total: s.total,
-      ),
+    final next = RevealSequenceState(
+      phase: RevealPhase.revealing,
+      revealed: s.revealed + 1,
+      total: s.total,
     );
-    // Hold on the last name a beat before showing who is safe.
-    _timer = Timer(step, _next);
+    emit(next);
+    // Wait longer before the last name, then hold before showing who's safe.
+    _timer = Timer(next.waitingForLast ? lastHold : step, _next);
   }
 
   /// Jumps straight to the end.

@@ -11,13 +11,10 @@ import 'notices.dart';
 /// Size of the projector canvas every host screen is designed on.
 const hostCanvas = Size(1920, 1080);
 
-/// Narrowest canvas on a portrait window (a phone, an upright tablet).
-/// Its height follows the window, so the stage fills the screen.
+/// Narrowest portrait canvas; its height follows the window to fill it.
 const hostPortraitWidth = 800.0;
 
-/// Whether the host stage is laid out for a projector or a portrait phone.
-/// Screens read it to stack their columns instead of placing them side by
-/// side.
+/// Projector or portrait layout; portrait screens stack their columns.
 class HostLayout extends InheritedWidget {
   final bool portrait;
 
@@ -32,9 +29,8 @@ class HostLayout extends InheritedWidget {
   bool updateShouldNotify(HostLayout old) => old.portrait != portrait;
 }
 
-/// Lays [child] out on a fixed canvas and scales it to fit the window: the
-/// 1920×1080 projector canvas on wide windows, an 800-wide portrait canvas
-/// on phones, so text stays readable instead of shrinking to a strip.
+/// Scales a fixed canvas to the window: 1920×1080 wide, 800 wide portrait,
+/// so text on phones stays readable instead of shrinking to a strip.
 class HostStage extends StatelessWidget {
   final Widget child;
 
@@ -64,8 +60,7 @@ class HostStage extends StatelessWidget {
   /// The canvas for a window of [window] logical pixels.
   static Size canvasFor(Size window) {
     if (window.width >= window.height || window.width <= 0) return hostCanvas;
-    // Phones get the 800 canvas; an upright tablet a wider one, so it is
-    // not just a stretched phone.
+    // Phones get 800; upright tablets wider, not a stretched phone.
     final width = max(hostPortraitWidth, window.width * 1.35);
     return Size(width, width * window.height / window.width);
   }
@@ -83,8 +78,7 @@ class HostStage extends StatelessWidget {
               child: SizedBox.fromSize(
                 size: canvas,
                 child: MediaQuery(
-                  // The canvas is a fixed design size; ignore the window's
-                  // text scale so the layouts do not overflow.
+                  // Fixed design size: ignore text scale to avoid overflow.
                   data: MediaQuery.of(
                     context,
                   ).copyWith(textScaler: TextScaler.noScaling),
@@ -147,8 +141,7 @@ class HostSplit extends StatelessWidget {
   final int secondFlex;
   final double gap;
 
-  /// Which pane takes the spare height when stacked; the other sizes to
-  /// its content. Null stacks both at their own height in a scroll view.
+  /// Pane taking spare height when stacked; null scrolls both.
   final HostSplitFill? portraitFill;
 
   const HostSplit({
@@ -264,8 +257,7 @@ class _Header extends StatelessWidget {
       for (final a in actions) ...[const SizedBox(width: 16), a],
     ];
 
-    // A phone is too narrow for one row: brand and actions on top, the
-    // phase and the code underneath.
+    // Phones: brand and actions on top, phase and code underneath.
     if (portrait) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

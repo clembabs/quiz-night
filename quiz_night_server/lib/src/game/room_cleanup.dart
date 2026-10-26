@@ -4,12 +4,9 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
-/// Deletes old rooms, so nicknames, answers and scores are kept for a day at
-/// most, and room codes come free again. Players, questions, answers and
-/// buzzes go with their room (the tables cascade).
+/// Deletes day-old rooms (data cascades), freeing codes and player data.
 abstract final class RoomCleanup {
-  /// How long a room's data is kept. A game takes well under an hour, so a
-  /// day leaves room for a late podium without keeping anything for long.
+  /// A game takes under an hour; a day allows a late podium, keeps little.
   static const keepFor = Duration(hours: 24);
 
   /// How often the server sweeps.
@@ -30,8 +27,7 @@ abstract final class RoomCleanup {
     return deleted.length;
   }
 
-  /// Sweeps once now, then every [every], each in its own session. Returns
-  /// the timer so the caller could stop it.
+  /// Sweeps now and every [every], each in a fresh session. Returns the timer.
   static Timer schedule(Serverpod pod) {
     Future<void> sweep() async {
       final session = await pod.createSession(enableLogging: false);

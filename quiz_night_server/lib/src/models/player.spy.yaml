@@ -11,6 +11,8 @@ fields:
   status: PlayerStatus, default=active
   eliminatedInRound: int?
   backedPlayerId: int?
+  ### The host's line when this player was cut (AI-written or built-in).
+  exitLine: String?
   joinedAt: DateTime, default=now
 indexes:
   player_room_idx:

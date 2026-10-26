@@ -23,8 +23,7 @@ class CutResult {
   /// Surviving player ids, best first.
   final List<int> survivorIds;
 
-  /// True when the last survivor and the first eliminated player had the
-  /// same score, so total answer time decided who stayed.
+  /// Score tie at the cutoff, so total answer time decided who stayed.
   final bool tieBrokenBySpeed;
 
   const CutResult({
@@ -37,8 +36,7 @@ class CutResult {
 /// The fewest players a cut may leave standing.
 const minSurvivors = 2;
 
-/// Ranks players best first: highest cumulative score, then fastest total
-/// correct-answer time, then earliest id (deterministic).
+/// Ranks best first: score, then fastest correct-answer time, then id.
 List<CutCandidate> rankCandidates(Iterable<CutCandidate> candidates) {
   final ranked = candidates.toList()
     ..sort((a, b) {
@@ -51,8 +49,7 @@ List<CutCandidate> rankCandidates(Iterable<CutCandidate> candidates) {
   return ranked;
 }
 
-/// The fraction of players kept each round under [EliminationRule.autoScaled],
-/// so [startingPlayers] reaches [finalistTarget] after [roundsBeforeFinal].
+/// Per-round keep fraction so autoScaled reaches [finalistTarget] in time.
 double autoScaledKeepFraction({
   required int startingPlayers,
   required int finalistTarget,
@@ -65,10 +62,8 @@ double autoScaledKeepFraction({
   ).toDouble();
 }
 
-/// How many players should survive the end-of-round cut.
-///
-/// Never goes below [finalistTarget] or [minSurvivors], and never above the
-/// number of active players.
+/// How many survive the round cut: never below [finalistTarget] or
+/// [minSurvivors], never above the active count.
 int survivorsAfterRound({
   required int activeCount,
   required EliminationRule rule,
@@ -97,8 +92,7 @@ int survivorsAfterRound({
           roundsBeforeFinal: roundsBeforeFinal,
         );
         target = (startingPlayers * pow(keep, round)).round();
-        // Late joiners or rescued players can push us off the schedule;
-        // still always cut someone.
+        // Late joiners or rescues can break the schedule; still cut someone.
         target = min(target, activeCount - 1);
       }
     case EliminationRule.suddenDeath:
@@ -145,9 +139,7 @@ CutResult computeRoundCut({
   return cutToSize(active, survivors);
 }
 
-/// The sudden-death cut after a question: everyone in [active] whose id is
-/// not in [correctIds] goes out, unless that would leave fewer than
-/// [minSurvivors]; then the best-ranked of them are spared.
+/// Cuts players not in [correctIds], sparing the best to keep [minSurvivors].
 CutResult computeSuddenDeathCut({
   required List<CutCandidate> active,
   required Set<int> correctIds,
@@ -165,8 +157,7 @@ CutResult computeSuddenDeathCut({
   );
 }
 
-/// Points for a correct round answer: 1000 scaled by time remaining, never
-/// below 500.
+/// Correct round answer: 1000 scaled by time remaining, floor 500.
 int pointsForAnswer({
   required bool correct,
   required int elapsedMs,

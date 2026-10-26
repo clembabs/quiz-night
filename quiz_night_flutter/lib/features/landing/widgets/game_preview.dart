@@ -10,8 +10,7 @@ import '../../room/host/host_question.dart';
 import '../landing_content.dart';
 import 'landing_parts.dart';
 
-/// A projector and a phone mid-question, drawn with the game's own widgets,
-/// so visitors see what the game looks like before they play.
+/// A projector and phone mid-question, built from the game's own widgets.
 class GamePreview extends StatelessWidget {
   const GamePreview({super.key});
 

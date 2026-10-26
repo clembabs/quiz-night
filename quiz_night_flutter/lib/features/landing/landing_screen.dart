@@ -13,9 +13,7 @@ import 'widgets/info_sections.dart';
 import 'widgets/landing_header.dart';
 import 'widgets/landing_parts.dart';
 
-/// One website page: the header, [sections] scrolling under it, and the
-/// footer. Every link goes through the router, so each page has its own URL
-/// and the browser's back and forward buttons work.
+/// A website page: header, [sections] and footer, each page with its own URL.
 class SiteScaffold extends StatelessWidget {
   final SitePage? current;
   final List<Widget> Function(BuildContext context) sections;
@@ -49,8 +47,7 @@ class SiteScaffold extends StatelessWidget {
                   builder: (context, box) => SingleChildScrollView(
                     key: const Key('landing.scroll'),
                     child: ConstrainedBox(
-                      // At least the window's height, so on a short page
-                      // the footer sits at the bottom, not mid-screen.
+                      // So the footer sits at the bottom of a short page.
                       constraints: BoxConstraints(minHeight: box.maxHeight),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -2,11 +2,9 @@ import 'screen_wake_lock_stub.dart'
     if (dart.library.js_interop) 'screen_wake_lock_web.dart'
     as impl;
 
-/// Keeps the screen on while a game is running, so phones don't dim mid
-/// question and the projector laptop doesn't sleep.
+/// Keeps the screen on mid-game so phones don't dim and laptops don't sleep.
 abstract interface class ScreenWakeLock {
-  /// Asks to keep the screen on. Browsers drop the lock when the tab is
-  /// hidden, so call again when the app resumes. Never throws.
+  /// Keeps the screen on; browsers drop it when hidden, so call on resume.
   Future<void> keepOn();
 
   /// Lets the screen sleep again. Never throws.

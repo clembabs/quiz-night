@@ -11,8 +11,7 @@ import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import 'host_cut.dart';
 
-/// The projector during the buzzer final: question, a compact option strip
-/// (finalists answer on their phones), and the finalists' desks.
+/// The projector buzzer final: question, option strip and finalists' desks.
 class HostFinal extends StatelessWidget {
   final RoomState room;
   final Duration clockOffset;

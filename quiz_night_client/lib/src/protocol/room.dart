@@ -179,7 +179,7 @@ abstract class Room
 
   int currentRound;
 
-  /// Index of the current question within the current round (1-based, 0 = none yet).
+  /// Question index within the round (1-based; 0 = none yet).
   int currentQuestionIndex;
 
   int? currentQuestionId;
@@ -227,8 +227,7 @@ abstract class Room
   /// When the host started the game; the 30-minute game clock runs from here.
   DateTime? startedAt;
 
-  /// Last change in the room (a join, an answer, a host action). Rooms idle
-  /// for 30 minutes are closed.
+  /// Last change (join, answer, host action); rooms idle 30 minutes close.
   DateTime lastActivityAt;
 
   /// Set when the game ends.

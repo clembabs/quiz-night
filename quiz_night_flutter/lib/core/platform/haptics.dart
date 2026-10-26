@@ -2,8 +2,7 @@ import 'haptics_stub.dart'
     if (dart.library.js_interop) 'haptics_web.dart'
     as impl;
 
-/// Haptic tokens from the design system. Each pairs with a visual cue, so
-/// phones without vibration (iOS Safari) lose nothing important.
+/// Haptic tokens; each has a visual cue for phones without vibration.
 enum HapticToken {
   /// Timer digit pulse in the last 3 seconds.
   tick([10]),
