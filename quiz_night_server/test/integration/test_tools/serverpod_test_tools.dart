@@ -19,6 +19,9 @@ import 'package:quiz_night_server/src/generated/buzz_result.dart' as _ipbdzgt2;
 import 'package:quiz_night_server/src/generated/create_room_result.dart'
     as _ir34dn0m;
 import 'package:quiz_night_server/src/generated/join_result.dart' as _iyz3flam;
+import 'package:quiz_night_server/src/generated/pack_draft.dart' as _ianylz40;
+import 'package:quiz_night_server/src/generated/question_difficulty.dart'
+    as _i4ozqmvk;
 import 'package:quiz_night_server/src/generated/room_config.dart' as _i3izb6ro;
 import 'package:quiz_night_server/src/generated/room_state.dart' as _ivgph652;
 import 'package:serverpod/serverpod.dart' as _is;
@@ -164,6 +167,8 @@ class TestEndpoints {
 
   late final _BuzzerEndpoint buzzer;
 
+  late final _QuestionsEndpoint questions;
+
   late final _RoomEndpoint room;
 }
 
@@ -183,6 +188,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     buzzer = _BuzzerEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    questions = _QuestionsEndpoint(
       endpoints,
       serializationManager,
     );
@@ -393,6 +402,121 @@ class _BuzzerEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _QuestionsEndpoint {
+  _QuestionsEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<bool> aiAvailable(_ist.TestSessionBuilder sessionBuilder) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'questions',
+            method: 'aiAvailable',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'questions',
+          methodName: 'aiAvailable',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ianylz40.PackDraft> generatePack(
+    _ist.TestSessionBuilder sessionBuilder,
+    String topic,
+    _i4ozqmvk.QuestionDifficulty difficulty,
+    _i3izb6ro.RoomConfig config,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'questions',
+            method: 'generatePack',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'questions',
+          methodName: 'generatePack',
+          parameters: _ist.testObjectToJson({
+            'topic': topic,
+            'difficulty': difficulty,
+            'config': config,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ianylz40.PackDraft>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ianylz40.PackDraft> removePackQuestion(
+    _ist.TestSessionBuilder sessionBuilder,
+    int packId,
+    String packToken,
+    int questionId,
+    _i3izb6ro.RoomConfig config,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'questions',
+            method: 'removePackQuestion',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'questions',
+          methodName: 'removePackQuestion',
+          parameters: _ist.testObjectToJson({
+            'packId': packId,
+            'packToken': packToken,
+            'questionId': questionId,
+            'config': config,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ianylz40.PackDraft>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
