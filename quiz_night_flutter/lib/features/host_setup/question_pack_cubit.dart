@@ -23,10 +23,21 @@ enum PackStatus {
   ready,
 }
 
+/// How many questions the host may ask the AI for (the server checks too).
+abstract final class PackLimits {
+  static const minCount = 10;
+  static const maxCount = 40;
+  static const step = 5;
+  static const defaultCount = 20;
+}
+
 class QuestionPackState extends Equatable {
   final PackStatus status;
   final String topic;
   final QuestionDifficulty difficulty;
+
+  /// Questions to write, rounds and final together.
+  final int count;
   final PackDraft? pack;
   final String? error;
 
@@ -34,6 +45,7 @@ class QuestionPackState extends Equatable {
     this.status = PackStatus.checking,
     this.topic = '',
     this.difficulty = QuestionDifficulty.mixed,
+    this.count = PackLimits.defaultCount,
     this.pack,
     this.error,
   });
@@ -51,6 +63,7 @@ class QuestionPackState extends Equatable {
     PackStatus? status,
     String? topic,
     QuestionDifficulty? difficulty,
+    int? count,
     PackDraft? pack,
     bool clearPack = false,
     String? error,
@@ -59,12 +72,13 @@ class QuestionPackState extends Equatable {
     status: status ?? this.status,
     topic: topic ?? this.topic,
     difficulty: difficulty ?? this.difficulty,
+    count: count ?? this.count,
     pack: clearPack ? null : pack ?? this.pack,
     error: clearError ? null : error ?? this.error,
   );
 
   @override
-  List<Object?> get props => [status, topic, difficulty, pack, error];
+  List<Object?> get props => [status, topic, difficulty, count, pack, error];
 }
 
 /// The setup screen's AI questions: topic, difficulty, writing, preview.
@@ -87,7 +101,14 @@ class QuestionPackCubit extends Cubit<QuestionPackState> {
   void setDifficulty(QuestionDifficulty d) =>
       emit(state.copyWith(difficulty: d));
 
-  /// Writes a pack for the current topic, sized for [config].
+  /// Sets how many questions to write, kept within [PackLimits].
+  void setCount(int count) => emit(
+    state.copyWith(
+      count: count.clamp(PackLimits.minCount, PackLimits.maxCount),
+    ),
+  );
+
+  /// Writes [QuestionPackState.count] questions on the topic for [config].
   Future<void> generate(RoomConfig config) async {
     if (!state.canGenerate) return;
     final previous = state.pack;
@@ -96,6 +117,7 @@ class QuestionPackCubit extends Cubit<QuestionPackState> {
       final pack = await _questions.generatePack(
         state.topic.trim(),
         state.difficulty,
+        state.count,
         config,
       );
       emit(state.copyWith(status: PackStatus.ready, pack: pack));
@@ -140,7 +162,7 @@ class QuestionPackCubit extends Cubit<QuestionPackState> {
         short
             ? 'Written for this game; the built-in questions fill in if they '
                   'run out.'
-            : 'Written for this game, with a few spare.',
+            : 'Written for this game: enough for every round and the final.',
       );
     }
     if (state.status == PackStatus.unavailable) {

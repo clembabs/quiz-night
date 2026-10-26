@@ -8,10 +8,11 @@ abstract interface class QuestionsRepository {
   /// Whether the server can write questions (an AI key is set up).
   Future<bool> aiAvailable();
 
-  /// Writes a question pack on [topic] sized for a game with [config].
+  /// Writes [count] questions (10-40) on [topic] for a game with [config].
   Future<PackDraft> generatePack(
     String topic,
     QuestionDifficulty difficulty,
+    int count,
     RoomConfig config,
   );
 
@@ -42,9 +43,10 @@ class ServerpodQuestionsRepository implements QuestionsRepository {
   Future<PackDraft> generatePack(
     String topic,
     QuestionDifficulty difficulty,
+    int count,
     RoomConfig config,
   ) => guardServerCall(
-    () => _client.questions.generatePack(topic, difficulty, config),
+    () => _client.questions.generatePack(topic, difficulty, count, config),
   );
 
   @override
@@ -73,6 +75,7 @@ class NoQuestionsRepository implements QuestionsRepository {
   Future<PackDraft> generatePack(
     String topic,
     QuestionDifficulty difficulty,
+    int count,
     RoomConfig config,
   ) => throw const AppFailure('AI questions are not available');
 
