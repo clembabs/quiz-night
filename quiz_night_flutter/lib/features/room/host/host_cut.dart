@@ -10,6 +10,7 @@ import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/finalist_desk.dart';
+import '../../../widgets/qn/host_line.dart';
 import '../../../widgets/qn/host_stage.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
@@ -209,7 +210,8 @@ class _Cards extends StatelessWidget {
     final cols = portrait
         ? (players.length <= 6 ? 2 : 3)
         : (players.length <= 10 ? 5 : 8);
-    final height = players.length <= (portrait ? 4 : 5) ? 300.0 : 220.0;
+    // Taller than the name needs: every cut player gets a host line.
+    final height = players.length <= (portrait ? 4 : 5) ? 380.0 : 290.0;
     return LayoutBuilder(
       builder: (context, c) {
         const gap = 28.0;
@@ -228,7 +230,7 @@ class _Cards extends StatelessWidget {
                     player: players[i],
                     out: i < stamped,
                     wildcard: wildcard,
-                    compact: height < 300,
+                    compact: height < 380,
                   ),
                 ),
             ],
@@ -343,6 +345,17 @@ class _OutCard extends StatelessWidget {
                 Text(
                   formatScore(player.score),
                   style: AppProjectorText.caption.copyWith(fontSize: 26),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: HostLine(
+                      key: Key('cut.line.${player.id}'),
+                      line: player.exitLine,
+                      fontSize: compact ? 20 : 24,
+                      maxLines: compact ? 2 : 3,
+                    ),
+                  ),
                 ),
               ],
             ),

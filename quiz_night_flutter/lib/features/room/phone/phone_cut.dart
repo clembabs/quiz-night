@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/crest.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/celebrations.dart';
+import '../../../widgets/qn/host_line.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
@@ -325,6 +326,13 @@ class _Eliminated extends StatelessWidget {
                       fontSize: 17,
                       color: AppColors.maroonPale,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  HostLine(
+                    key: const Key('cut.hostLine'),
+                    line: me.exitLine,
+                    fontSize: 18,
+                    maxLines: 4,
                   ),
                 ],
               ),
