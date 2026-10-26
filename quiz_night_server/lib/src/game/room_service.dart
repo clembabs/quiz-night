@@ -3,8 +3,11 @@ import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
 
+import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
+import '../security/tokens.dart';
 import 'cut_logic.dart';
+import 'nickname.dart';
 import 'question_bank.dart';
 
 /// Answers that arrive this long after the deadline are still accepted, to
@@ -42,6 +45,17 @@ class RoomService {
   /// Enabled in `server.dart`; off in tests.
   static bool autoRevealEnabled = false;
 
+  /// Players per room (the MVP size). Every update goes to every phone in
+  /// the room, so traffic grows with the square of this; raise it once
+  /// mid-question updates are batched.
+  static const maxPlayers = 20;
+
+  /// How long a game may run, from the host pressing Start.
+  static const sessionLength = Duration(minutes: 30);
+
+  /// A room with no activity for this long is closed.
+  static const idleLimit = Duration(minutes: 30);
+
   // ---------------------------------------------------------------- lookup
 
   static Future<Room> _roomByCode(
@@ -70,7 +84,7 @@ class RoomService {
     bool lock = false,
   }) async {
     final room = await _roomByCode(session, code, tx: tx, lock: lock);
-    if (room.hostToken != hostToken) {
+    if (!tokensMatch(room.hostToken, hostToken)) {
       throw _error(QuizErrorCode.notHost, 'Only the host can do that');
     }
     return room;
@@ -101,6 +115,12 @@ class RoomService {
     RoomConfig config,
   ) async {
     _validateConfig(config);
+    // Only the host who generated a pack holds its token.
+    final packId = await QuestionPacks.verifyForRoom(
+      session,
+      config.packId,
+      config.packToken,
+    );
     final hostToken = _randomToken();
     for (var attempt = 0; attempt < 20; attempt++) {
       // Grow the code if short ones keep colliding.
@@ -122,6 +142,7 @@ class RoomService {
           finalQuestionCount: config.finalQuestionCount,
           timeLimitSeconds: config.timeLimitSeconds,
           showQuestionOnPhones: config.showQuestionOnPhones,
+          packId: packId,
         ),
       );
       return CreateRoomResult(roomCode: code, hostToken: hostToken);
@@ -165,11 +186,17 @@ class RoomService {
     String code,
     String nickname,
   ) async {
-    final name = nickname.trim();
-    if (name.isEmpty || name.length > 20) {
+    final name = Nickname.clean(nickname);
+    if (name.isEmpty || name.length > Nickname.maxLength) {
       throw _error(
         QuizErrorCode.invalidInput,
-        'Nickname must be 1-20 characters',
+        'Nickname must be 1-${Nickname.maxLength} characters',
+      );
+    }
+    if (Nickname.isOffensive(name)) {
+      throw _error(
+        QuizErrorCode.invalidInput,
+        'Pick a different nickname: it shows on the big screen.',
       );
     }
     final result = await session.db.transaction((tx) async {
@@ -190,6 +217,19 @@ class RoomService {
         where: (t) => t.roomId.equals(room.id!),
         transaction: tx,
       );
+      if (room.locked) {
+        throw _error(
+          QuizErrorCode.roomLocked,
+          'The host has locked this room. Ask them to unlock it.',
+        );
+      }
+      if (players.length >= maxPlayers) {
+        throw _error(
+          QuizErrorCode.roomFull,
+          'This room is full ($maxPlayers players). Ask the host for another '
+          'room.',
+        );
+      }
       if (players.any((p) => p.nickname.toLowerCase() == name.toLowerCase())) {
         throw _error(QuizErrorCode.nicknameTaken, 'That nickname is taken');
       }
@@ -250,7 +290,11 @@ class RoomService {
       if (count < 2) {
         throw _error(QuizErrorCode.invalidState, 'Need at least 2 players');
       }
-      room = room.copyWith(startingPlayerCount: count, currentRound: 1);
+      room = room.copyWith(
+        startingPlayerCount: count,
+        currentRound: 1,
+        startedAt: DateTime.now().toUtc(),
+      );
       return _startQuestion(session, tx, room, isFinal: false);
     });
     await _afterQuestionStarted(session, room);
@@ -273,7 +317,10 @@ class RoomService {
         if (room.finalQuestionsPlayed >= room.finalQuestionCount) {
           return Room.db.updateRow(
             session,
-            room.copyWith(status: RoomStatus.finished),
+            room.copyWith(
+              status: RoomStatus.finished,
+              endReason: RoomEndReason.completed,
+            ),
             transaction: tx,
           );
         }
@@ -459,6 +506,118 @@ class RoomService {
         room.copyWith(wildcardUsed: true),
         transaction: tx,
       );
+      return room.id!;
+    });
+    await _broadcast(session, roomId);
+  }
+
+  /// Ends games past their 30 minutes ([RoomEndReason.timeUp]) and closes
+  /// rooms idle for [idleLimit] ([RoomEndReason.inactive]). Each keeps the
+  /// scores as they are, so the podium shows the results so far. Returns how
+  /// many rooms were ended. Run on a timer by `RoomExpiry`.
+  static Future<int> endExpired(Session session, {DateTime? now}) async {
+    final at = now ?? DateTime.now().toUtc();
+    final due = await Room.db.find(
+      session,
+      where: (t) =>
+          t.status.notEquals(RoomStatus.finished) &
+          ((t.startedAt < at.subtract(sessionLength)) |
+              (t.lastActivityAt < at.subtract(idleLimit))),
+    );
+    var ended = 0;
+    for (final candidate in due) {
+      final roomId = await session.db.transaction((tx) async {
+        final room = await Room.db.findById(
+          session,
+          candidate.id!,
+          transaction: tx,
+          lockMode: LockMode.forUpdate,
+        );
+        if (room == null || room.status == RoomStatus.finished) return null;
+        final timeUp =
+            room.startedAt != null &&
+            !room.startedAt!.isAfter(at.subtract(sessionLength));
+        final idle = !room.lastActivityAt.isAfter(at.subtract(idleLimit));
+        if (!timeUp && !idle) return null;
+        await Room.db.updateRow(
+          session,
+          room.copyWith(
+            status: RoomStatus.finished,
+            endReason: timeUp ? RoomEndReason.timeUp : RoomEndReason.inactive,
+            questionEndsAt: null,
+            buzzerHolderId: null,
+          ),
+          transaction: tx,
+        );
+        return room.id;
+      });
+      if (roomId != null) {
+        ended++;
+        await _broadcast(session, roomId);
+      }
+    }
+    return ended;
+  }
+
+  /// Host: stops (or allows again) new players joining, e.g. once everyone
+  /// in the room is in, so nobody else can join with the code on screen.
+  static Future<void> setLocked(
+    Session session,
+    String code,
+    String hostToken,
+    bool locked,
+  ) async {
+    final roomId = await session.db.transaction((tx) async {
+      final room = await _hostRoom(
+        session,
+        code,
+        hostToken,
+        tx: tx,
+        lock: true,
+      );
+      await Room.db.updateRow(
+        session,
+        room.copyWith(locked: locked),
+        transaction: tx,
+      );
+      return room.id!;
+    });
+    await _broadcast(session, roomId);
+  }
+
+  /// Host: removes a player from the lobby (a joke nickname, a duplicate
+  /// phone). Their token stops working, so their phone shows they were
+  /// removed. Only before the game starts: mid-game removals would change
+  /// the cut for everyone else.
+  static Future<void> removePlayer(
+    Session session,
+    String code,
+    String hostToken,
+    int playerId,
+  ) async {
+    final roomId = await session.db.transaction((tx) async {
+      final room = await _hostRoom(
+        session,
+        code,
+        hostToken,
+        tx: tx,
+        lock: true,
+      );
+      if (room.status != RoomStatus.lobby) {
+        throw _error(
+          QuizErrorCode.invalidState,
+          'Players can only be removed before the game starts',
+        );
+      }
+      final player = await Player.db.findById(
+        session,
+        playerId,
+        transaction: tx,
+      );
+      if (player == null || player.roomId != room.id) {
+        throw _error(QuizErrorCode.playerNotFound, 'Player not found');
+      }
+      await Player.db.deleteRow(session, player, transaction: tx);
       return room.id!;
     });
     await _broadcast(session, roomId);
@@ -786,6 +945,30 @@ class RoomService {
   }
 
   /// Inserts the next question and puts the room into answering state.
+  /// The next unplayed question of the right kind from the room's pack.
+  static Future<BankQuestion?> _nextPackQuestion(
+    Session session,
+    Transaction tx,
+    Room room,
+    Set<String> usedTexts, {
+    required bool isFinal,
+  }) async {
+    final packId = room.packId;
+    if (packId == null) return null;
+    final candidates = await PackQuestion.db.find(
+      session,
+      where: (t) => t.packId.equals(packId) & t.isFinal.equals(isFinal),
+      orderBy: (t) => t.orderIndex,
+      transaction: tx,
+    );
+    final next = candidates
+        .where((q) => !usedTexts.contains(q.text))
+        .firstOrNull;
+    return next == null
+        ? null
+        : BankQuestion(next.text, next.options, next.correctIndex);
+  }
+
   static Future<Room> _startQuestion(
     Session session,
     Transaction tx,
@@ -798,10 +981,23 @@ class RoomService {
       transaction: tx,
     );
     final usedTexts = used.map((q) => q.text).toSet();
-    final bank = isFinal ? finalQuestions : roundQuestions;
-    var fresh = bank.where((q) => !usedTexts.contains(q.text)).toList();
-    if (fresh.isEmpty) fresh = bank.toList();
-    final pick = fresh[_random.nextInt(fresh.length)];
+    // The host's AI-written pack first, in its order; then the bank.
+    final fromPack = await _nextPackQuestion(
+      session,
+      tx,
+      room,
+      usedTexts,
+      isFinal: isFinal,
+    );
+    final BankQuestion pick;
+    if (fromPack != null) {
+      pick = fromPack;
+    } else {
+      final bank = isFinal ? finalQuestions : roundQuestions;
+      var fresh = bank.where((q) => !usedTexts.contains(q.text)).toList();
+      if (fresh.isEmpty) fresh = bank.toList();
+      pick = fresh[_random.nextInt(fresh.length)];
+    }
 
     final indexInRound = isFinal
         ? room.finalQuestionsPlayed + 1
@@ -1056,6 +1252,11 @@ class RoomService {
       finalQuestionsPlayed: room.finalQuestionsPlayed,
       eliminationRule: room.eliminationRule,
       wildcardUsed: room.wildcardUsed,
+      locked: room.locked,
+      sessionEndsAt: room.status == RoomStatus.finished
+          ? null
+          : room.startedAt?.add(sessionLength),
+      endReason: room.endReason,
       showQuestionOnPhones: room.showQuestionOnPhones,
       projectedSurvivors: _projectedSurvivors(room, question, players),
       question: question == null
@@ -1110,8 +1311,14 @@ class RoomService {
   }
 
   static Future<void> _broadcast(Session session, int roomId) async {
-    final room = await Room.db.findById(session, roomId);
+    var room = await Room.db.findById(session, roomId);
     if (room == null) return;
+    // Every broadcast follows a change, so it marks the room as active.
+    room = await Room.db.updateRow(
+      session,
+      room.copyWith(lastActivityAt: DateTime.now().toUtc()),
+      columns: (t) => [t.lastActivityAt],
+    );
     await session.messages.postMessage(
       channelFor(room.code),
       await buildState(session, room),

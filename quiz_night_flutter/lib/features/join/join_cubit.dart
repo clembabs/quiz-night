@@ -11,6 +11,8 @@ enum JoinError {
   missingFields,
   roomNotFound,
   gameStarted,
+  roomFull,
+  roomLocked,
   nicknameTaken,
   other,
 }
@@ -65,6 +67,8 @@ class JoinCubit extends Cubit<JoinState> {
   static JoinError _kindFor(AppFailure f) => switch (f.kind) {
     FailureKind.roomGone => JoinError.roomNotFound,
     FailureKind.gameStarted => JoinError.gameStarted,
+    FailureKind.roomFull => JoinError.roomFull,
+    FailureKind.roomLocked => JoinError.roomLocked,
     FailureKind.nicknameTaken => JoinError.nicknameTaken,
     _ => JoinError.other,
   };

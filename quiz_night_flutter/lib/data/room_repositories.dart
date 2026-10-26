@@ -32,6 +32,12 @@ abstract interface class GameRepository {
   /// Rescues one eliminated player; once per game, before the final.
   Future<void> useWildcard(Seat host, int playerId);
 
+  /// Removes a player from the lobby, before the game starts.
+  Future<void> removePlayer(Seat host, int playerId);
+
+  /// Stops (or allows again) new players joining.
+  Future<void> setLocked(Seat host, bool locked);
+
   /// Answers [questionId] for [player]. Eliminated players' answers count
   /// as shadow score only.
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
@@ -127,6 +133,16 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   );
 
   @override
+  Future<void> setLocked(Seat host, bool locked) => _guard(
+    () => _client.room.setLocked(host.code, host.token, locked),
+  );
+
+  @override
+  Future<void> removePlayer(Seat host, int playerId) => _guard(
+    () => _client.room.removePlayer(host.code, host.token, playerId),
+  );
+
+  @override
   Future<BuzzResult> buzz(Seat finalist, int questionId) =>
       _guard(() => _client.buzzer.buzz(finalist.token, questionId));
 
@@ -155,13 +171,8 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
             _client.answer.submitAnswer(player.token, questionId, choiceIndex),
       );
 
-  static Future<T> _guard<T>(Future<T> Function() call) async {
-    try {
-      return await call();
-    } catch (e) {
-      throw toFailure(e);
-    }
-  }
+  static Future<T> _guard<T>(Future<T> Function() call) =>
+      guardServerCall(call);
 
   /// Maps transport errors to [AppFailure].
   static AppFailure toFailure(Object e) {
@@ -177,6 +188,18 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     QuizErrorCode.alreadyAnswered => FailureKind.alreadyAnswered,
     QuizErrorCode.tooLate => FailureKind.tooLate,
     QuizErrorCode.nicknameTaken => FailureKind.nicknameTaken,
+    QuizErrorCode.roomFull => FailureKind.roomFull,
+    QuizErrorCode.roomLocked => FailureKind.roomLocked,
     _ => FailureKind.other,
   };
+}
+
+/// Runs a server call, turning transport errors into [AppFailure]s with
+/// the server's own user-facing message.
+Future<T> guardServerCall<T>(Future<T> Function() call) async {
+  try {
+    return await call();
+  } catch (e) {
+    throw ServerpodRoomRepository.toFailure(e);
+  }
 }

@@ -60,9 +60,9 @@ DangerStatus? dangerStatusFor(RoomState room, PlayerView me) {
 /// Final placement of every player: finalists by the final, then everyone
 /// else by how late they went out, then by score.
 List<PlayerView> finalPlacements(RoomState room) {
-  final out = room.players
-      .where((p) => p.status != PlayerStatus.finalist)
-      .toList();
+  final top = finalStandings(room);
+  final topIds = {for (final p in top) p.id};
+  final out = room.players.where((p) => !topIds.contains(p.id)).toList();
   out.sort((a, b) {
     final byRound = (b.eliminatedInRound ?? 999).compareTo(
       a.eliminatedInRound ?? 999,
@@ -71,7 +71,7 @@ List<PlayerView> finalPlacements(RoomState room) {
     final byScore = b.score.compareTo(a.score);
     return byScore != 0 ? byScore : a.id.compareTo(b.id);
   });
-  return [...finalStandings(room), ...out];
+  return [...top, ...out];
 }
 
 /// 1-based final placement of [playerId], or null.

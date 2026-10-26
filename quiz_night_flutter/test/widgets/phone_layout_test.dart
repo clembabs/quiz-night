@@ -6,8 +6,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
-import 'package:quiz_night_flutter/features/join/join_form.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
+import 'package:quiz_night_flutter/features/join/join_screen.dart';
+import 'package:quiz_night_flutter/features/landing/landing_screen.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
@@ -16,6 +17,7 @@ import 'package:quiz_night_flutter/features/room/phone/phone_result.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_waiting.dart';
 import 'package:quiz_night_flutter/features/room/room_cubit.dart';
 import 'package:quiz_night_flutter/widgets/qn/phone_frame.dart';
+import 'package:quiz_night_flutter/widgets/qn/session_clock.dart';
 
 import '../fakes/fakes.dart';
 import 'harness.dart';
@@ -46,7 +48,12 @@ void main() {
 
   /// Renders [child] in the phone frame at 360×640, with the header.
   /// Flutter fails the test on any overflow.
-  Future<void> render(WidgetTester tester, Widget child) async {
+  Future<void> render(
+    WidgetTester tester,
+    Widget child, {
+    // Off on the results screens: the clock goes once the game ends.
+    bool withClock = true,
+  }) async {
     tester.view.physicalSize = phone;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -60,7 +67,20 @@ void main() {
           home: Scaffold(
             body: BlocProvider<RoomCubit>.value(
               value: room,
-              child: PhoneFrame(code: '4821', phase: 'Round 2', child: child),
+              child: PhoneFrame(
+                code: '4821',
+                phase: 'Round 2',
+                // The game clock sits under the header once a game starts.
+                clock: withClock
+                    ? SessionClock(
+                        endsAt: DateTime.now().toUtc().add(
+                          const Duration(minutes: 24),
+                        ),
+                        clockOffset: Duration.zero,
+                      )
+                    : null,
+                child: child,
+              ),
             ),
           ),
         ),
@@ -115,10 +135,9 @@ void main() {
             providers: [
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: Scaffold(
-              body: PhoneFrame(
-                child: JoinForm(onHost: () {}, onBack: () {}),
-              ),
+            child: SiteScaffold(
+              current: null,
+              sections: (_) => [JoinSection(onHost: () {})],
             ),
           ),
         ),
@@ -266,8 +285,32 @@ void main() {
           spectator.copyWith(backedPlayerId: 2),
         ],
       );
-      await render(t, PhonePlacement(room: room, me: room.players.last));
+      await render(
+        t,
+        PhonePlacement(room: room, me: room.players.last),
+        withClock: false,
+      );
       expect(t.takeException(), isNull);
+    });
+
+    testWidgets('when the game ran out of time then the results and their '
+        'notice fit', (t) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        round: 2,
+        players: [
+          for (var i = 1; i <= 3; i++)
+            player(i, '$longName $i', score: 99000 - i),
+          spectator,
+        ],
+      ).copyWith(endReason: RoomEndReason.timeUp);
+      await render(
+        t,
+        PhonePlacement(room: room, me: room.players.first),
+        withClock: false,
+      );
+      expect(t.takeException(), isNull);
+      expect(find.text("TIME'S UP"), findsOneWidget);
     });
   });
 }

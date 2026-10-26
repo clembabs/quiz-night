@@ -17,6 +17,9 @@ import 'package:quiz_night_client/src/protocol/buzz_result.dart' as _i6x4qugu;
 import 'package:quiz_night_client/src/protocol/create_room_result.dart'
     as _if7vktiw;
 import 'package:quiz_night_client/src/protocol/join_result.dart' as _ik8s3h8i;
+import 'package:quiz_night_client/src/protocol/pack_draft.dart' as _i1m5kpiv;
+import 'package:quiz_night_client/src/protocol/question_difficulty.dart'
+    as _ih0atpad;
 import 'package:quiz_night_client/src/protocol/room_config.dart' as _i2v75h2f;
 import 'package:quiz_night_client/src/protocol/room_state.dart' as _inkt92gq;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
@@ -25,189 +28,6 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
-
-/// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
-/// are made available on the server and enable the corresponding sign-in widget
-/// on the client.
-/// {@category Endpoint}
-class EndpointEmailIdp extends _iaic.EndpointEmailIdpBase {
-  EndpointEmailIdp(_isc.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'emailIdp';
-
-  /// Logs in the user and returns a new session.
-  ///
-  /// Throws an [EmailAccountLoginException] in case of errors, with reason:
-  /// - [EmailAccountLoginExceptionReason.invalidCredentials] if the email or
-  ///   password is incorrect.
-  /// - [EmailAccountLoginExceptionReason.tooManyAttempts] if there have been
-  ///   too many failed login attempts.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  @override
-  _ida.Future<_iacc.AuthSuccess> login({
-    required String email,
-    required String password,
-  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
-    'emailIdp',
-    'login',
-    {
-      'email': email,
-      'password': password,
-    },
-  );
-
-  /// Starts the registration for a new user account with an email-based login
-  /// associated to it.
-  ///
-  /// Upon successful completion of this method, an email will have been
-  /// sent to [email] with a verification link, which the user must open to
-  /// complete the registration.
-  ///
-  /// Always returns a account request ID, which can be used to complete the
-  /// registration. If the email is already registered, the returned ID will not
-  /// be valid.
-  @override
-  _ida.Future<_isc.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_isc.UuidValue>(
-        'emailIdp',
-        'startRegistration',
-        {'email': email},
-      );
-
-  /// Verifies an account request code and returns a token
-  /// that can be used to complete the account creation.
-  ///
-  /// Throws an [EmailAccountRequestException] in case of errors, with reason:
-  /// - [EmailAccountRequestExceptionReason.expired] if the account request has
-  ///   already expired.
-  /// - [EmailAccountRequestExceptionReason.policyViolation] if the password
-  ///   does not comply with the password policy.
-  /// - [EmailAccountRequestExceptionReason.invalid] if no request exists
-  ///   for the given [accountRequestId] or [verificationCode] is invalid.
-  @override
-  _ida.Future<String> verifyRegistrationCode({
-    required _isc.UuidValue accountRequestId,
-    required String verificationCode,
-  }) => caller.callServerEndpoint<String>(
-    'emailIdp',
-    'verifyRegistrationCode',
-    {
-      'accountRequestId': accountRequestId,
-      'verificationCode': verificationCode,
-    },
-  );
-
-  /// Completes a new account registration, creating a new auth user with a
-  /// profile and attaching the given email account to it.
-  ///
-  /// Throws an [EmailAccountRequestException] in case of errors, with reason:
-  /// - [EmailAccountRequestExceptionReason.expired] if the account request has
-  ///   already expired.
-  /// - [EmailAccountRequestExceptionReason.policyViolation] if the password
-  ///   does not comply with the password policy.
-  /// - [EmailAccountRequestExceptionReason.invalid] if the [registrationToken]
-  ///   is invalid.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  ///
-  /// Returns a session for the newly created user.
-  @override
-  _ida.Future<_iacc.AuthSuccess> finishRegistration({
-    required String registrationToken,
-    required String password,
-  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
-    'emailIdp',
-    'finishRegistration',
-    {
-      'registrationToken': registrationToken,
-      'password': password,
-    },
-  );
-
-  /// Requests a password reset for [email].
-  ///
-  /// If the email address is registered, an email with reset instructions will
-  /// be send out. If the email is unknown, this method will have no effect.
-  ///
-  /// Always returns a password reset request ID, which can be used to complete
-  /// the reset. If the email is not registered, the returned ID will not be
-  /// valid.
-  ///
-  /// Throws an [EmailAccountPasswordResetException] in case of errors, with reason:
-  /// - [EmailAccountPasswordResetExceptionReason.tooManyAttempts] if the user has
-  ///   made too many attempts trying to request a password reset.
-  ///
-  @override
-  _ida.Future<_isc.UuidValue> startPasswordReset({required String email}) =>
-      caller.callServerEndpoint<_isc.UuidValue>(
-        'emailIdp',
-        'startPasswordReset',
-        {'email': email},
-      );
-
-  /// Verifies a password reset code and returns a finishPasswordResetToken
-  /// that can be used to finish the password reset.
-  ///
-  /// Throws an [EmailAccountPasswordResetException] in case of errors, with reason:
-  /// - [EmailAccountPasswordResetExceptionReason.expired] if the password reset
-  ///   request has already expired.
-  /// - [EmailAccountPasswordResetExceptionReason.tooManyAttempts] if the user has
-  ///   made too many attempts trying to verify the password reset.
-  /// - [EmailAccountPasswordResetExceptionReason.invalid] if no request exists
-  ///   for the given [passwordResetRequestId] or [verificationCode] is invalid.
-  ///
-  /// If multiple steps are required to complete the password reset, this endpoint
-  /// should be overridden to return credentials for the next step instead
-  /// of the credentials for setting the password.
-  @override
-  _ida.Future<String> verifyPasswordResetCode({
-    required _isc.UuidValue passwordResetRequestId,
-    required String verificationCode,
-  }) => caller.callServerEndpoint<String>(
-    'emailIdp',
-    'verifyPasswordResetCode',
-    {
-      'passwordResetRequestId': passwordResetRequestId,
-      'verificationCode': verificationCode,
-    },
-  );
-
-  /// Completes a password reset request by setting a new password.
-  ///
-  /// The [verificationCode] returned from [verifyPasswordResetCode] is used to
-  /// validate the password reset request.
-  ///
-  /// Throws an [EmailAccountPasswordResetException] in case of errors, with reason:
-  /// - [EmailAccountPasswordResetExceptionReason.expired] if the password reset
-  ///   request has already expired.
-  /// - [EmailAccountPasswordResetExceptionReason.policyViolation] if the new
-  ///   password does not comply with the password policy.
-  /// - [EmailAccountPasswordResetExceptionReason.invalid] if no request exists
-  ///   for the given [passwordResetRequestId] or [verificationCode] is invalid.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  @override
-  _ida.Future<void> finishPasswordReset({
-    required String finishPasswordResetToken,
-    required String newPassword,
-  }) => caller.callServerEndpoint<void>(
-    'emailIdp',
-    'finishPasswordReset',
-    {
-      'finishPasswordResetToken': finishPasswordResetToken,
-      'newPassword': newPassword,
-    },
-  );
-
-  @override
-  _ida.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
-    'emailIdp',
-    'hasAccount',
-    {},
-  );
-}
 
 /// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
 /// is made available on the server and enables automatic token refresh on the client.
@@ -324,8 +144,61 @@ class EndpointBuzzer extends _isc.EndpointRef {
   );
 }
 
+/// AI-written questions for the host's setup screen. Rate limited inside
+/// [QuestionPacks.generate] (3 an hour per address, 150 a day overall).
+/// {@category Endpoint}
+class EndpointQuestions extends _isc.EndpointRef {
+  EndpointQuestions(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'questions';
+
+  /// Whether this server can write questions (an API key is set).
+  _ida.Future<bool> aiAvailable() => caller.callServerEndpoint<bool>(
+    'questions',
+    'aiAvailable',
+    {},
+  );
+
+  /// Writes [questionCount] questions (10-40) on [topic] for a game with
+  /// [config].
+  _ida.Future<_i1m5kpiv.PackDraft> generatePack(
+    String topic,
+    _ih0atpad.QuestionDifficulty difficulty,
+    int questionCount,
+    _i2v75h2f.RoomConfig config,
+  ) => caller.callServerEndpoint<_i1m5kpiv.PackDraft>(
+    'questions',
+    'generatePack',
+    {
+      'topic': topic,
+      'difficulty': difficulty,
+      'questionCount': questionCount,
+      'config': config,
+    },
+  );
+
+  /// Drops one question from the host's pack.
+  _ida.Future<_i1m5kpiv.PackDraft> removePackQuestion(
+    int packId,
+    String packToken,
+    int questionId,
+    _i2v75h2f.RoomConfig config,
+  ) => caller.callServerEndpoint<_i1m5kpiv.PackDraft>(
+    'questions',
+    'removePackQuestion',
+    {
+      'packId': packId,
+      'packToken': packToken,
+      'questionId': questionId,
+      'config': config,
+    },
+  );
+}
+
 /// Room lifecycle. Host-only methods take the `hostToken` returned by
-/// [createRoom]; the server rejects them without it.
+/// [createRoom]; the server rejects them without it. Every method is rate
+/// limited (see [Limits]).
 /// {@category Endpoint}
 class EndpointRoom extends _isc.EndpointRef {
   EndpointRoom(_isc.EndpointCaller caller) : super(caller);
@@ -429,6 +302,36 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
+  /// Locks the room to new players, or unlocks it.
+  _ida.Future<void> setLocked(
+    String code,
+    String hostToken,
+    bool locked,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'setLocked',
+    {
+      'code': code,
+      'hostToken': hostToken,
+      'locked': locked,
+    },
+  );
+
+  /// Removes a player from the lobby, before the game starts.
+  _ida.Future<void> removePlayer(
+    String code,
+    String hostToken,
+    int playerId,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'removePlayer',
+    {
+      'code': code,
+      'hostToken': hostToken,
+      'playerId': playerId,
+    },
+  );
+
   /// Live room updates. The first event is always a full snapshot, so
   /// re-subscribing after a disconnect restores the client's view.
   _ida.Stream<_inkt92gq.RoomState> watchRoom(String code) =>
@@ -481,15 +384,13 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
-    emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     answer = EndpointAnswer(this);
     buzzer = EndpointBuzzer(this);
+    questions = EndpointQuestions(this);
     room = EndpointRoom(this);
     modules = Modules(this);
   }
-
-  late final EndpointEmailIdp emailIdp;
 
   late final EndpointJwtRefresh jwtRefresh;
 
@@ -497,16 +398,18 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointBuzzer buzzer;
 
+  late final EndpointQuestions questions;
+
   late final EndpointRoom room;
 
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
-    'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'answer': answer,
     'buzzer': buzzer,
+    'questions': questions,
     'room': room,
   };
 

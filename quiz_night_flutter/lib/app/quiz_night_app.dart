@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/platform/haptics.dart';
 import '../core/platform/screen_wake_lock.dart';
 import '../core/theme/app_theme.dart';
+import '../data/questions_repository.dart';
 import '../data/room_repositories.dart';
 import '../data/seat_repository.dart';
 import 'app_router.dart';
@@ -15,6 +16,9 @@ class QuizNightApp extends StatefulWidget {
   final LobbyRepository lobby;
   final GameRepository game;
   final SeatRepository seats;
+
+  /// AI-written questions; none unless main.dart passes the server's.
+  final QuestionsRepository questions;
 
   /// Defaults to doing nothing; main.dart passes the browser's wake lock.
   final ScreenWakeLock wakeLock;
@@ -31,6 +35,7 @@ class QuizNightApp extends StatefulWidget {
     required this.lobby,
     required this.game,
     required this.seats,
+    this.questions = const NoQuestionsRepository(),
     this.wakeLock = const NoopScreenWakeLock(),
     this.haptics,
     this.initialLocation,
@@ -60,6 +65,9 @@ class _QuizNightAppState extends State<QuizNightApp> {
         RepositoryProvider<LobbyRepository>.value(value: widget.lobby),
         RepositoryProvider<GameRepository>.value(value: widget.game),
         RepositoryProvider<SeatRepository>.value(value: widget.seats),
+        RepositoryProvider<QuestionsRepository>.value(
+          value: widget.questions,
+        ),
         RepositoryProvider<ScreenWakeLock>.value(value: widget.wakeLock),
         RepositoryProvider<Haptics>(
           create: (_) => widget.haptics ?? SilentHaptics(),

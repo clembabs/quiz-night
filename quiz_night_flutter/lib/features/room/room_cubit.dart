@@ -76,6 +76,10 @@ class RoomViewState extends Equatable {
       ? null
       : room?.players.where((p) => p.id == seat.playerId).firstOrNull;
 
+  /// A player whose seat is no longer in the room: the host removed them.
+  bool get removedByHost =>
+      !seat.isHost && room != null && !roomGone && me == null;
+
   /// This player's pick for the current question, if any.
   int? get myChoice {
     final id = room?.question?.id;
@@ -272,6 +276,14 @@ class RoomCubit extends Cubit<RoomViewState> {
 
   Future<void> useWildcard(int playerId) =>
       _act(() => _game.useWildcard(state.seat, playerId));
+
+  /// Host: closes the room to new players, or opens it again.
+  Future<void> setLocked(bool locked) =>
+      _act(() => _game.setLocked(state.seat, locked));
+
+  /// Host: removes a player from the lobby.
+  Future<void> removePlayer(int playerId) =>
+      _act(() => _game.removePlayer(state.seat, playerId));
 
   // ---- player actions
 

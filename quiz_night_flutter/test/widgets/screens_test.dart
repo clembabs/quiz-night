@@ -9,9 +9,11 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/app/quiz_night_app.dart';
 import 'package:quiz_night_flutter/core/platform/screen_wake_lock.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
+import 'package:quiz_night_flutter/data/app_failure.dart';
 import 'package:quiz_night_flutter/data/seat.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
 import 'package:quiz_night_flutter/features/join/join_form.dart';
+import 'package:quiz_night_flutter/features/landing/widgets/info_sections.dart';
 
 import '../fakes/fakes.dart';
 
@@ -57,7 +59,9 @@ void main() {
     });
 
     testWidgets('when a code is typed on the landing page then Join game '
-        'opens the join form with it, and Back returns', (tester) async {
+        'opens the join form with it, and the brand returns home', (
+      tester,
+    ) async {
       when(() => seats.load()).thenAnswer((_) async => null);
       await tester.pumpWidget(
         QuizNightApp(lobby: lobby, game: game, seats: seats),
@@ -72,7 +76,7 @@ void main() {
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
 
-      await tester.tap(find.byKey(const Key('join.back')));
+      await tester.tap(find.byKey(const Key('site.home')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('join.code')), findsNothing);
       expect(find.byKey(const Key('landing.code')), findsOneWidget);
@@ -94,6 +98,81 @@ void main() {
 
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
+    });
+
+    testWidgets('when joining fails then the error shows under the field '
+        'and as a toast', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      when(
+        () => lobby.joinRoom(any(), any()),
+      ).thenAnswer((_) async => throw AppFailure.connection);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join?code=4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('join.nickname')), 'Clem');
+      await tester.tap(find.byKey(const Key('join.submit')));
+      await tester.pumpAndSettle();
+
+      final message = AppFailure.connection.message;
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('toast.error')),
+          matching: find.text(message),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(message), findsNWidgets(2));
+    });
+
+    testWidgets('when the game already started then the toast is a warning, '
+        'like the banner', (tester) async {
+      when(() => seats.load()).thenAnswer((_) async => null);
+      when(() => lobby.joinRoom(any(), any())).thenAnswer(
+        (_) async => throw const AppFailure(
+          'Already started',
+          kind: FailureKind.gameStarted,
+        ),
+      );
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join?code=4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('join.nickname')), 'Clem');
+      await tester.tap(find.byKey(const Key('join.submit')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('toast.warning')), findsOneWidget);
+      expect(find.byKey(const Key('toast.error')), findsNothing);
+    });
+
+    testWidgets('when a page is shorter than the window then the footer sits '
+        'at the bottom', (tester) async {
+      tester.view.physicalSize = const Size(1440, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.getRect(find.byType(LandingFooter)).bottom, 1600);
     });
 
     testWidgets('when opened from an old QR link on the home page then it '

@@ -71,9 +71,10 @@ abstract final class LandingContent {
   static const forHosts = [
     Step(
       'Create a room',
-      'Tap “Host a game” on a laptop. Choose how players '
+      'Tap “Start hosting” on a laptop. Choose how players '
           'are knocked out, how many questions a round, how many seconds each '
-          'and how many reach the final.',
+          'and how many reach the final. Type a topic to have AI write the '
+          'questions.',
     ),
     Step(
       'Put it on the big screen',
@@ -134,8 +135,10 @@ abstract final class LandingContent {
       'The host screen stays awake for the whole game.',
     ]),
     GuideCard('Questions', 'Choose the game', [
-      'Questions come from the built-in question bank for now.',
-      'Typing a topic and getting AI-written questions is coming soon.',
+      'Type any topic and AI writes the questions for your game, with '
+          'harder ones for the final.',
+      'Preview them first, with the answers, and remove any you are unsure '
+          'of. Leave the topic empty to use the built-in questions.',
       'Pick 3, 5, 8 or 10 questions a round and 15, 20 or 30 seconds each.',
       'Choose 2, 3 or 4 finalists for the buzzer final.',
     ]),
@@ -189,10 +192,10 @@ abstract final class LandingContent {
             'tap “Host a game”.',
       ),
       Faq(
-        'Can I write my own questions?',
-        'Not yet. Games use the built-in '
-            'question bank. Your own questions and AI-written ones are '
-            'coming.',
+        'Can I choose the questions?',
+        'Type a topic and AI writes questions for your game; you preview '
+            'them, with the answers, before it starts. Writing your own '
+            'questions is coming soon.',
       ),
       Faq(
         'What equipment do I need?',
@@ -211,6 +214,11 @@ abstract final class LandingContent {
         'Only the nickname they type '
             'and their answers and scores for the game they play. No names, '
             'emails or phone numbers.',
+      ),
+      Faq(
+        'How long do you keep it?',
+        'One day. Every room, with its nicknames, answers and scores, is '
+            'deleted automatically 24 hours after it was created.',
       ),
     ]),
   ];

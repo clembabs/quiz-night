@@ -25,15 +25,21 @@ import 'create_room_result.dart' as _imz5iufx;
 import 'elimination_event.dart' as _i044r49r;
 import 'elimination_rule.dart' as _ix1rmfwn;
 import 'join_result.dart' as _irdkvnmr;
+import 'pack_draft.dart' as _i6u791n3;
+import 'pack_question.dart' as _ib5lmu7a;
+import 'pack_question_view.dart' as _iwaxsltl;
 import 'player.dart' as _imuqra0a;
 import 'player_status.dart' as _iarmrzsm;
 import 'player_view.dart' as _ijz1mobl;
 import 'question.dart' as _in6mynjk;
+import 'question_difficulty.dart' as _i5mrkeak;
+import 'question_pack.dart' as _i0rdilu0;
 import 'question_view.dart' as _irhyxwad;
 import 'quiz_error_code.dart' as _ig7vrbjo;
 import 'quiz_exception.dart' as _izdirdeu;
 import 'room.dart' as _ieflxecy;
 import 'room_config.dart' as _iwzadpd6;
+import 'room_end_reason.dart' as _i1z47hfo;
 import 'room_state.dart' as _i1uzd9w7;
 import 'room_status.dart' as _ilj1at52;
 import 'tiebreak_mode.dart' as _ixk2jfuv;
@@ -45,15 +51,21 @@ export 'create_room_result.dart';
 export 'elimination_event.dart';
 export 'elimination_rule.dart';
 export 'join_result.dart';
+export 'pack_draft.dart';
+export 'pack_question.dart';
+export 'pack_question_view.dart';
 export 'player.dart';
 export 'player_status.dart';
 export 'player_view.dart';
 export 'question.dart';
+export 'question_difficulty.dart';
+export 'question_pack.dart';
 export 'question_view.dart';
 export 'quiz_error_code.dart';
 export 'quiz_exception.dart';
 export 'room.dart';
 export 'room_config.dart';
+export 'room_end_reason.dart';
 export 'room_state.dart';
 export 'room_status.dart';
 export 'tiebreak_mode.dart';
@@ -267,6 +279,85 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'pack_question',
+      dartName: 'PackQuestion',
+      schema: 'public',
+      module: 'quiz_night',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'packId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'orderIndex',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'isFinal',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _isp.ColumnDefinition(
+          name: 'text',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'options',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<String>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'correctIndex',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'pack_question_fk_0',
+          columns: ['packId'],
+          referenceTable: 'question_pack',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'pack_question_pack_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'packId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -504,6 +595,49 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'question_pack',
+      dartName: 'QuestionPack',
+      schema: 'public',
+      module: 'quiz_night',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'topic',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'difficulty',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:QuestionDifficulty',
+        ),
+        _isp.ColumnDefinition(
+          name: 'token',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'room',
       dartName: 'Room',
       schema: 'public',
@@ -618,6 +752,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'false',
         ),
         _isp.ColumnDefinition(
+          name: 'locked',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
           name: 'startingPlayerCount',
           columnType: _isp.ColumnType.bigint,
           isNullable: true,
@@ -668,8 +809,44 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'DateTime',
           columnDefault: 'now',
         ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastActivityAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
+        _isp.ColumnDefinition(
+          name: 'endReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:RoomEndReason?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'packId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'room_fk_0',
+          columns: ['packId'],
+          referenceTable: 'question_pack',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
           indexName: 'room_code_idx',
@@ -743,6 +920,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _irdkvnmr.JoinResult) {
       return _irdkvnmr.JoinResult.fromJson(data) as T;
     }
+    if (t == _i6u791n3.PackDraft) {
+      return _i6u791n3.PackDraft.fromJson(data) as T;
+    }
+    if (t == _ib5lmu7a.PackQuestion) {
+      return _ib5lmu7a.PackQuestion.fromJson(data) as T;
+    }
+    if (t == _iwaxsltl.PackQuestionView) {
+      return _iwaxsltl.PackQuestionView.fromJson(data) as T;
+    }
     if (t == _imuqra0a.Player) {
       return _imuqra0a.Player.fromJson(data) as T;
     }
@@ -754,6 +940,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _in6mynjk.Question) {
       return _in6mynjk.Question.fromJson(data) as T;
+    }
+    if (t == _i5mrkeak.QuestionDifficulty) {
+      return _i5mrkeak.QuestionDifficulty.fromJson(data) as T;
+    }
+    if (t == _i0rdilu0.QuestionPack) {
+      return _i0rdilu0.QuestionPack.fromJson(data) as T;
     }
     if (t == _irhyxwad.QuestionView) {
       return _irhyxwad.QuestionView.fromJson(data) as T;
@@ -769,6 +961,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _iwzadpd6.RoomConfig) {
       return _iwzadpd6.RoomConfig.fromJson(data) as T;
+    }
+    if (t == _i1z47hfo.RoomEndReason) {
+      return _i1z47hfo.RoomEndReason.fromJson(data) as T;
     }
     if (t == _i1uzd9w7.RoomState) {
       return _i1uzd9w7.RoomState.fromJson(data) as T;
@@ -806,6 +1001,16 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_irdkvnmr.JoinResult?>()) {
       return (data != null ? _irdkvnmr.JoinResult.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_i6u791n3.PackDraft?>()) {
+      return (data != null ? _i6u791n3.PackDraft.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ib5lmu7a.PackQuestion?>()) {
+      return (data != null ? _ib5lmu7a.PackQuestion.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iwaxsltl.PackQuestionView?>()) {
+      return (data != null ? _iwaxsltl.PackQuestionView.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_imuqra0a.Player?>()) {
       return (data != null ? _imuqra0a.Player.fromJson(data) : null) as T;
     }
@@ -817,6 +1022,13 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_in6mynjk.Question?>()) {
       return (data != null ? _in6mynjk.Question.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i5mrkeak.QuestionDifficulty?>()) {
+      return (data != null ? _i5mrkeak.QuestionDifficulty.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i0rdilu0.QuestionPack?>()) {
+      return (data != null ? _i0rdilu0.QuestionPack.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_irhyxwad.QuestionView?>()) {
       return (data != null ? _irhyxwad.QuestionView.fromJson(data) : null) as T;
@@ -835,6 +1047,10 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iwzadpd6.RoomConfig?>()) {
       return (data != null ? _iwzadpd6.RoomConfig.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_i1z47hfo.RoomEndReason?>()) {
+      return (data != null ? _i1z47hfo.RoomEndReason.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_i1uzd9w7.RoomState?>()) {
       return (data != null ? _i1uzd9w7.RoomState.fromJson(data) : null) as T;
     }
@@ -846,6 +1062,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
+    if (t == List<_iwaxsltl.PackQuestionView>) {
+      return (data as List)
+              .map((e) => deserialize<_iwaxsltl.PackQuestionView>(e))
+              .toList()
+          as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -884,15 +1106,21 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i044r49r.EliminationEvent => 'EliminationEvent',
       _ix1rmfwn.EliminationRule => 'EliminationRule',
       _irdkvnmr.JoinResult => 'JoinResult',
+      _i6u791n3.PackDraft => 'PackDraft',
+      _ib5lmu7a.PackQuestion => 'PackQuestion',
+      _iwaxsltl.PackQuestionView => 'PackQuestionView',
       _imuqra0a.Player => 'Player',
       _iarmrzsm.PlayerStatus => 'PlayerStatus',
       _ijz1mobl.PlayerView => 'PlayerView',
       _in6mynjk.Question => 'Question',
+      _i5mrkeak.QuestionDifficulty => 'QuestionDifficulty',
+      _i0rdilu0.QuestionPack => 'QuestionPack',
       _irhyxwad.QuestionView => 'QuestionView',
       _ig7vrbjo.QuizErrorCode => 'QuizErrorCode',
       _izdirdeu.QuizException => 'QuizException',
       _ieflxecy.Room => 'Room',
       _iwzadpd6.RoomConfig => 'RoomConfig',
+      _i1z47hfo.RoomEndReason => 'RoomEndReason',
       _i1uzd9w7.RoomState => 'RoomState',
       _ilj1at52.RoomStatus => 'RoomStatus',
       _ixk2jfuv.TiebreakMode => 'TiebreakMode',
@@ -926,6 +1154,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'EliminationRule';
       case _irdkvnmr.JoinResult():
         return 'JoinResult';
+      case _i6u791n3.PackDraft():
+        return 'PackDraft';
+      case _ib5lmu7a.PackQuestion():
+        return 'PackQuestion';
+      case _iwaxsltl.PackQuestionView():
+        return 'PackQuestionView';
       case _imuqra0a.Player():
         return 'Player';
       case _iarmrzsm.PlayerStatus():
@@ -934,6 +1168,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'PlayerView';
       case _in6mynjk.Question():
         return 'Question';
+      case _i5mrkeak.QuestionDifficulty():
+        return 'QuestionDifficulty';
+      case _i0rdilu0.QuestionPack():
+        return 'QuestionPack';
       case _irhyxwad.QuestionView():
         return 'QuestionView';
       case _ig7vrbjo.QuizErrorCode():
@@ -944,6 +1182,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'Room';
       case _iwzadpd6.RoomConfig():
         return 'RoomConfig';
+      case _i1z47hfo.RoomEndReason():
+        return 'RoomEndReason';
       case _i1uzd9w7.RoomState():
         return 'RoomState';
       case _ilj1at52.RoomStatus():
@@ -1000,6 +1240,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'JoinResult') {
       return deserialize<_irdkvnmr.JoinResult>(data['data']);
     }
+    if (dataClassName == 'PackDraft') {
+      return deserialize<_i6u791n3.PackDraft>(data['data']);
+    }
+    if (dataClassName == 'PackQuestion') {
+      return deserialize<_ib5lmu7a.PackQuestion>(data['data']);
+    }
+    if (dataClassName == 'PackQuestionView') {
+      return deserialize<_iwaxsltl.PackQuestionView>(data['data']);
+    }
     if (dataClassName == 'Player') {
       return deserialize<_imuqra0a.Player>(data['data']);
     }
@@ -1011,6 +1260,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Question') {
       return deserialize<_in6mynjk.Question>(data['data']);
+    }
+    if (dataClassName == 'QuestionDifficulty') {
+      return deserialize<_i5mrkeak.QuestionDifficulty>(data['data']);
+    }
+    if (dataClassName == 'QuestionPack') {
+      return deserialize<_i0rdilu0.QuestionPack>(data['data']);
     }
     if (dataClassName == 'QuestionView') {
       return deserialize<_irhyxwad.QuestionView>(data['data']);
@@ -1026,6 +1281,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'RoomConfig') {
       return deserialize<_iwzadpd6.RoomConfig>(data['data']);
+    }
+    if (dataClassName == 'RoomEndReason') {
+      return deserialize<_i1z47hfo.RoomEndReason>(data['data']);
     }
     if (dataClassName == 'RoomState') {
       return deserialize<_i1uzd9w7.RoomState>(data['data']);
@@ -1081,10 +1339,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i6pk958y.Answer.t;
       case _izgfeu3b.Buzz:
         return _izgfeu3b.Buzz.t;
+      case _ib5lmu7a.PackQuestion:
+        return _ib5lmu7a.PackQuestion.t;
       case _imuqra0a.Player:
         return _imuqra0a.Player.t;
       case _in6mynjk.Question:
         return _in6mynjk.Question.t;
+      case _i0rdilu0.QuestionPack:
+        return _i0rdilu0.QuestionPack.t;
       case _ieflxecy.Room:
         return _ieflxecy.Room.t;
     }

@@ -1,5 +1,6 @@
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
+import 'package:quiz_night_flutter/data/questions_repository.dart';
 import 'package:quiz_night_flutter/data/room_repositories.dart';
 import 'package:quiz_night_flutter/data/seat.dart';
 import 'package:quiz_night_flutter/data/seat_repository.dart';
@@ -10,11 +11,40 @@ class MockGameRepository extends Mock implements GameRepository {}
 
 class MockSeatRepository extends Mock implements SeatRepository {}
 
+class MockQuestionsRepository extends Mock implements QuestionsRepository {}
+
 /// Registers fallback values mocktail needs for `any()` matchers.
 void registerFallbacks() {
   registerFallbackValue(RoomConfig());
   registerFallbackValue(hostSeat);
+  registerFallbackValue(QuestionDifficulty.mixed);
+  registerFallbackValue(samplePack());
 }
+
+/// A generated pack: [rounds] round and [finals] final questions, the
+/// answer always the first option.
+PackDraft samplePack({
+  int rounds = 4,
+  int finals = 2,
+  String topic = 'Nollywood',
+}) => PackDraft(
+  packId: 7,
+  packToken: 'pack-token',
+  topic: topic,
+  difficulty: QuestionDifficulty.mixed,
+  roundQuestionsNeeded: rounds,
+  finalQuestionsNeeded: finals,
+  questions: [
+    for (var i = 1; i <= rounds + finals; i++)
+      PackQuestionView(
+        id: i,
+        isFinal: i > rounds,
+        text: 'Question $i about $topic, written to be long enough?',
+        options: ['Right $i', 'Wrong A', 'Wrong B', 'Wrong C'],
+        correctIndex: 0,
+      ),
+  ],
+);
 
 const hostSeat = Seat(role: SeatRole.host, code: 'ABCD', token: 'host-token');
 

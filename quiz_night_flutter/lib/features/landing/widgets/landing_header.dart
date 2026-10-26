@@ -70,7 +70,8 @@ class LandingHeader extends StatelessWidget {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
-                          child: _Brand(
+                          child: SiteBrand(
+                            key: const Key('site.home'),
                             onTap: () => onNavigate(SitePage.home),
                           ),
                         ),
@@ -181,10 +182,11 @@ class _NavLink extends StatelessWidget {
   );
 }
 
-class _Brand extends StatelessWidget {
+/// The crest and "QUIZ NIGHT", linking home.
+class SiteBrand extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _Brand({required this.onTap});
+  const SiteBrand({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) => Semantics(

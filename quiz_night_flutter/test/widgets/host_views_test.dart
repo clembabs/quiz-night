@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
+import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
 import 'package:quiz_night_flutter/features/room/host/host_cut.dart';
 import 'package:quiz_night_flutter/features/room/host/host_final.dart';
 import 'package:quiz_night_flutter/features/room/host/host_lobby.dart';
@@ -18,6 +19,9 @@ import 'package:quiz_night_flutter/widgets/qn/host_stage.dart';
 
 import '../fakes/fakes.dart';
 import 'harness.dart';
+
+class MockPackCubit extends MockCubit<QuestionPackState>
+    implements QuestionPackCubit {}
 
 class MockSetupCubit extends MockCubit<HostSetupState>
     implements HostSetupCubit {}
@@ -54,14 +58,26 @@ void main() {
 
   group('Given the host creates a game', () {
     late MockSetupCubit setup;
+    late MockPackCubit packCubit;
 
     setUp(() {
       setup = MockSetupCubit();
+      packCubit = MockPackCubit();
+      when(
+        () => packCubit.state,
+      ).thenReturn(const QuestionPackState(status: PackStatus.idle));
+      when(() => packCubit.summaryItem).thenReturn(
+        const SummaryItem('Built-in questions', 'Or type a topic.'),
+      );
+      when(() => packCubit.generate(any())).thenAnswer((_) async {});
+      when(() => packCubit.remove(any(), any())).thenAnswer((_) async {});
       when(() => setup.state).thenReturn(const HostSetupState());
       when(
         () => setup.summary,
       ).thenReturn(const [SummaryItem('Bottom 30%', 'Lowest 30% go home.')]);
-      when(() => setup.create()).thenAnswer((_) async {});
+      when(
+        () => setup.create(pack: any(named: 'pack')),
+      ).thenAnswer((_) async {});
     });
 
     Future<void> pumpSetup(WidgetTester t) async {
@@ -70,8 +86,11 @@ void main() {
       addTearDown(t.view.reset);
       await t.pumpWidget(
         MaterialApp(
-          home: BlocProvider<HostSetupCubit>.value(
-            value: setup,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<HostSetupCubit>.value(value: setup),
+              BlocProvider<QuestionPackCubit>.value(value: packCubit),
+            ],
             child: const HostSetupScreen(),
           ),
         ),
@@ -96,7 +115,114 @@ void main() {
     testWidgets('when creating then the cubit creates the room', (t) async {
       await pumpSetup(t);
       await t.tap(find.byKey(const Key('create.submit')));
-      verify(() => setup.create()).called(1);
+      verify(() => setup.create(pack: null)).called(1);
+    });
+
+    testWidgets('when a topic is typed and Write questions tapped then the '
+        'pack cubit writes for this game', (t) async {
+      when(() => packCubit.state).thenReturn(
+        const QuestionPackState(status: PackStatus.idle, topic: 'Nollywood'),
+      );
+      await pumpSetup(t);
+      await t.ensureVisible(find.byKey(const Key('topic.field')));
+      await t.enterText(find.byKey(const Key('topic.field')), 'Afrobeats');
+      verify(() => packCubit.setTopic('Afrobeats')).called(1);
+      await t.ensureVisible(find.byKey(const Key('topic.generate')));
+      await t.tap(find.byKey(const Key('topic.generate')));
+      verify(() => packCubit.generate(any())).called(1);
+    });
+
+    testWidgets('when the count slider moves then the pack cubit gets a '
+        'count between 10 and 40', (t) async {
+      when(() => packCubit.state).thenReturn(
+        const QuestionPackState(status: PackStatus.idle, topic: 'Nollywood'),
+      );
+      await pumpSetup(t);
+      expect(find.text('Write 20 questions'), findsOneWidget);
+      final slider = find.byKey(const Key('topic.count'));
+      await t.ensureVisible(slider);
+      // The right end of the track is the maximum.
+      await t.tapAt(t.getRect(slider).centerRight - const Offset(4, 0));
+      verify(() => packCubit.setCount(40)).called(1);
+    });
+
+    testWidgets('when the page scrolls on a wide screen then the summary and '
+        'Create room stay in view', (t) async {
+      when(() => packCubit.state).thenReturn(
+        QuestionPackState(
+          status: PackStatus.ready,
+          topic: 'Nollywood',
+          pack: samplePack(rounds: 25, finals: 7),
+        ),
+      );
+      await pumpSetup(t);
+      final create = find.byKey(const Key('create.submit'));
+      final before = t.getRect(create);
+      await t.drag(
+        find.byKey(const Key('setup.scroll')),
+        const Offset(0, -800),
+      );
+      await t.pump();
+      expect(t.getRect(create), before);
+      expect(create.hitTestable(), findsOneWidget);
+    });
+
+    testWidgets('when a pack is ready then the host previews it, can remove '
+        'a question, and Create room plays it', (t) async {
+      final pack = samplePack();
+      when(() => packCubit.state).thenReturn(
+        QuestionPackState(
+          status: PackStatus.ready,
+          topic: 'Nollywood',
+          pack: pack,
+        ),
+      );
+      await pumpSetup(t);
+      expect(find.text('Preview · 4 round + 2 final'), findsOneWidget);
+      expect(find.text('✓ Right 1'), findsOneWidget);
+
+      await t.ensureVisible(find.byKey(const Key('pack.remove.2')));
+      await t.tap(find.byKey(const Key('pack.remove.2')));
+      verify(() => packCubit.remove(2, any())).called(1);
+
+      await t.ensureVisible(find.byKey(const Key('create.submit')));
+      await t.tap(find.byKey(const Key('create.submit')));
+      verify(() => setup.create(pack: pack)).called(1);
+    });
+
+    testWidgets('when writing questions fails then the error shows under '
+        'the topic and as a toast', (t) async {
+      const idle = QuestionPackState(status: PackStatus.idle, topic: 'Lagos');
+      const failed = QuestionPackState(
+        status: PackStatus.idle,
+        topic: 'Lagos',
+        error: 'The free AI quota is used up for now.',
+      );
+      whenListen(
+        packCubit,
+        Stream.value(failed),
+        initialState: idle,
+      );
+      await pumpSetup(t);
+      await t.pump();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('toast.error')),
+          matching: find.text(failed.error!),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('topic.error')), findsOneWidget);
+    });
+
+    testWidgets('when AI questions are not set up then it says so and the '
+        'game uses the built-in ones', (t) async {
+      when(
+        () => packCubit.state,
+      ).thenReturn(const QuestionPackState(status: PackStatus.unavailable));
+      await pumpSetup(t);
+      expect(find.textContaining("AI questions aren't set up"), findsOneWidget);
+      expect(find.byKey(const Key('topic.field')), findsNothing);
     });
   });
 
@@ -119,6 +245,50 @@ void main() {
       // Start is the step, but the server refuses under two players; the
       // button still forwards, so check it is labelled for starting.
       expect(find.text('START GAME'), findsOneWidget);
+    });
+
+    testWidgets('when the host removes a player then it asks first, then '
+        'removes them', (t) async {
+      when(() => cubit.removePlayer(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.pump(const Duration(seconds: 1));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      expect(find.text('REMOVE P2?'), findsOneWidget);
+      await t.tap(find.text('Keep'));
+      await t.pumpAndSettle();
+      verifyNever(() => cubit.removePlayer(any()));
+
+      await t.tap(find.byKey(const Key('chip.remove.P2')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('remove.confirm')));
+      await t.pumpAndSettle();
+      verify(() => cubit.removePlayer(2)).called(1);
+    });
+
+    testWidgets('when the host locks the room then it asks the server, and a '
+        'locked room offers to unlock', (t) async {
+      when(() => cubit.setLocked(any())).thenAnswer((_) async {});
+      await pump(
+        t,
+        HostLobby(room: lobby(3), appUrl: Uri.parse('https://q.ng/')),
+      );
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(true)).called(1);
+
+      final locked = lobby(3).copyWith(locked: true);
+      await pump(
+        t,
+        HostLobby(room: locked, appUrl: Uri.parse('https://q.ng/')),
+      );
+      expect(find.text('Unlock room'), findsOneWidget);
+      expect(find.text('No new players can join'), findsOneWidget);
+      await t.tap(find.byKey(const Key('lobby.lock')));
+      verify(() => cubit.setLocked(false)).called(1);
     });
 
     testWidgets('when players are in then they show and Start starts', (
@@ -393,6 +563,30 @@ void main() {
       }
       expect(find.text('Everyone made the final'), findsOneWidget);
       expect(find.text('0 of 0'), findsNothing);
+    });
+  });
+
+  group('Given a game that ran out of time', () {
+    testWidgets('when the podium shows then it says why and ranks by score '
+        'so far', (t) async {
+      final room = roomState(
+        status: RoomStatus.finished,
+        round: 2,
+        players: [
+          player(1, 'Ada', score: 1000),
+          player(2, 'Bo', score: 3000),
+          player(3, 'Cy', score: 2000),
+        ],
+      ).copyWith(endReason: RoomEndReason.timeUp);
+      await pump(t, HostPodium(room: room));
+      for (var i = 0; i < 4; i++) {
+        await t.pump(const Duration(seconds: 1));
+      }
+      expect(find.byKey(const Key('podium.notice')), findsOneWidget);
+      expect(find.textContaining("Time's up"), findsOneWidget);
+      expect(find.text('Bo'), findsOneWidget);
+      expect(find.text('No final this time'), findsOneWidget);
+      expect(find.text('Everyone made the final'), findsNothing);
     });
   });
 }

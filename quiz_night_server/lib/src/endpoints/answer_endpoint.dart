@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../game/room_service.dart';
 import '../generated/protocol.dart';
+import '../security/guard.dart';
 
 class AnswerEndpoint extends Endpoint {
   /// Active players score; eliminated players' answers count as shadow score.
@@ -10,5 +11,13 @@ class AnswerEndpoint extends Endpoint {
     String playerToken,
     int questionId,
     int choiceIndex,
-  ) => RoomService.submitAnswer(session, playerToken, questionId, choiceIndex);
+  ) {
+    Guard.check(session, Limits.playerAction, key: playerToken);
+    return RoomService.submitAnswer(
+      session,
+      playerToken,
+      questionId,
+      choiceIndex,
+    );
+  }
 }

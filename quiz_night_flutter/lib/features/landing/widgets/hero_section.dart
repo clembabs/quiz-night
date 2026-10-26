@@ -213,8 +213,9 @@ class _HostCard extends StatelessWidget {
             Text('RUN A QUIZ NIGHT', style: AppWebText.cardTitle),
             const SizedBox(height: 14),
             Text(
-              'Pick how players are knocked out, set the rounds, and open the '
-              'host screen on a laptop connected to a TV or projector.',
+              'Type any topic and AI writes the questions. Set the rounds, '
+              'and open the host screen on a laptop connected to a TV or '
+              'projector.',
               style: AppWebText.body,
             ),
             const SizedBox(height: 14),

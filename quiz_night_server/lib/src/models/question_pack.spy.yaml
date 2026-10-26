@@ -1,0 +1,9 @@
+### AI-written questions for one host's game, made before the room exists.
+class: QuestionPack
+table: question_pack
+fields:
+  topic: String
+  difficulty: QuestionDifficulty
+  ### Proves the caller made this pack; required to use or edit it.
+  token: String?, scope=serverOnly
+  createdAt: DateTime, default=now

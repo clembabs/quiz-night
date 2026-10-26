@@ -9,3 +9,8 @@ values:
   - tooLate
   - alreadyAnswered
   - notAllowed
+  - rateLimited
+  - roomFull
+  - roomLocked
+  - aiUnavailable
+  - generationFailed

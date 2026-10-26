@@ -1,0 +1,9 @@
+### Why a game ended.
+enum: RoomEndReason
+values:
+  ### Played through to the podium.
+  - completed
+  ### The 30-minute game limit ran out; results stand where they were.
+  - timeUp
+  ### Nothing happened in the room for 30 minutes.
+  - inactive

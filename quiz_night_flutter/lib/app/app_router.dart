@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/questions_repository.dart';
 import '../data/room_repositories.dart';
 import '../data/seat_repository.dart';
 import '../features/host_setup/host_setup_cubit.dart';
 import '../features/host_setup/host_setup_screen.dart';
+import '../features/host_setup/question_pack_cubit.dart';
 import '../features/join/join_screen.dart';
 import '../features/landing/landing_screen.dart';
 import '../features/room/room_gate.dart';
@@ -47,11 +49,19 @@ GoRouter buildAppRouter({
     ),
     GoRoute(
       path: AppPaths.host,
-      builder: (context, _) => BlocProvider(
-        create: (context) => HostSetupCubit(
-          context.read<LobbyRepository>(),
-          context.read<SeatRepository>(),
-        ),
+      builder: (context, _) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => HostSetupCubit(
+              context.read<LobbyRepository>(),
+              context.read<SeatRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) =>
+                QuestionPackCubit(context.read<QuestionsRepository>())..start(),
+          ),
+        ],
         child: const HostSetupScreen(),
       ),
     ),

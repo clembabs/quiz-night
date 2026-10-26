@@ -48,6 +48,9 @@ class HostStage extends StatelessWidget {
   /// Small actions in the header's right edge (e.g. Leave).
   final List<Widget> actions;
 
+  /// Time left in the game, shown beside the room code.
+  final Widget? clock;
+
   const HostStage({
     super.key,
     required this.child,
@@ -55,6 +58,7 @@ class HostStage extends StatelessWidget {
     this.code,
     this.reconnecting = false,
     this.actions = const [],
+    this.clock,
   });
 
   /// The canvas for a window of [window] logical pixels.
@@ -104,6 +108,7 @@ class HostStage extends StatelessWidget {
                                   topLabel: topLabel,
                                   code: code,
                                   actions: actions,
+                                  clock: clock,
                                   portrait: portrait,
                                 ),
                                 SizedBox(height: portrait ? 32 : 40),
@@ -202,12 +207,14 @@ class _Header extends StatelessWidget {
   final String topLabel;
   final String? code;
   final List<Widget> actions;
+  final Widget? clock;
   final bool portrait;
 
   const _Header({
     required this.topLabel,
     this.code,
     required this.actions,
+    this.clock,
     required this.portrait,
   });
 
@@ -271,6 +278,11 @@ class _Header extends StatelessWidget {
               if (codePill != null) ...[const SizedBox(width: 16), codePill],
             ],
           ),
+          // Its own line: a phone is too narrow for phase, clock and code.
+          if (clock != null) ...[
+            const SizedBox(height: 16),
+            Align(alignment: Alignment.centerLeft, child: clock),
+          ],
         ],
       );
     }
@@ -281,6 +293,7 @@ class _Header extends StatelessWidget {
         Expanded(
           child: Align(alignment: Alignment.centerRight, child: label),
         ),
+        if (clock != null) ...[const SizedBox(width: 24), clock!],
         if (codePill != null) ...[const SizedBox(width: 24), codePill],
         ...actionRow,
       ],

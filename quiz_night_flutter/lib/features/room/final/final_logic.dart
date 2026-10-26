@@ -5,6 +5,15 @@ List<PlayerView> finalStandings(RoomState room) {
   final finalists = room.players
       .where((p) => p.status == PlayerStatus.finalist)
       .toList();
+  // A game that ended before the final (time up, or closed for inactivity):
+  // whoever was still in, by score so far.
+  if (finalists.isEmpty && endedEarly(room)) {
+    return room.players.where((p) => p.status == PlayerStatus.active).toList()
+      ..sort((a, b) {
+        final byScore = b.score.compareTo(a.score);
+        return byScore != 0 ? byScore : a.id.compareTo(b.id);
+      });
+  }
   finalists.sort((a, b) {
     final byFinal = b.finalScore.compareTo(a.finalScore);
     if (byFinal != 0) return byFinal;
@@ -15,6 +24,32 @@ List<PlayerView> finalStandings(RoomState room) {
 }
 
 PlayerView? winnerOf(RoomState room) => finalStandings(room).firstOrNull;
+
+/// The score a podium shows: final points for finalists, the game score
+/// for anyone ranked from a game that stopped before the final.
+int podiumScore(PlayerView p) =>
+    p.status == PlayerStatus.finalist ? p.finalScore : p.score;
+
+/// The game stopped before the podium: its 30 minutes ran out, or nothing
+/// happened for 30 minutes.
+bool endedEarly(RoomState room) =>
+    room.endReason == RoomEndReason.timeUp ||
+    room.endReason == RoomEndReason.inactive;
+
+/// The room closed before its game ever started (idle lobby).
+bool closedBeforeStart(RoomState room) =>
+    room.endReason == RoomEndReason.inactive && room.round == 0;
+
+/// Why the results are "so far", for the podium and phones.
+String? endNoticeFor(RoomState room) => switch (room.endReason) {
+  RoomEndReason.timeUp =>
+    "Time's up: the game's 30 minutes ran out. "
+        'These are the scores when the clock stopped.',
+  RoomEndReason.inactive =>
+    'This room closed after 30 minutes without activity. '
+        'These are the scores when it stopped.',
+  _ => null,
+};
 
 /// Spectators who backed [finalistId]. Picks are only sent once finished.
 List<PlayerView> backersOf(RoomState room, int finalistId) =>
