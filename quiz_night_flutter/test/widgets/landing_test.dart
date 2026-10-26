@@ -13,8 +13,7 @@ import 'package:quiz_night_flutter/features/landing/landing_screen.dart';
 import '../fakes/fakes.dart';
 import 'harness.dart';
 
-/// Window widths the page must fit, with a tall height so the whole page
-/// lays out at once.
+/// Widths the page must fit; tall so the whole page lays out at once.
 const widths = {
   'phone': 360.0,
   'iphone': 390.0,
@@ -22,8 +21,7 @@ const widths = {
   'desktop': 1440.0,
 };
 
-/// With SHOT_DIR set, renders in the real fonts and saves a full-page PNG
-/// per width, for checking the layout by eye.
+/// With SHOT_DIR set, saves a real-font full-page PNG per width.
 final shotDir = Platform.environment['SHOT_DIR'];
 
 /// The whole app at [location], with no saved seat.

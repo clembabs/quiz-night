@@ -36,9 +36,7 @@ const windows = {
   'projector': Size(1920, 1080),
 };
 
-/// With SHOT_DIR set, renders in the real fonts and saves a PNG per case,
-/// for checking layouts by eye. Unset (the normal run) it only checks that
-/// nothing overflows.
+/// With SHOT_DIR set, saves a real-font PNG per case; else checks overflow.
 final shotDir = Platform.environment['SHOT_DIR'];
 
 void main() {

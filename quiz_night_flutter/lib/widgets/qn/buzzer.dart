@@ -73,8 +73,7 @@ class BuzzerLook {
   );
 }
 
-/// The round buzzer with a solid drop shadow. Press feedback is local and
-/// instant, before the server confirms.
+/// The round buzzer; press feedback is local, before the server confirms.
 class BuzzerButton extends StatefulWidget {
   final BuzzerLook look;
   final double size;
@@ -110,8 +109,7 @@ class _BuzzerButtonState extends State<BuzzerButton> {
       label: '${l.title}. ${l.subtitle}',
       onTap: widget.onPressed,
       excludeSemantics: true,
-      // Raw pointer-down: a tap recognizer inside a scrollable waits ~100 ms
-      // to rule out a scroll, which loses buzzer races.
+      // Pointer-down: taps in scrollables wait ~100 ms and lose races.
       child: Listener(
         key: const Key('buzz'),
         onPointerDown: enabled ? (_) => _press() : null,

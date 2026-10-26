@@ -15,8 +15,7 @@ Color moveColor(int? move) {
   return move > 0 ? AppColors.greenLine : AppColors.errorText;
 }
 
-/// One leaderboard row: rank, badge, name (+ tag), score, movement.
-/// Sized for the 1920×1080 projector canvas; [scale] shrinks it for phones.
+/// One leaderboard row, sized for 1920×1080; [scale] shrinks it for phones.
 class StandingsRow extends StatelessWidget {
   final int rank;
   final String nickname;

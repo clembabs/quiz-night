@@ -1,8 +1,7 @@
 import '../generated/protocol.dart';
 import 'question_generator.dart';
 
-/// The instructions every provider gets. The topic goes in separately, as
-/// data, so text in it can't change these rules.
+/// Shared rules; the topic is sent separately as data so it can't change them.
 const questionWriterInstructions = '''
 You write questions for Quiz Night, a live elimination quiz played by groups:
 friends, teams, churches and youth groups, events and classrooms.

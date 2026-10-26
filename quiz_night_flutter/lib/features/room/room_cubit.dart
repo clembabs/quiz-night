@@ -26,27 +26,23 @@ class RoomViewState extends Equatable {
   /// The user left; the screen should close.
   final bool left;
 
-  /// Last failed action. [errorSeq] changes on every failure so the same
-  /// message twice still shows twice.
+  /// Last failed action; [errorSeq] bumps so a repeat message shows again.
   final String? actionError;
   final int errorSeq;
 
   /// Server clock minus local clock, so countdowns follow server time.
   final Duration clockOffset;
 
-  /// The option this player picked, per question id. Kept locally so the
-  /// tapped button stays highlighted; the server never reveals others' picks.
+  /// This player's pick per question id, kept locally to stay highlighted.
   final Map<int, int> myChoices;
 
-  /// The finalist this spectator backed. The server keeps picks hidden until
-  /// the podium, so it is remembered here.
+  /// This spectator's backed finalist; the server hides picks until the end.
   final int? myBackedId;
 
   /// A buzz is on its way to the server; ignore further taps.
   final bool buzzing;
 
-  /// Host only: the "After round N" standings are on screen (between the
-  /// last reveal of a round and the cut).
+  /// Host only: the "After round N" standings are on screen.
   final bool showingStandings;
 
   /// Places each player moved at the latest reveal (positive is up).
@@ -140,10 +136,8 @@ class RoomViewState extends Equatable {
 Duration defaultBackoff(int attempt) =>
     Duration(milliseconds: min(5000, 500 * pow(2, attempt).toInt()));
 
-/// Keeps one seat's live room state and runs its actions.
-///
-/// The server sends a full snapshot on every subscribe, so reconnecting is
-/// just subscribing again.
+/// One seat's live room state and actions.
+/// Every subscribe gets a full snapshot, so reconnecting is just resubscribing.
 class RoomCubit extends Cubit<RoomViewState> {
   final GameRepository _game;
   final SeatRepository _seats;
@@ -287,8 +281,7 @@ class RoomCubit extends Cubit<RoomViewState> {
 
   // ---- player actions
 
-  /// Locks in [choiceIndex] for the open question. The pick shows at once;
-  /// if the server rejects it (e.g. too late) it is rolled back.
+  /// Locks in [choiceIndex]; shows at once, rolled back if the server rejects.
   Future<void> submitAnswer(int choiceIndex) async {
     final room = state.room;
     final question = room?.question;
@@ -311,9 +304,7 @@ class RoomCubit extends Cubit<RoomViewState> {
     }
   }
 
-  /// Sends an answer, retrying once after a connection blip. If the first
-  /// attempt did reach the server, the retry reports alreadyAnswered, which
-  /// the caller treats as success.
+  /// Retries once after a connection blip; alreadyAnswered then means success.
   Future<void> _sendAnswer(int questionId, int choiceIndex) async {
     try {
       await _game.submitAnswer(state.seat, questionId, choiceIndex);
@@ -325,8 +316,7 @@ class RoomCubit extends Cubit<RoomViewState> {
     }
   }
 
-  /// Backs [finalistId] to win. Shows at once; rolled back if rejected.
-  /// Picking again changes the pick.
+  /// Backs [finalistId]; shows at once, rolled back if rejected.
   Future<void> backFinalist(int finalistId) async {
     if (state.seat.isHost || state.myBackedId == finalistId) return;
     final previous = state.myBackedId;
@@ -342,8 +332,7 @@ class RoomCubit extends Cubit<RoomViewState> {
 
   // ---- buzzer final
 
-  /// Tries to claim the buzzer. Whether it worked arrives with the next
-  /// snapshot; a refusal ("Too slow") is shown as a message.
+  /// Claims the buzzer; the result comes in the next snapshot, or "Too slow".
   Future<void> buzz() async {
     final room = state.room;
     final q = room?.question;
@@ -369,7 +358,6 @@ class RoomCubit extends Cubit<RoomViewState> {
     }
   }
 
-  /// Answers while holding the buzzer.
   Future<void> submitBuzzAnswer(int choiceIndex) async {
     final room = state.room;
     final q = room?.question;

@@ -46,8 +46,7 @@ void main() {
     shadowScore: 99999,
   );
 
-  /// Renders [child] in the phone frame at 360×640, with the header.
-  /// Flutter fails the test on any overflow.
+  /// Renders [child] in the 360×640 phone frame; any overflow fails the test.
   Future<void> render(
     WidgetTester tester,
     Widget child, {
@@ -94,7 +93,6 @@ void main() {
     for (var i = 2; i <= 30; i++) player(i, '$longName $i', score: i * 100),
   ];
 
-  /// Long question and long options.
   QuestionView longQuestion({bool revealed = false, bool isFinal = false}) =>
       QuestionView(
         id: 10,

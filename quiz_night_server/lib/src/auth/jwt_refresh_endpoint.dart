@@ -1,5 +1,4 @@
 import 'package:serverpod_auth_idp_server/core.dart';
 
-/// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
-/// is made available on the server and enables automatic token refresh on the client.
+/// Exposes JWT refresh so the client can refresh tokens automatically.
 class JwtRefreshEndpoint extends RefreshJwtTokensEndpoint {}

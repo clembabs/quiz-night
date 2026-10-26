@@ -5,15 +5,12 @@ import 'dart:io';
 import 'question_generator.dart';
 import 'question_prompt.dart';
 
-/// [QuestionGenerator] on Google's Gemini API, with structured output so the
-/// reply is always the JSON shape below. Plain HTTPS: no extra package.
+/// Gemini-backed [QuestionGenerator]: structured JSON output, plain HTTPS.
 class GeminiQuestionGenerator implements QuestionGenerator {
   final String apiKey;
 
-  /// Tried in order: when one is busy (5xx), out of quota (429), slow or
-  /// unreachable, the next one gets the request. Flash writes the best
-  /// questions; Flash-Lite is the fast backup. Both run with thinking kept
-  /// low; newer Flash models were too slow for a host waiting to start.
+  /// Tried in order; on 5xx, 429, timeout or no connection, the next one.
+  /// Flash-Lite is the fast backup; low thinking (newer Flash too slow).
   final List<String> models;
 
   /// Per model, so the backup still has time.
@@ -85,8 +82,7 @@ class GeminiQuestionGenerator implements QuestionGenerator {
     throw last ?? const GenerationFailed('no models');
   }
 
-  /// One model, once. Throws [_TryNext] for failures another model might
-  /// not have; anything else (a refusal, a bad request) ends the attempt.
+  /// One model, once. [_TryNext] for failures another model might not have.
   Future<List<DraftQuestion>> _ask(
     String model,
     GenerationRequest request,
@@ -112,8 +108,7 @@ class GeminiQuestionGenerator implements QuestionGenerator {
     return parseResponse(res.body);
   }
 
-  /// Reads a generateContent reply. Throws [GenerationRefused] when the
-  /// topic was blocked, [GenerationFailed] when the reply is unusable.
+  /// Parses a reply; throws [GenerationRefused] or [GenerationFailed].
   static List<DraftQuestion> parseResponse(String body) {
     final Object? json;
     try {

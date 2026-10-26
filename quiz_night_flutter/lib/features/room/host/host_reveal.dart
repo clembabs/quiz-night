@@ -11,8 +11,7 @@ import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
 import '../round_logic.dart';
 
-/// The projector reveal: distribution bars grow from zero, wrong options dim
-/// and strike, the correct one turns green with ✓.
+/// The projector reveal: answer bars grow, the correct one turns green.
 class HostReveal extends StatelessWidget {
   final RoomState room;
 
@@ -98,8 +97,7 @@ class _Column extends StatelessWidget {
   final double share;
   final bool correct;
 
-  /// A bar growing left to right with its label above (portrait phone),
-  /// instead of a column growing upwards.
+  /// Grow left to right (portrait phone) instead of as an upward column.
   final bool horizontal;
 
   const _Column({

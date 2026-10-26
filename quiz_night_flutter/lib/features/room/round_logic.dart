@@ -15,9 +15,7 @@ enum HostStep {
   none,
 }
 
-/// Picks the host's next step from the room state. [showingStandings] is
-/// the host's local standings board, shown between the last reveal of a round
-/// and the cut.
+/// The host's next step; [showingStandings] is the local standings board.
 HostStep hostStepFor(RoomState room, {bool showingStandings = false}) {
   switch (room.status) {
     case RoomStatus.lobby:
@@ -50,8 +48,7 @@ HostStep hostStepFor(RoomState room, {bool showingStandings = false}) {
   }
 }
 
-/// Under sudden death the cut happens per question, so the round can be
-/// over early once few enough players remain.
+/// Sudden death cuts per question, so a round can end early.
 bool _suddenDeathDecided(RoomState room) =>
     room.eliminationRule == EliminationRule.suddenDeath &&
     activeCount(room) <= room.finalistTarget;
@@ -82,10 +79,7 @@ int answeredCount(RoomState room) => room.players
     .where((p) => p.status == PlayerStatus.active && p.hasAnswered)
     .length;
 
-/// Time left on the question, measured on the server's clock.
-///
-/// [clockOffset] is server time minus local time, so `localNow +
-/// clockOffset` is "now" on the server.
+/// Time left on the server's clock; [clockOffset] is server minus local time.
 Duration timeLeft({
   required DateTime endsAt,
   required Duration clockOffset,

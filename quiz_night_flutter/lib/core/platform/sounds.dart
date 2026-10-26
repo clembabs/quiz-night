@@ -5,8 +5,7 @@ import 'sounds_stub.dart'
     if (dart.library.js_interop) 'sounds_web.dart'
     as impl;
 
-/// The cut's sound cues. Synthesised in the browser, so they cost no
-/// download.
+/// The cut's sound cues, synthesised in the browser: no download.
 enum SoundCue {
   /// Under "Who's going home?": a snare roll that builds.
   drumroll,
@@ -26,8 +25,7 @@ abstract interface class Sounds {
   bool get enabled;
   set enabled(bool value);
 
-  /// Browsers only allow audio after a tap; call this on every pointer
-  /// down so the first cue can play.
+  /// Browsers allow audio only after a tap; call on every pointer down.
   void unlock();
 
   /// Plays [cue] if enabled and supported. Never throws.

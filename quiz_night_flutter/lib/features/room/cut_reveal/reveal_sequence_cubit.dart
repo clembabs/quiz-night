@@ -29,8 +29,7 @@ class RevealSequenceState extends Equatable {
 
   bool get isDone => phase == RevealPhase.done;
 
-  /// Every name but the last is out, and the room waits for it: the
-  /// bubble, the cruellest moment of the cut.
+  /// All names but the last are out: the bubble, the cruellest moment.
   bool get waitingForLast =>
       phase == RevealPhase.revealing && total > 1 && revealed == total - 1;
 
@@ -38,10 +37,8 @@ class RevealSequenceState extends Equatable {
   List<Object?> get props => [phase, revealed, total];
 }
 
-/// Drives the dramatic one-by-one elimination reveal.
-///
-/// Every screen runs its own copy from the same cut, so the projector and
-/// phones stay roughly in step without extra server messages.
+/// Drives the one-by-one elimination reveal.
+/// Each screen runs its own copy, so they stay in step without server messages.
 class RevealSequenceCubit extends Cubit<RevealSequenceState> {
   final Duration intro;
   final Duration step;
@@ -91,8 +88,7 @@ class RevealSequenceCubit extends Cubit<RevealSequenceState> {
       total: s.total,
     );
     emit(next);
-    // A longer wait before the last name; then hold on it a beat before
-    // showing who is safe.
+    // Wait longer before the last name, then hold before showing who's safe.
     _timer = Timer(next.waitingForLast ? lastHold : step, _next);
   }
 

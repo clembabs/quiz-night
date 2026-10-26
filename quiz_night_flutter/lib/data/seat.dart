@@ -2,8 +2,7 @@ import 'package:equatable/equatable.dart';
 
 enum SeatRole { host, player }
 
-/// Who this browser is in a room: the host, or a player. The [token] proves
-/// it to the server.
+/// Who this browser is in a room (host or player); [token] proves it.
 class Seat extends Equatable {
   final SeatRole role;
   final String code;

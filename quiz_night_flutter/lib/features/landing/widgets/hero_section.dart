@@ -196,8 +196,7 @@ class _HostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LandingCard(
     borderColor: AppColors.line,
-    // spaceBetween, not a Spacer: the card must also work at its own height
-    // when the cards stack.
+    // Not a Spacer: the card must also work at its own height when stacked.
     child: Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,

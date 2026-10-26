@@ -4,8 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-/// Centres [child] in the page column (at most [maxWidth], with the side
-/// gutter) and pads it top and bottom.
+/// Centres [child] in the page column (at most [maxWidth]), padded.
 class LandingSection extends StatelessWidget {
   final Widget child;
   final double maxWidth;

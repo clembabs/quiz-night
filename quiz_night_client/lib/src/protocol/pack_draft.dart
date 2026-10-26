@@ -66,8 +66,7 @@ abstract class PackDraft
 
   List<_iwaxsltl.PackQuestionView> questions;
 
-  /// How many round and final questions the game is likely to need; fewer
-  /// left (after removals) means the built-in bank fills in.
+  /// Round/final questions the game likely needs; the bank fills any shortfall.
   int roundQuestionsNeeded;
 
   int finalQuestionsNeeded;

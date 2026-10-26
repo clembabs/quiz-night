@@ -19,9 +19,7 @@ import '../final/final_logic.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
 
-/// The projector cut, staged as a show: a drumroll over face-down cards,
-/// each flipping to a name stamped OUT, a longer wait for the last one,
-/// then "13 SURVIVE" (or the finalists' desks when the final is next).
+/// The projector cut as a show: face-down cards flip to names stamped OUT.
 class HostCut extends StatelessWidget {
   final RoomState room;
 
@@ -110,9 +108,7 @@ class HostCut extends StatelessWidget {
   }
 }
 
-/// Plays the cut's sounds as the [sequence] moves: a drumroll at the start
-/// and before the last name, a stamp per name, a chime (or a fanfare for
-/// the finalists) at the end.
+/// Plays the cut's drumroll, stamps and closing chime as [sequence] moves.
 class _CutSounds extends StatefulWidget {
   final RevealSequenceState sequence;
   final bool anyoneOut;

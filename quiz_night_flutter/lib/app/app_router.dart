@@ -13,8 +13,7 @@ import '../features/room/room_gate.dart';
 import 'app_paths.dart';
 import 'seat_resume.dart';
 
-/// The app's URLs. Each screen builds its own cubit from the repositories
-/// above the router, so screens never construct their dependencies.
+/// The app's URLs; each screen builds its cubit from repos above the router.
 GoRouter buildAppRouter({
   required SeatResume resume,
   String? initialLocation,

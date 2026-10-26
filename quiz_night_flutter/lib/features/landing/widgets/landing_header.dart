@@ -21,8 +21,7 @@ enum SitePage {
   const SitePage(this.label, this.path);
 }
 
-/// Brand on the left; links and "Join a game" on wide screens, a Menu
-/// button that opens them underneath on narrow ones.
+/// Brand, plus links on wide screens or a Menu button on narrow ones.
 class LandingHeader extends StatelessWidget {
   /// The page being shown, highlighted in the links; null on "not found".
   final SitePage? current;
@@ -64,8 +63,7 @@ class LandingHeader extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: gutter),
                   child: Row(
                     children: [
-                      // Shrinks rather than pushing the Menu button off a
-                      // very narrow phone.
+                      // Keeps the Menu button on screen on narrow phones.
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,

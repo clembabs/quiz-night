@@ -81,8 +81,7 @@ class QuestionPackState extends Equatable {
   List<Object?> get props => [status, topic, difficulty, count, pack, error];
 }
 
-/// The setup screen's AI questions: topic, difficulty, writing, preview.
-/// Separate from [HostSetupCubit], which owns the game settings.
+/// The setup screen's AI questions; game settings live in [HostSetupCubit].
 class QuestionPackCubit extends Cubit<QuestionPackState> {
   final QuestionsRepository _questions;
 
@@ -132,7 +131,6 @@ class QuestionPackCubit extends Cubit<QuestionPackState> {
     }
   }
 
-  /// Drops one question from the pack.
   Future<void> remove(int questionId, RoomConfig config) async {
     final pack = state.pack;
     if (pack == null) return;

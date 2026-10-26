@@ -33,8 +33,7 @@ Color cutBackground(
   };
 }
 
-/// The phone during a cut: suspense until your fate shows, then You
-/// survived / Eliminated, then (for spectators) back a finalist.
+/// The phone during a cut: suspense, your fate, then back a finalist.
 class PhoneCut extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;

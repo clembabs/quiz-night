@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
-/// The badge tone for [nickname]: its code points summed, over the eight
-/// board-safe tones. The same name always gets the same colour everywhere.
+/// Badge tone for [nickname] from its code points; same name, same colour.
 Color badgeToneFor(String nickname) {
   final sum = nickname.runes.fold<int>(0, (a, r) => a + r);
   return AppColors.badgeTones[sum % AppColors.badgeTones.length];

@@ -4,8 +4,7 @@ import 'package:quiz_night_client/quiz_night_client.dart';
 
 import 'reveal_sequence_cubit.dart';
 
-/// Starts a fresh [RevealSequenceCubit] for each cut and rebuilds [builder]
-/// as names are revealed.
+/// A fresh [RevealSequenceCubit] per cut; rebuilds [builder] as names show.
 class CutRevealScope extends StatelessWidget {
   final EliminationEvent? event;
   final Widget Function(BuildContext context, RevealSequenceState sequence)

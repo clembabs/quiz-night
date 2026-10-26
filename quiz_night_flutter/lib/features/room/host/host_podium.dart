@@ -11,17 +11,16 @@ import '../../../widgets/qn/standings_row.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
 
-/// The projector podium: blocks rise 3rd → 2nd → 1st, then who backed the
-/// winner.
+/// The projector podium: blocks rise 3rd → 2nd → 1st, then the backers.
 class HostPodium extends StatelessWidget {
   final RoomState room;
 
   const HostPodium({super.key, required this.room});
 
-  /// Display order left to right (2nd, 1st, 3rd), heights and rise delays.
   /// Height the podium is laid out at before scaling.
   static const _podiumHeight = 560.0;
 
+  /// Display order left to right (2nd, 1st, 3rd), heights and rise delays.
   static const _slots = [
     (place: 2, height: 230.0, delay: Duration(milliseconds: 900)),
     (place: 1, height: 320.0, delay: Duration(milliseconds: 1700)),
@@ -47,8 +46,7 @@ class HostPodium extends StatelessWidget {
     final split = HostSplit(
       firstFlex: 15,
       secondFlex: 10,
-      // The tallest stack (avatar, name, the winner's block) needs about
-      // [_podiumHeight]; with less room the podium scales down to fit.
+      // The tallest stack needs about [_podiumHeight]; less room scales down.
       first: LayoutBuilder(
         builder: (context, c) => FittedBox(
           fit: BoxFit.scaleDown,

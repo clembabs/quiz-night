@@ -298,8 +298,7 @@ class _Gone extends StatelessWidget {
   );
 }
 
-/// A lobby closed after 30 minutes with nobody doing anything: no results
-/// to show, just why the room is gone.
+/// A lobby closed after 30 idle minutes: just why the room is gone.
 class _Closed extends StatelessWidget {
   final bool large;
 

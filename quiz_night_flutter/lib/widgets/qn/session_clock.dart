@@ -6,8 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../features/room/round_logic.dart';
 
-/// "24:13 left": time remaining in the game's 30 minutes, on the server's
-/// clock. Gold in the last five minutes, red in the last one.
+/// Game time left on the server's clock; gold under 5 min, red under 1.
 class SessionClock extends StatefulWidget {
   final DateTime endsAt;
   final Duration clockOffset;

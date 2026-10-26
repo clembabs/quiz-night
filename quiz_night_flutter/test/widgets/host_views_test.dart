@@ -243,8 +243,7 @@ void main() {
       expect(find.byKey(const Key('lobby.code')), findsOneWidget);
       expect(find.text('Waiting for the first player…'), findsOneWidget);
       await t.tap(find.byKey(const Key('host.step')));
-      // Start is the step, but the server refuses under two players; the
-      // button still forwards, so check it is labelled for starting.
+      // Server refuses under two players; just check the button says start.
       expect(find.text('START GAME'), findsOneWidget);
     });
 

@@ -5,8 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../brand/initial_badge.dart';
 
-/// A player's chip: initial badge and nickname. States: default, you (gold
-/// ring), finalist, eliminated (struck, faded).
+/// A player's chip (badge + nickname): default, you, finalist, eliminated.
 class PlayerChip extends StatelessWidget {
   final String nickname;
   final bool isYou;
@@ -16,8 +15,7 @@ class PlayerChip extends StatelessWidget {
   /// Shows a remove button (host lobby) that calls this.
   final VoidCallback? onRemove;
 
-  /// Chip height: 40 on phones, 52 for "you" on the waiting screen, 80 on
-  /// the projector lobby.
+  /// Chip height: 40 phone, 52 "you" when waiting, 80 projector lobby.
   final double height;
 
   const PlayerChip({
