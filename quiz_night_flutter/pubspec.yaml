@@ -26,7 +26,7 @@ dependencies:
   serverpod_auth_idp_flutter: 4.0.4
   serverpod_flutter: 4.0.4
   shared_preferences: ^2.5.6
-  web: ^1.1.1
+  web: ^1.1.2
 
 dev_dependencies:
   bloc_test: ^10.0.0
