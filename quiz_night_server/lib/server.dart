@@ -13,30 +13,17 @@ import 'src/security/guard.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/security_headers.dart';
 
-/// The starting point of the Serverpod server.
+/// Starts the server: the API, the web app at `/`, and room cleanup jobs.
 void run(List<String> args) async {
-  // Initialize Serverpod. The generated Serverpod class is already connected
-  // with your project's generated code.
   final pod = Serverpod(args);
 
-  // Initialize authentication services for the server.
-  // Token managers will be used to validate and issue authentication keys,
-  // and the identity providers will be the authentication options available for users.
   pod.initializeAuthServices(
-    tokenManagerBuilders: [
-      // Use JWT for authentication keys towards the server.
-      JwtConfigFromPasswords(),
-    ],
-    // No sign-in methods yet: players and hosts are identified by their
-    // room tokens. The email provider was removed so its public sign-up,
-    // login and password-reset endpoints don't exist (each could send
-    // emails on our account). Add a provider here, plus its endpoint in
-    // lib/src/auth/, when host accounts arrive.
+    tokenManagerBuilders: [JwtConfigFromPasswords()],
+    // No sign-in yet: room tokens identify players and hosts. The email
+    // provider was removed so its endpoints can't send mail on our account.
     identityProviderBuilders: [],
   );
 
-  // Serve all files in the web/static relative directory under /web.
-  // These are used by the default web page.
   pod.webServer.addRoute(
     StaticRoute.withCacheBusting(cacheBustingConfig),
     cacheBustingConfig.mountPrefix,
@@ -48,28 +35,20 @@ void run(List<String> args) async {
     '/',
   );
 
-  // Setup the app config route.
-  // We build this configuration based on the servers api url and serve it to
-  // the flutter app.
+  // Tells the web app where the API is (see lib/client.dart in the app).
   pod.webServer.addRoute(
     AppConfigRoute(apiConfig: pod.config.apiServer),
     '/assets/assets/config.json',
   );
 
-  // Checks if the flutter web app has been built and serves it if it has.
   final appDir = Directory(Uri(path: 'web/app').toFilePath());
   if (appDir.existsSync()) {
-    // Serve the flutter web app under /.
     pod.webServer.addRoute(
       FlutterRoute(
         appDir,
-        // If building the Flutter app with WASM, set the below parameter to
-        // true and add the --wasm flag to the flutter build command.
         enableWasmHeaders: false,
-        // Let the CDN (Serverpod Cloud) keep the web build at the edge for a
-        // day, so phones on mobile data load it from nearby; every deploy
-        // clears it. Browsers re-check after a minute because Flutter's file
-        // names are not content-hashed. index.html is always no-cache.
+        // CDN keeps the web build a day (cleared on deploy); browsers re-check
+        // each minute (names aren't hashed); index.html is never cached.
         cacheControlFactory: (_, _) => CacheControlHeader(
           publicCache: true,
           maxAge: 60,
@@ -79,7 +58,7 @@ void run(List<String> args) async {
       '/',
     );
   } else {
-    // If the flutter web app has not been built, serve the build app page.
+    // No web build yet (`make build-web`): a page saying so.
     final defaultRoute = StaticRoute.file(
       File(
         Uri(path: 'web/pages/build_flutter_app.html').toFilePath(),
@@ -100,10 +79,6 @@ void run(List<String> args) async {
     );
   }
 
-  // Configure cloud storage.
-  // This setup works with Serverpod Cloud without extra configuration.
-  // If you want to use a custom provider for cloud storage, replace these
-  // with your preferred provider.
   pod.addCloudStorage(
     await ServerpodCloudProvider.private(
       fallback: () => DatabaseCloudStorage('private'),
@@ -124,7 +99,6 @@ void run(List<String> args) async {
   // AI-written questions, if the geminiApiKey password is set.
   QuestionPacks.configure(pod);
 
-  // Start the server.
   await pod.start();
 
   // Delete rooms (and their players' data) after a day.
