@@ -57,7 +57,9 @@ void main() {
     });
 
     testWidgets('when a code is typed on the landing page then Join game '
-        'opens the join form with it, and Back returns', (tester) async {
+        'opens the join form with it, and the brand returns home', (
+      tester,
+    ) async {
       when(() => seats.load()).thenAnswer((_) async => null);
       await tester.pumpWidget(
         QuizNightApp(lobby: lobby, game: game, seats: seats),
@@ -72,7 +74,7 @@ void main() {
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
 
-      await tester.tap(find.byKey(const Key('join.back')));
+      await tester.tap(find.byKey(const Key('site.home')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('join.code')), findsNothing);
       expect(find.byKey(const Key('landing.code')), findsOneWidget);

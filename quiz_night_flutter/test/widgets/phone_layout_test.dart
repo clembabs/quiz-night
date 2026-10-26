@@ -6,8 +6,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
-import 'package:quiz_night_flutter/features/join/join_form.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
+import 'package:quiz_night_flutter/features/join/join_screen.dart';
+import 'package:quiz_night_flutter/features/landing/landing_screen.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
@@ -134,10 +135,9 @@ void main() {
             providers: [
               BlocProvider<JoinCubit>.value(value: join),
             ],
-            child: Scaffold(
-              body: PhoneFrame(
-                child: JoinForm(onHost: () {}, onBack: () {}),
-              ),
+            child: SiteScaffold(
+              current: null,
+              sections: (_) => [JoinSection(onHost: () {})],
             ),
           ),
         ),
