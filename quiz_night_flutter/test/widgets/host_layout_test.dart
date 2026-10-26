@@ -11,6 +11,7 @@ import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
 import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
+import 'package:quiz_night_flutter/features/room/cut_reveal/reveal_sequence_cubit.dart';
 import 'package:quiz_night_flutter/features/room/host/host_cut.dart';
 import 'package:quiz_night_flutter/features/room/host/host_final.dart';
 import 'package:quiz_night_flutter/features/room/host/host_lobby.dart';
@@ -97,6 +98,31 @@ void main() {
         lastElimination: cut(out: [8, 7], survivors: 6),
       ),
       createSequence: fastSequence,
+    ),
+    // Eight out with long host lines: the smallest cards, fully revealed.
+    'cut lines': () => HostCut(
+      room: roomState(
+        status: RoomStatus.elimination,
+        round: 1,
+        players: [
+          ...crowd(4),
+          for (var id = 11; id <= 18; id++)
+            player(
+              id,
+              'Player number $id',
+              status: out,
+              eliminatedInRound: 1,
+              exitLine:
+                  'Player number $id goes home still thinking about the '
+                  'Ogun river, the capital of Kenya and the Mona Lisa.',
+            ),
+        ],
+        lastElimination: cut(
+          out: [for (var id = 18; id >= 11; id--) id],
+          survivors: 4,
+        ),
+      ),
+      createSequence: (total) => RevealSequenceCubit(total: total)..skip(),
     ),
     'final': () => HostFinal(
       room: roomState(

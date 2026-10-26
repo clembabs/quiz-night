@@ -66,6 +66,7 @@ PlayerView player(
   int shadowScore = 0,
   bool lockedOut = false,
   int? backedPlayerId,
+  String? exitLine,
 }) => PlayerView(
   id: id,
   nickname: nickname,
@@ -78,6 +79,7 @@ PlayerView player(
   hasAnswered: hasAnswered,
   lastPoints: lastPoints,
   lockedOut: lockedOut,
+  exitLine: exitLine,
 );
 
 /// A four-option round question; "Paris" (index 1) is correct once [revealed].

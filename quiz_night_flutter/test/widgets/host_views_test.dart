@@ -459,6 +459,26 @@ void main() {
       expect(title(t), 'MEET YOUR FINALISTS');
     });
 
+    testWidgets('when the host lines arrive then each stamped card shows its '
+        'line', (t) async {
+      final room = cutRoom();
+      final withLines = room.copyWith(
+        players: [
+          for (final p in room.players)
+            p.status == PlayerStatus.eliminated
+                ? p.copyWith(exitLine: '${p.nickname} goes home early.')
+                : p,
+        ],
+      );
+      await pump(t, HostCut(room: withLines, createSequence: fastSequence));
+      // Face down: the lines stay hidden with the names.
+      expect(find.text('“Dee goes home early.”'), findsNothing);
+      await t.tap(find.text('Skip'));
+      await t.pumpAndSettle();
+      expect(find.text('“Dee goes home early.”'), findsOneWidget);
+      expect(find.text('“Cy goes home early.”'), findsOneWidget);
+    });
+
     testWidgets('when skipped then it jumps to the end', (t) async {
       await pump(t, HostCut(room: cutRoom(), createSequence: fastSequence));
       await t.tap(find.text('Skip'));
