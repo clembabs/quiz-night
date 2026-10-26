@@ -6,6 +6,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'app/quiz_night_app.dart';
 import 'core/platform/haptics.dart';
 import 'core/platform/screen_wake_lock.dart';
+import 'core/platform/sounds.dart';
 import 'client.dart';
 import 'data/questions_repository.dart';
 import 'data/room_repositories.dart';
@@ -27,6 +28,7 @@ void main() async {
       questions: ServerpodQuestionsRepository(client),
       wakeLock: createScreenWakeLock(),
       haptics: createHaptics(),
+      sounds: createSounds(),
     ),
   );
 }
