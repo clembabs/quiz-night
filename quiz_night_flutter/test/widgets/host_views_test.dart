@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
+import 'package:quiz_night_flutter/core/platform/sounds.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
 import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
@@ -408,19 +409,55 @@ void main() {
     testWidgets('when it runs then suspense, stamps, then the survivors', (
       t,
     ) async {
-      await pump(t, HostCut(room: cutRoom(), createSequence: fastSequence));
+      final sounds = RecordingSounds();
+      await pumpHost(
+        t,
+        HostCut(room: cutRoom(), createSequence: fastSequence),
+        cubit: cubit,
+        sounds: sounds,
+      );
       expect(title(t), 'WHO’S GOING HOME?');
+      // Face down: nobody's name shows before their turn.
+      expect(find.text('Dee'), findsNothing);
+      expect(find.text('Cy'), findsNothing);
+      expect(sounds.played, [SoundCue.drumroll]);
 
       await t.pump(const Duration(seconds: 1));
-      expect(title(t), 'GOING HOME…');
+      await t.pump(const Duration(milliseconds: 800));
+      // Dee is out; the room waits for the last name.
+      expect(title(t), 'AND THE LAST ONE GOING HOME…');
+      expect(find.text('Dee'), findsOneWidget);
+      expect(find.text('Cy'), findsNothing);
+      expect(sounds.played, [
+        SoundCue.drumroll,
+        SoundCue.stamp,
+        SoundCue.drumroll,
+      ]);
 
-      await t.pump(const Duration(seconds: 1));
+      await t.pump(const Duration(milliseconds: 200));
       await t.pump(const Duration(seconds: 1));
       await t.pump(const Duration(seconds: 1));
       expect(title(t), 'ROUND 1 IS OVER');
+      expect(sounds.played.last, SoundCue.survive);
       expect(find.byKey(const Key('cut.survivors')), findsOneWidget);
       await t.tap(find.byKey(const Key('host.step')));
       verify(() => cubit.nextQuestion()).called(1);
+    });
+
+    testWidgets('when the cut decides the finalists then a fanfare plays, and '
+        'skipping cuts the drumroll', (t) async {
+      final sounds = RecordingSounds();
+      await pumpHost(
+        t,
+        HostCut(room: cutRoom(finalists: true), createSequence: fastSequence),
+        cubit: cubit,
+        sounds: sounds,
+      );
+      await t.tap(find.text('Skip'));
+      await t.pump();
+      expect(sounds.stops, greaterThanOrEqualTo(1));
+      expect(sounds.played.last, SoundCue.fanfare);
+      expect(title(t), 'MEET YOUR FINALISTS');
     });
 
     testWidgets('when skipped then it jumps to the end', (t) async {
