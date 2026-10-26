@@ -281,8 +281,7 @@ void main() {
         'room and keeps the screen on', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => playerSeat);
       when(() => lobby.isSeatLive(playerSeat)).thenAnswer((_) async => true);
-      // A live room stream stays open; one that closes means a dropped
-      // connection and the cubit would keep reconnecting.
+      // Keep the stream open: a closed one reads as a dropped connection.
       final live = StreamController<RoomState>()
         ..add(roomState(players: [player(1, 'Ada')]));
       addTearDown(live.close);

@@ -1,12 +1,9 @@
-/// Nicknames show on the shared big screen, so the server cleans and checks
-/// them before anyone joins.
+/// Nicknames show on the big screen, so the server cleans and checks them.
 abstract final class Nickname {
   static const maxLength = 20;
 
-  /// Invisible and control characters: control codes, format characters
-  /// (zero-width spaces and joiners, right-to-left overrides), private-use
-  /// and unassigned code points. They hide text, fake other names or flip
-  /// what the big screen shows.
+  /// Control, format (zero-width, RTL override), private-use and unassigned
+  /// code points: they hide text, fake names or flip the big screen.
   static final _invisible = RegExp(
     r'[\p{Cc}\p{Cf}\p{Co}\p{Cn}]',
     unicode: true,
@@ -15,8 +12,7 @@ abstract final class Nickname {
   /// Any run of whitespace, including line and paragraph separators.
   static final _spaces = RegExp(r'[\s\p{Zl}\p{Zp}]+', unicode: true);
 
-  /// The nickname as it will be shown: invisible characters removed, spaces
-  /// folded to single ones and trimmed. May be empty.
+  /// Display form: invisibles stripped, spaces folded, trimmed. May be empty.
   static String clean(String raw) =>
       raw.replaceAll(_invisible, '').replaceAll(_spaces, ' ').trim();
 
@@ -34,8 +30,7 @@ abstract final class Nickname {
     '8': 'b',
   };
 
-  /// Blocked even inside a longer word: strong words that don't turn up
-  /// inside ordinary names.
+  /// Blocked anywhere: strong words that never occur inside ordinary names.
   static const _blockedAnywhere = [
     'fuck',
     'shit',
@@ -53,8 +48,7 @@ abstract final class Nickname {
     'retard',
   ];
 
-  /// Blocked only as a whole word, because they hide inside innocent names
-  /// (Cassandra, Dickens, Glass, Titus).
+  /// Whole-word only: they hide in innocent names (Cassandra, Dickens, Titus).
   static const _blockedWords = {
     'ass',
     'arse',

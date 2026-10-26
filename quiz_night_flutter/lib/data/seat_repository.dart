@@ -9,10 +9,8 @@ abstract interface class SeatRepository {
   Future<void> clear();
 }
 
-/// [SeatRepository] backed by `shared_preferences` (localStorage on web).
-///
-/// Storage can be unavailable (private browsing, blocked site data); then
-/// every call quietly does nothing and the app still works for this visit.
+/// [SeatRepository] on `shared_preferences` (localStorage on web).
+/// If storage is unavailable, calls quietly do nothing.
 class PrefsSeatRepository implements SeatRepository {
   static const _role = 'seat.role';
   static const _code = 'seat.code';

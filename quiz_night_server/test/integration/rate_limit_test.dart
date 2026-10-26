@@ -77,8 +77,7 @@ void main() {
       final room = await endpoints.room.createRoom(sb, RoomConfig());
       final other = await endpoints.room.createRoom(sb, RoomConfig());
       for (var i = 0; i < Limits.joinPerRoom.max; i++) {
-        // Same nickname: the first joins, the rest fail on the name, but
-        // every attempt counts against the room.
+        // Same nickname: later joins fail on the name but still count.
         try {
           await endpoints.room.joinRoom(sb, room.roomCode, 'Spam');
         } on QuizException catch (e) {

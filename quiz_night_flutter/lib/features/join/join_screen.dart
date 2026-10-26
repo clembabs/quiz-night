@@ -11,8 +11,7 @@ import '../landing/widgets/landing_parts.dart';
 import 'join_cubit.dart';
 import 'join_form.dart';
 
-/// `/join`: a website page with the room code and nickname form. [code]
-/// comes from the URL (a scanned QR, or the landing page's code box).
+/// `/join`: code and nickname form; [code] comes from the URL (QR or landing).
 class JoinScreen extends StatelessWidget {
   final String? code;
 
@@ -39,8 +38,7 @@ class JoinScreen extends StatelessWidget {
           listener: (context, state) => showToast(
             context,
             state.error!,
-            // The room is there, but can't take you: a warning, as in the
-            // form's banner.
+            // The room exists but can't take you: a warning, as in the banner.
             kind: switch (state.errorKind) {
               JoinError.gameStarted ||
               JoinError.roomFull ||

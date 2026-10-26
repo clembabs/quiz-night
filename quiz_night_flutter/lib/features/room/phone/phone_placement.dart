@@ -11,8 +11,7 @@ import '../final/final_logic.dart';
 import '../room_cubit.dart';
 import '../standings_logic.dart';
 
-/// The phone at the end: final placement, title and a line about the winner
-/// and who you backed.
+/// The phone at the end: placement, title, the winner and who you backed.
 class PhonePlacement extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;
@@ -75,8 +74,7 @@ class PhonePlacement extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Scales down rather than overflowing on a small phone (the
-          // "time's up" notice adds a few lines).
+          // Scales down on small phones (the "time's up" notice adds lines).
           Expanded(
             child: LayoutBuilder(
               builder: (context, c) => Center(

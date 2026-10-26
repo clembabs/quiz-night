@@ -1,5 +1,4 @@
-/// The site's root address (scheme, host and port), e.g. for the lobby QR.
-/// Falls back to [Uri.base] when it has no web origin (tests, file URLs).
+/// The site's root (scheme, host, port), else [Uri.base] (tests, files).
 Uri siteRoot([Uri? base]) {
   final b = base ?? Uri.base;
   if (!b.hasAuthority || !(b.scheme == 'http' || b.scheme == 'https')) {

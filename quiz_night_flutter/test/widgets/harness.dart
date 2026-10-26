@@ -14,7 +14,6 @@ import 'package:quiz_night_flutter/widgets/qn/host_stage.dart';
 
 class MockRoomCubit extends MockCubit<RoomViewState> implements RoomCubit {}
 
-/// Records which haptic tokens were played.
 class RecordingHaptics implements Haptics {
   final played = <HapticToken>[];
 
@@ -94,9 +93,7 @@ Future<void> pumpHost(
   size: hostCanvas,
 );
 
-/// Loads the app's bundled fonts (and their fallbacks) so renders match the
-/// real app, instead of the test font's blocks. For screenshot runs only:
-/// layout tests keep the wider test font, which catches more overflows.
+/// Real fonts for screenshot runs; layout tests keep the wider test font.
 Future<void> loadRealFonts() async {
   for (final (family, files) in [
     ('Bricolage', ['BricolageGrotesque-ExtraBold.ttf']),

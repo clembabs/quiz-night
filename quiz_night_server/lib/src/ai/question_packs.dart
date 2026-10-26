@@ -14,18 +14,15 @@ import 'gemini_generator.dart';
 import 'question_checks.dart';
 import 'question_generator.dart';
 
-/// AI-written question packs: made for a host before their room exists,
-/// previewed (answers included) and played before the built-in bank.
+/// AI packs: made pre-room, previewed with answers, played before the bank.
 abstract final class QuestionPacks {
-  /// The generator in use. Set in `server.dart` from the `geminiApiKey`
-  /// password; tests set a fake. Null: AI questions are off.
+  /// Set in `server.dart` from `geminiApiKey`; fake in tests; null = AI off.
   static QuestionGenerator? generator;
 
   /// Generations per address: a host trying a few topics.
   static const perAddress = RateLimit('aiPerAddress', 3, Duration(hours: 1));
 
-  /// Generations across the whole server per day. Each can take two model
-  /// calls (the fallback), so this stays near 300 calls, under the free tier.
+  /// Server-wide per day; with fallbacks ~300 calls, under the free tier.
   static const perDay = RateLimit('aiPerDay', 150, Duration(hours: 24));
 
   static const minTopic = 2;
@@ -35,8 +32,7 @@ abstract final class QuestionPacks {
   static const minQuestions = 10;
   static const maxQuestions = 40;
 
-  /// Splits the host's [count] into round and final questions: the game's
-  /// final questions, but no more than a third of the pack.
+  /// Splits [count] into rounds and finals: the game's finals, max a third.
   static ({int rounds, int finals}) split(int count, RoomConfig config) {
     final finals = min(config.finalQuestionCount, count ~/ 3);
     return (rounds: count - finals, finals: finals);
@@ -47,10 +43,8 @@ abstract final class QuestionPacks {
   static QuizException _error(QuizErrorCode code, String message) =>
       QuizException(code: code, message: message);
 
-  /// Round and final questions a game with [config] is likely to need: the
-  /// rounds a full room takes to reach the finalists, but no more than fit
-  /// in the 30-minute game (a question, its reveal and the leaderboard take
-  /// about the time limit plus 25 seconds).
+  /// Questions a full room needs to reach the finalists, capped to fit the
+  /// 30-minute game (each question takes about its time limit plus 25s).
   static ({int rounds, int finals}) questionsNeeded(RoomConfig config) {
     var active = RoomService.maxPlayers;
     var rounds = 0;
@@ -83,8 +77,7 @@ abstract final class QuestionPacks {
 
   static bool get available => generator != null;
 
-  /// Writes, checks and saves a pack of [questionCount] questions on
-  /// [topic].
+  /// Writes, checks and saves [questionCount] questions on [topic].
   static Future<PackDraft> generate(
     Session session,
     String topic,
@@ -274,8 +267,7 @@ abstract final class QuestionPacks {
   static String _token() =>
       List.generate(32, (_) => _rng.nextInt(16).toRadixString(16)).join();
 
-  /// Configures the Gemini generator from the server's passwords, if the
-  /// `geminiApiKey` password is set.
+  /// Sets up the Gemini generator if the `geminiApiKey` password is set.
   static void configure(Serverpod pod) {
     final key = pod.getPassword('geminiApiKey');
     if (key != null && key.isNotEmpty && key != 'change-me') {

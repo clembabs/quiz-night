@@ -21,8 +21,7 @@ void registerFallbacks() {
   registerFallbackValue(samplePack());
 }
 
-/// A generated pack: [rounds] round and [finals] final questions, the
-/// answer always the first option.
+/// A pack of [rounds] round and [finals] final questions; answer is option 0.
 PackDraft samplePack({
   int rounds = 4,
   int finals = 2,
@@ -67,6 +66,7 @@ PlayerView player(
   int shadowScore = 0,
   bool lockedOut = false,
   int? backedPlayerId,
+  String? exitLine,
 }) => PlayerView(
   id: id,
   nickname: nickname,
@@ -79,10 +79,10 @@ PlayerView player(
   hasAnswered: hasAnswered,
   lastPoints: lastPoints,
   lockedOut: lockedOut,
+  exitLine: exitLine,
 );
 
-/// A four-option round question; correct answer is "Paris" (index 1) once
-/// [revealed].
+/// A four-option round question; "Paris" (index 1) is correct once [revealed].
 QuestionView question({
   int id = 10,
   int round = 1,

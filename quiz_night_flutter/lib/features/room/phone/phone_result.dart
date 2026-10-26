@@ -12,8 +12,7 @@ import '../../../widgets/qn/standings_row.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
 
-/// After a reveal: a big Correct / Wrong card, score and rank, and where you
-/// stand against the danger line.
+/// After a reveal: Correct / Wrong, score, rank and the danger line.
 class PhoneResult extends StatefulWidget {
   final RoomState room;
   final PlayerView? me;
@@ -217,8 +216,7 @@ class _StatTile extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        // Big numbers shrink rather than overflow on narrow or large-text
-        // phones.
+        // Big numbers shrink rather than overflow on narrow phones.
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,

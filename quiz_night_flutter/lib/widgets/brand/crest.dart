@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
-/// The school-crest outline: square-ish top corners, a shield-round bottom.
-/// Matches the CSS `border-radius: r r 50% 50% / r r 46% 46%`.
+/// Crest outline, as CSS `border-radius: r r 50% 50% / r r 46% 46%`.
 class CrestBorder extends OutlinedBorder {
   /// Top corner radius as a fraction of the width.
   final double topRadius;
@@ -45,8 +44,7 @@ class CrestBorder extends OutlinedBorder {
       CrestBorder(side: side ?? this.side, topRadius: topRadius);
 }
 
-/// A crest-shaped badge. With no [child] it is the Quiz Night mark: "QN"
-/// over a gold rule.
+/// A crest-shaped badge; with no [child], "QN" over a gold rule.
 class Crest extends StatelessWidget {
   final double width;
   final Color fill;
@@ -112,8 +110,7 @@ class Crest extends StatelessWidget {
   );
 }
 
-/// The stacked mark: crest above "QUIZ NIGHT", centred (design system
-/// "Crest mark · stacked").
+/// The stacked mark: crest above "QUIZ NIGHT", centred.
 class QuizNightStackedMark extends StatelessWidget {
   final double crestWidth;
   final String? subtitle;

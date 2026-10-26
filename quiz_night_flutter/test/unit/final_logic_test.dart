@@ -10,8 +10,7 @@ const f = PlayerStatus.finalist;
 const out = PlayerStatus.eliminated;
 
 void main() {
-  /// Ada leads the final, Bo is second on round score, Cy third.
-  /// Dee backed Ada, Eve backed Bo, Fay backed nobody.
+  /// Ada leads, Bo second, Cy third; Dee backed Ada, Eve Bo, Fay nobody.
   RoomState finished() => roomState(
     status: RoomStatus.finished,
     players: [

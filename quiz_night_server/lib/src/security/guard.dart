@@ -4,24 +4,19 @@ import '../generated/protocol.dart';
 import 'client_address.dart';
 import 'rate_limiter.dart';
 
-/// The limits, sized for a classroom or venue where every phone shares one
-/// Wi-Fi address: generous per address, tight per token.
+/// Sized for a venue sharing one Wi-Fi: generous per address, tight per token.
 abstract final class Limits {
   /// New rooms per address.
   static const createRoom = RateLimit('createRoom', 20, Duration(hours: 1));
 
-  /// Joins per address: a room's worth of phones on one Wi-Fi, with retries,
-  /// but not a script hopping between rooms.
+  /// Joins per address: a roomful on one Wi-Fi, but not a room-hopping script.
   static const joinRoom = RateLimit('joinRoom', 60, Duration(minutes: 1));
 
-  /// Join attempts per room, from any number of addresses: a real group
-  /// trickles in, a script flooding a known code is cut off.
+  /// Joins per room from any address: stops a script flooding a known code.
   static const joinPerRoom = RateLimit('joinPerRoom', 20, Duration(minutes: 1));
 
-  /// Wrong room codes per address: more than 6 in a minute blocks joining
-  /// from that address for 5 minutes. Room codes are 4 digits, so this makes
-  /// guessing them impractical (about 7 tries every 5 minutes), while real
-  /// typos rarely pass a couple.
+  /// Wrong codes per address: over 6 a minute blocks 5 minutes, making 4-digit
+  /// code guessing impractical while real typos stay well under.
   static const wrongCode = RateLimit(
     'wrongCode',
     6,
@@ -45,13 +40,11 @@ abstract final class Limits {
   /// New room streams per address.
   static const watch = RateLimit('watch', 300, Duration(minutes: 1));
 
-  /// Room streams one address may hold open at once: a full room of phones
-  /// plus the host, with room for reconnect overlap.
+  /// Open streams per address: a full room plus host, with reconnect overlap.
   static const maxOpenStreams = 60;
 }
 
-/// Applies [Limits] in the endpoints. Off by default, so tests of game logic
-/// are unaffected; `server.dart` turns it on.
+/// Applies [Limits] in endpoints. Off for tests; `server.dart` turns it on.
 abstract final class Guard {
   static bool enabled = false;
   static RateLimiter limiter = RateLimiter();
@@ -65,8 +58,7 @@ abstract final class Guard {
     message: 'Too many requests. Wait a moment and try again.',
   );
 
-  /// Counts one call against [limit] for [key] (default: the caller's
-  /// address) and throws `rateLimited` once it is used up.
+  /// Counts a call for [key] (default: address); throws once used up.
   static void check(Session session, RateLimit limit, {String? key}) {
     if (!enabled) return;
     if (!limiter.tryAcquire(key ?? clientAddress(session), limit, now())) {
@@ -74,8 +66,7 @@ abstract final class Guard {
     }
   }
 
-  /// Throws `rateLimited` if this address has used up [limit] without
-  /// counting this call; pair with [recordFailure].
+  /// Throws if [limit] is used up, without counting; pair with [recordFailure].
   static void checkFailures(Session session, RateLimit limit) {
     if (!enabled) return;
     if (limiter.isExhausted(clientAddress(session), limit, now())) {
@@ -88,8 +79,7 @@ abstract final class Guard {
     limiter.record(clientAddress(session), limit, now());
   }
 
-  /// Takes a stream slot for the caller's address and returns the function
-  /// that gives it back. Throws `rateLimited` when the address holds too many.
+  /// Takes a stream slot (throws if too many); returns the release function.
   static void Function() openStream(Session session) {
     if (!enabled) return () {};
     final key = clientAddress(session);

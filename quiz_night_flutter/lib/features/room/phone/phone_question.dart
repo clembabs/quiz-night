@@ -128,8 +128,7 @@ class _Answer extends StatelessWidget {
                   ],
                 ],
               );
-        // The question takes its natural height and the answers fill the
-        // rest; only if nothing fits (huge text) does the screen scroll.
+        // Answers fill what the question leaves; scrolls only if nothing fits.
         return SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: c.maxHeight),
@@ -173,8 +172,7 @@ class _Answer extends StatelessWidget {
                             ),
                     ),
                     const SizedBox(height: 16),
-                    // Buttons never exceed 120 px; spare room goes above
-                    // them, so answers stay in thumb reach.
+                    // Spare room goes above buttons, keeping them in reach.
                     Expanded(
                       child: Align(
                         alignment: Alignment.bottomCenter,

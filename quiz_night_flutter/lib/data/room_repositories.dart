@@ -11,8 +11,7 @@ abstract interface class LobbyRepository {
   /// Joins a room in the lobby and returns the player's seat.
   Future<Seat> joinRoom(String code, String nickname);
 
-  /// Whether a saved seat is still in a game that has not finished.
-  /// Offline counts as live, so the room screen can retry.
+  /// Whether a saved seat is in an unfinished game; offline counts as live.
   Future<bool> isSeatLive(Seat seat);
 }
 
@@ -38,8 +37,7 @@ abstract interface class GameRepository {
   /// Stops (or allows again) new players joining.
   Future<void> setLocked(Seat host, bool locked);
 
-  /// Answers [questionId] for [player]. Eliminated players' answers count
-  /// as shadow score only.
+  /// Answers [questionId]; eliminated players' answers are shadow only.
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
 
   /// A spectator picks the finalist they think will win.
@@ -194,8 +192,7 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   };
 }
 
-/// Runs a server call, turning transport errors into [AppFailure]s with
-/// the server's own user-facing message.
+/// Runs a server call; errors become [AppFailure]s with its message.
 Future<T> guardServerCall<T>(Future<T> Function() call) async {
   try {
     return await call();

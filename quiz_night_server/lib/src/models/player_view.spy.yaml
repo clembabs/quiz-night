@@ -14,3 +14,5 @@ fields:
   ### Points from the current question; only set after reveal.
   lastPoints: int?
   lockedOut: bool
+  ### The host's line when this player was cut; arrives just after the cut.
+  exitLine: String?

@@ -7,8 +7,7 @@ import 'screen_wake_lock.dart';
 
 ScreenWakeLock createScreenWakeLock() => _BrowserScreenWakeLock();
 
-/// The Screen Wake Lock API. Unsupported browsers (and denied requests, e.g.
-/// low battery mode) are ignored: the game works, the screen may just dim.
+/// Screen Wake Lock API; unsupported or denied requests are ignored.
 class _BrowserScreenWakeLock implements ScreenWakeLock {
   web.WakeLockSentinel? _sentinel;
 

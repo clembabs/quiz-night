@@ -29,8 +29,7 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
 
-/// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
-/// is made available on the server and enables automatic token refresh on the client.
+/// Exposes JWT refresh so the client can refresh tokens automatically.
 /// {@category Endpoint}
 class EndpointJwtRefresh extends _iacc.EndpointRefreshJwtTokens {
   EndpointJwtRefresh(_isc.EndpointCaller caller) : super(caller);
@@ -144,8 +143,7 @@ class EndpointBuzzer extends _isc.EndpointRef {
   );
 }
 
-/// AI-written questions for the host's setup screen. Rate limited inside
-/// [QuestionPacks.generate] (3 an hour per address, 150 a day overall).
+/// AI questions for host setup; rate limited in [QuestionPacks.generate].
 /// {@category Endpoint}
 class EndpointQuestions extends _isc.EndpointRef {
   EndpointQuestions(_isc.EndpointCaller caller) : super(caller);
@@ -160,8 +158,7 @@ class EndpointQuestions extends _isc.EndpointRef {
     {},
   );
 
-  /// Writes [questionCount] questions (10-40) on [topic] for a game with
-  /// [config].
+  /// Writes [questionCount] questions (10-40) on [topic] for [config].
   _ida.Future<_i1m5kpiv.PackDraft> generatePack(
     String topic,
     _ih0atpad.QuestionDifficulty difficulty,
@@ -196,9 +193,7 @@ class EndpointQuestions extends _isc.EndpointRef {
   );
 }
 
-/// Room lifecycle. Host-only methods take the `hostToken` returned by
-/// [createRoom]; the server rejects them without it. Every method is rate
-/// limited (see [Limits]).
+/// Room lifecycle. Host-only methods need the `hostToken`; all rate limited.
 /// {@category Endpoint}
 class EndpointRoom extends _isc.EndpointRef {
   EndpointRoom(_isc.EndpointCaller caller) : super(caller);
@@ -332,8 +327,7 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
-  /// Live room updates. The first event is always a full snapshot, so
-  /// re-subscribing after a disconnect restores the client's view.
+  /// Live updates; always starts with a full snapshot so reconnects recover.
   _ida.Stream<_inkt92gq.RoomState> watchRoom(String code) =>
       caller.callStreamingServerEndpoint<
         _ida.Stream<_inkt92gq.RoomState>,

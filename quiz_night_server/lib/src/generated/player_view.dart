@@ -28,6 +28,7 @@ abstract class PlayerView
     required this.hasAnswered,
     this.lastPoints,
     required this.lockedOut,
+    this.exitLine,
   });
 
   factory PlayerView({
@@ -42,6 +43,7 @@ abstract class PlayerView
     required bool hasAnswered,
     int? lastPoints,
     required bool lockedOut,
+    String? exitLine,
   }) = _PlayerViewImpl;
 
   factory PlayerView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -61,6 +63,7 @@ abstract class PlayerView
       ),
       lastPoints: jsonSerialization['lastPoints'] as int?,
       lockedOut: _is.BoolJsonExtension.fromJson(jsonSerialization['lockedOut']),
+      exitLine: jsonSerialization['exitLine'] as String?,
     );
   }
 
@@ -88,6 +91,9 @@ abstract class PlayerView
 
   bool lockedOut;
 
+  /// The host's line when this player was cut; arrives just after the cut.
+  String? exitLine;
+
   /// Returns a shallow copy of this [PlayerView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -103,6 +109,7 @@ abstract class PlayerView
     bool? hasAnswered,
     int? lastPoints,
     bool? lockedOut,
+    String? exitLine,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -119,6 +126,7 @@ abstract class PlayerView
       'hasAnswered': hasAnswered,
       if (lastPoints != null) 'lastPoints': lastPoints,
       'lockedOut': lockedOut,
+      if (exitLine != null) 'exitLine': exitLine,
     };
   }
 
@@ -137,6 +145,7 @@ abstract class PlayerView
       'hasAnswered': hasAnswered,
       if (lastPoints != null) 'lastPoints': lastPoints,
       'lockedOut': lockedOut,
+      if (exitLine != null) 'exitLine': exitLine,
     };
   }
 
@@ -161,6 +170,7 @@ class _PlayerViewImpl extends PlayerView {
     required bool hasAnswered,
     int? lastPoints,
     required bool lockedOut,
+    String? exitLine,
   }) : super._(
          id: id,
          nickname: nickname,
@@ -173,6 +183,7 @@ class _PlayerViewImpl extends PlayerView {
          hasAnswered: hasAnswered,
          lastPoints: lastPoints,
          lockedOut: lockedOut,
+         exitLine: exitLine,
        );
 
   /// Returns a shallow copy of this [PlayerView]
@@ -191,6 +202,7 @@ class _PlayerViewImpl extends PlayerView {
     bool? hasAnswered,
     Object? lastPoints = _Undefined,
     bool? lockedOut,
+    Object? exitLine = _Undefined,
   }) {
     return PlayerView(
       id: id ?? this.id,
@@ -208,6 +220,7 @@ class _PlayerViewImpl extends PlayerView {
       hasAnswered: hasAnswered ?? this.hasAnswered,
       lastPoints: lastPoints is int? ? lastPoints : this.lastPoints,
       lockedOut: lockedOut ?? this.lockedOut,
+      exitLine: exitLine is String? ? exitLine : this.exitLine,
     );
   }
 }

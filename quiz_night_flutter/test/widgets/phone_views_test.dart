@@ -287,6 +287,37 @@ void main() {
       verify(() => cubit.keepWatchingAsSpectator()).called(1);
     });
 
+    testWidgets('when the host line arrives then the eliminated player sees '
+        'it in quotes', (t) async {
+      final room = cutRoom();
+      await pump(
+        t,
+        PhoneCut(room: room, me: room.players[2], createSequence: fastSequence),
+      );
+      await t.pump(const Duration(seconds: 1));
+      await t.pump(const Duration(seconds: 1));
+      expect(find.textContaining('“'), findsNothing);
+
+      final withLine = room.copyWith(
+        players: [
+          ...room.players.take(2),
+          room.players[2].copyWith(exitLine: 'Cy packs up the pencil case.'),
+        ],
+      );
+      await pump(
+        t,
+        PhoneCut(
+          room: withLine,
+          me: withLine.players[2],
+          createSequence: fastSequence,
+        ),
+      );
+      await t.pump(const Duration(seconds: 1));
+      await t.pump(const Duration(seconds: 1));
+      await t.pumpAndSettle();
+      expect(find.text('“Cy packs up the pencil case.”'), findsOneWidget);
+    });
+
     testWidgets('when finalists are set and you keep watching then you can '
         'back one', (t) async {
       final room = cutRoom(finalists: true);

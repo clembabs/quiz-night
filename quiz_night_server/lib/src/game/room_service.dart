@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
 
+import '../ai/host_lines.dart';
 import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
 import '../security/tokens.dart';
@@ -10,8 +11,7 @@ import 'cut_logic.dart';
 import 'nickname.dart';
 import 'question_bank.dart';
 
-/// Answers that arrive this long after the deadline are still accepted, to
-/// absorb network latency. The server clock is the only clock that counts.
+/// Grace after the deadline to absorb network latency; server clock only.
 const answerGrace = Duration(milliseconds: 500);
 
 /// After a finalist buzzes they get at least this long to answer.
@@ -20,8 +20,7 @@ const buzzAnswerWindow = Duration(seconds: 8);
 /// Points for a correct buzzer-final answer.
 const finalPointsPerQuestion = 1000;
 
-/// Digits only: phones open the number keypad and codes read well on a
-/// projector.
+/// Digits only: phones open the number keypad, and codes read well projected.
 const _codeAlphabet = '0123456789';
 final _random = Random.secure();
 
@@ -40,14 +39,11 @@ QuizException _error(QuizErrorCode code, String message) =>
 
 /// Game logic for a room. Endpoints are thin wrappers around this.
 class RoomService {
-  /// When true, the server reveals questions on its own once their deadline
-  /// passes, so a host whose tab goes to sleep cannot stall the game.
+  /// Auto-reveal at the deadline, so a sleeping host tab can't stall the game.
   /// Enabled in `server.dart`; off in tests.
   static bool autoRevealEnabled = false;
 
-  /// Players per room (the MVP size). Every update goes to every phone in
-  /// the room, so traffic grows with the square of this; raise it once
-  /// mid-question updates are batched.
+  /// MVP room size; traffic grows with its square, so batch updates first.
   static const maxPlayers = 20;
 
   /// How long a game may run, from the host pressing Start.
@@ -201,8 +197,7 @@ class RoomService {
     }
     final result = await session.db.transaction((tx) async {
       final room = await _roomByCode(session, code, tx: tx, lock: true);
-      // A finished game is over for good: to someone holding its code it no
-      // longer exists. A running one only turns away late joiners.
+      // A finished room no longer exists; a running one refuses late joiners.
       if (room.status == RoomStatus.finished) {
         throw _error(QuizErrorCode.roomNotFound, 'This game session has ended');
       }
@@ -300,9 +295,7 @@ class RoomService {
     await _afterQuestionStarted(session, room);
   }
 
-  /// Advances to the next question: within a round, into the next round after
-  /// a cut, into the buzzer final, or to the podium after the last final
-  /// question.
+  /// Advances within a round, to the next round, the final, or the podium.
   static Future<void> nextQuestion(
     Session session,
     String code,
@@ -379,8 +372,7 @@ class RoomService {
     }
   }
 
-  /// Ends the current round and runs the cut. Idempotent: a second call for
-  /// the same round changes nothing.
+  /// Ends the round and runs the cut. Idempotent: a repeat call is a no-op.
   static Future<void> endRound(
     Session session,
     String code,
@@ -455,6 +447,8 @@ class RoomService {
       return room.id!;
     });
     await _broadcast(session, roomId);
+    // After the broadcast, so the reveal starts while the lines are written.
+    await _writeExitLines(session, roomId);
   }
 
   /// Rescues one eliminated player, once per game, before the final starts.
@@ -497,6 +491,7 @@ class RoomService {
           status: finalsDecided ? PlayerStatus.finalist : PlayerStatus.active,
           eliminatedInRound: null,
           backedPlayerId: null,
+          exitLine: null,
         ),
         transaction: tx,
       );
@@ -511,10 +506,8 @@ class RoomService {
     await _broadcast(session, roomId);
   }
 
-  /// Ends games past their 30 minutes ([RoomEndReason.timeUp]) and closes
-  /// rooms idle for [idleLimit] ([RoomEndReason.inactive]). Each keeps the
-  /// scores as they are, so the podium shows the results so far. Returns how
-  /// many rooms were ended. Run on a timer by `RoomExpiry`.
+  /// Ends games past [sessionLength] and rooms idle past [idleLimit], keeping
+  /// scores for the podium. Returns the count; run by `RoomExpiry`.
   static Future<int> endExpired(Session session, {DateTime? now}) async {
     final at = now ?? DateTime.now().toUtc();
     final due = await Room.db.find(
@@ -559,8 +552,7 @@ class RoomService {
     return ended;
   }
 
-  /// Host: stops (or allows again) new players joining, e.g. once everyone
-  /// in the room is in, so nobody else can join with the code on screen.
+  /// Host: stops or reopens joining, so nobody else joins via the code shown.
   static Future<void> setLocked(
     Session session,
     String code,
@@ -585,10 +577,8 @@ class RoomService {
     await _broadcast(session, roomId);
   }
 
-  /// Host: removes a player from the lobby (a joke nickname, a duplicate
-  /// phone). Their token stops working, so their phone shows they were
-  /// removed. Only before the game starts: mid-game removals would change
-  /// the cut for everyone else.
+  /// Host: removes a lobby player and revokes their token. Lobby only, since
+  /// mid-game removals would change the cut for everyone else.
   static Future<void> removePlayer(
     Session session,
     String code,
@@ -633,8 +623,7 @@ class RoomService {
   ) async {
     final now = DateTime.now().toUtc();
     final (roomId, isShadow) = await session.db.transaction((tx) async {
-      // Locking the player row serialises answers per player, so "one
-      // answer per question" holds even under double taps.
+      // Row lock serialises answers, so double taps can't answer twice.
       final player = await _playerByToken(
         session,
         playerToken,
@@ -756,8 +745,7 @@ class RoomService {
 
   // ----------------------------------------------------------- buzzer final
 
-  /// The first valid buzz wins. The room row is locked, so two simultaneous
-  /// buzzes are serialised and only one can find the buzzer free.
+  /// First valid buzz wins; the room row lock serialises simultaneous buzzes.
   static Future<BuzzResult> buzz(
     Session session,
     String playerToken,
@@ -944,7 +932,6 @@ class RoomService {
     return active <= room.finalistTarget;
   }
 
-  /// Inserts the next question and puts the room into answering state.
   /// The next unplayed question of the right kind from the room's pack.
   static Future<BankQuestion?> _nextPackQuestion(
     Session session,
@@ -969,6 +956,7 @@ class RoomService {
         : BankQuestion(next.text, next.options, next.correctIndex);
   }
 
+  /// Inserts the next question and puts the room into answering state.
   static Future<Room> _startQuestion(
     Session session,
     Transaction tx,
@@ -1092,7 +1080,7 @@ class RoomService {
           room.currentQuestionId != questionId ||
           (room.status != RoomStatus.question &&
               room.status != RoomStatus.buzzerFinal)) {
-        return false;
+        return null;
       }
       var updated = room.copyWith(
         status: RoomStatus.reveal,
@@ -1103,10 +1091,85 @@ class RoomService {
         updated = await _applySuddenDeath(session, tx, updated, questionId);
       }
       await Room.db.updateRow(session, updated, transaction: tx);
-      return true;
+      return updated;
     });
-    if (changed) await _broadcast(session, roomId);
-    return changed;
+    if (changed == null) return false;
+    await _broadcast(session, roomId);
+    if (changed.eliminationRule == EliminationRule.suddenDeath) {
+      await _writeExitLines(session, roomId);
+    }
+    return true;
+  }
+
+  /// Gives this room's newly eliminated players their host line, then
+  /// broadcasts. Safe to repeat: players who have a line keep it.
+  static Future<void> _writeExitLines(Session session, int roomId) async {
+    final room = await Room.db.findById(session, roomId);
+    if (room == null) return;
+    final out = await Player.db.find(
+      session,
+      where: (t) =>
+          t.roomId.equals(roomId) &
+          t.status.equals(PlayerStatus.eliminated) &
+          t.eliminatedInRound.equals(room.currentRound) &
+          t.exitLine.equals(null),
+    );
+    if (out.isEmpty) return;
+    final questions = await Question.db.find(
+      session,
+      where: (t) =>
+          t.roomId.equals(roomId) &
+          t.round.equals(room.currentRound) &
+          t.isFinal.equals(false),
+      orderBy: (t) => t.orderIndex,
+    );
+    final answers = await Answer.db.find(
+      session,
+      where: (t) =>
+          t.playerId.inSet(out.map((p) => p.id!).toSet()) &
+          t.questionId.inSet(questions.map((q) => q.id!).toSet()),
+    );
+    final correct = {
+      for (final a in answers)
+        if (a.isCorrect) (a.playerId, a.questionId),
+    };
+    // In reveal order, so the built-in lines vary down the cut.
+    final order = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    out.sort((a, b) => order.indexOf(a.id!).compareTo(order.indexOf(b.id!)));
+    final subjects = [
+      for (final p in out)
+        _lineSubject(p, room.currentRound, questions.reversed, correct),
+    ];
+    final lines = await HostLines.linesFor(
+      subjects,
+      log: (m) => session.log(m, level: LogLevel.warning),
+    );
+    await Player.db.update(
+      session,
+      [for (final p in out) p.copyWith(exitLine: lines[p.id!])],
+      columns: (t) => [t.exitLine],
+    );
+    await _broadcast(session, roomId);
+  }
+
+  /// [p] for the line writer, with their latest miss this round.
+  static LineSubject _lineSubject(
+    Player p,
+    int round,
+    Iterable<Question> newestFirst,
+    Set<(int, int)> correct,
+  ) {
+    final missed = newestFirst
+        .where((q) => !correct.contains((p.id!, q.id!)))
+        .firstOrNull;
+    return LineSubject(
+      playerId: p.id!,
+      nickname: p.nickname,
+      round: round,
+      score: p.score,
+      missedQuestion: missed?.text,
+      missedAnswer: missed?.options[missed.correctIndex],
+    );
   }
 
   static Future<Room> _applySuddenDeath(
@@ -1234,6 +1297,7 @@ class RoomService {
               hasAnswered: answerBy.containsKey(p.id),
               lastPoints: open ? null : answerBy[p.id]?.pointsAwarded,
               lockedOut: lockedOut.contains(p.id),
+              exitLine: p.exitLine,
             ),
         ]..sort((a, b) {
           final byFinal = b.finalScore.compareTo(a.finalScore);
@@ -1283,8 +1347,7 @@ class RoomService {
     );
   }
 
-  /// Where the danger line sits: the survivors the end-of-round cut would
-  /// keep right now. Uses the same function as the cut, so they agree.
+  /// The danger line: survivors the cut would keep now (same function).
   static int? _projectedSurvivors(
     Room room,
     Question? question,

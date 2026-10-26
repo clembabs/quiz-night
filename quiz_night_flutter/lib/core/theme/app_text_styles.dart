@@ -10,8 +10,7 @@ abstract final class AppFonts {
   /// Body: Figtree 400 / 700 / 800.
   static const body = 'Figtree';
 
-  /// Per-glyph fallbacks: Nigerian letters the others lack (ẹ ọ ṣ ị ụ ṅ ɓ
-  /// ɗ ƙ ƴ), then UI symbols (✓ ✕ ▲ ▼ ★ ⏱).
+  /// Fallbacks: Nigerian letters (ẹ ọ ṣ ɓ ɗ …), then UI symbols (✓ ✕ ★).
   static const fallback = ['NotoSansAfr', 'NotoSansSymbols'];
 }
 
@@ -45,10 +44,7 @@ TextStyle _body(
   color: color,
 );
 
-/// The phone type scale (design system "Typography", phone column).
-///
-/// Display roles (displayXl, displayL, headline) are set in capitals: pass
-/// upper-cased text, e.g. via `DisplayText`.
+/// The phone type scale. Display roles are caps: pass upper-cased text.
 abstract final class AppTextStyles {
   // ---- Design-system roles
   /// Room codes and the biggest moments. 56 / 1.0 / 800.
@@ -115,9 +111,8 @@ abstract final class AppTextStyles {
   static final toast = _body(14, 1.2, FontWeight.w700);
 }
 
-/// The projector type scale (design system "Typography", 1080p column), for
-/// host screens laid out on a 1920×1080 canvas. Body never goes below 36: on
-/// a ~2.5 m projected image that is legible from 10 m.
+/// The projector type scale, for host screens on a 1920×1080 canvas.
+/// Body never goes below 36: legible from 10 m when projected.
 abstract final class AppProjectorText {
   static final displayXl = _display(200, 0.95, tracking: 0.06);
   static final displayL = _display(120, 1.0, tracking: -0.01);
@@ -146,8 +141,7 @@ abstract final class AppProjectorText {
   static final numeric = _display(96, 1.0);
 }
 
-/// The website type scale (landing page). Sizes that grow with the window
-/// take its width, like CSS `clamp(min, vw, max)`.
+/// The website type scale; fluid sizes follow width like CSS clamp().
 abstract final class AppWebText {
   static double _fluid(double width, double min, double vw, double max) =>
       (width * vw).clamp(min, max);

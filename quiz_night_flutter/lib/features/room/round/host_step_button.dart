@@ -6,8 +6,7 @@ import '../../../widgets/qn/host_stage.dart';
 import '../room_cubit.dart';
 import '../round_logic.dart';
 
-/// The host's single "what next" button on the projector canvas, driven by
-/// [hostStepFor].
+/// The host's single "what next" button, driven by [hostStepFor].
 class HostStepButton extends StatelessWidget {
   final RoomState room;
   final double height;

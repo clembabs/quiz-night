@@ -8,8 +8,7 @@ import 'sounds.dart';
 
 Sounds createSounds() => _WebAudioSounds();
 
-/// Every cue is built from oscillators and a noise burst with the Web
-/// Audio API: no sound files to download. Unsupported browsers stay silent.
+/// Cues built from Web Audio oscillators and noise: no files to download.
 class _WebAudioSounds implements Sounds {
   @override
   bool enabled = true;
@@ -138,8 +137,7 @@ class _WebAudioSounds implements Sounds {
     _hit(ctx, out, t, level: 0.5, length: 0.12, frequency: 2600);
   }
 
-  /// [notes] (Hz) one after another, [spread] seconds apart, each ringing
-  /// out: a chime, or with 0 a chord.
+  /// Plays [notes] (Hz) [spread] s apart, each ringing: a chime, or a chord.
   void _chord(
     web.AudioContext ctx,
     web.AudioNode out,

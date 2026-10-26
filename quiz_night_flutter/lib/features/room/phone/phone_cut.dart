@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/crest.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/celebrations.dart';
+import '../../../widgets/qn/host_line.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
@@ -33,8 +34,7 @@ Color cutBackground(
   };
 }
 
-/// The phone during a cut: suspense until your fate shows, then You
-/// survived / Eliminated, then (for spectators) back a finalist.
+/// The phone during a cut: suspense, your fate, then back a finalist.
 class PhoneCut extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;
@@ -326,6 +326,13 @@ class _Eliminated extends StatelessWidget {
                       fontSize: 17,
                       color: AppColors.maroonPale,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  HostLine(
+                    key: const Key('cut.hostLine'),
+                    line: me.exitLine,
+                    fontSize: 18,
+                    maxLines: 4,
                   ),
                 ],
               ),

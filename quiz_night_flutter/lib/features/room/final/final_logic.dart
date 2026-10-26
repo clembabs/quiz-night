@@ -5,8 +5,7 @@ List<PlayerView> finalStandings(RoomState room) {
   final finalists = room.players
       .where((p) => p.status == PlayerStatus.finalist)
       .toList();
-  // A game that ended before the final (time up, or closed for inactivity):
-  // whoever was still in, by score so far.
+  // Ended before the final: whoever was still in, by score so far.
   if (finalists.isEmpty && endedEarly(room)) {
     return room.players.where((p) => p.status == PlayerStatus.active).toList()
       ..sort((a, b) {
@@ -25,13 +24,11 @@ List<PlayerView> finalStandings(RoomState room) {
 
 PlayerView? winnerOf(RoomState room) => finalStandings(room).firstOrNull;
 
-/// The score a podium shows: final points for finalists, the game score
-/// for anyone ranked from a game that stopped before the final.
+/// Final points for finalists, or the game score if it stopped before.
 int podiumScore(PlayerView p) =>
     p.status == PlayerStatus.finalist ? p.finalScore : p.score;
 
-/// The game stopped before the podium: its 30 minutes ran out, or nothing
-/// happened for 30 minutes.
+/// Stopped before the podium: time ran out, or 30 minutes of inactivity.
 bool endedEarly(RoomState room) =>
     room.endReason == RoomEndReason.timeUp ||
     room.endReason == RoomEndReason.inactive;
@@ -107,7 +104,6 @@ BuzzerSeat buzzerSeatFor(
   return buzzing ? BuzzerSeat.buzzing : BuzzerSeat.canBuzz;
 }
 
-/// Nickname of [id] in [room], if they exist.
 String? nicknameOf(RoomState room, int? id) =>
     room.players.where((p) => p.id == id).firstOrNull?.nickname;
 

@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// A grid that fits as many columns of at least [minItemWidth] as the width
-/// allows, like CSS `repeat(auto-fit, minmax(min(100%, X), 1fr))`.
+/// Fits as many [minItemWidth] columns as allowed, like CSS auto-fit.
 class ResponsiveGrid extends StatelessWidget {
   final List<Widget> children;
   final double minItemWidth;

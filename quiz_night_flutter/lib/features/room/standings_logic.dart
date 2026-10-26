@@ -19,8 +19,7 @@ const dangerMargin = 1;
 
 String _places(int n) => n == 1 ? '1 place' : '$n places';
 
-/// The phone's danger indicator for [me], or null when there is nothing to
-/// show (spectators, sudden death, the final).
+/// Danger indicator for [me]; null for spectators, sudden death and the final.
 DangerStatus? dangerStatusFor(RoomState room, PlayerView me) {
   if (me.status == PlayerStatus.finalist) {
     return const DangerStatus(
@@ -57,8 +56,7 @@ DangerStatus? dangerStatusFor(RoomState room, PlayerView me) {
   );
 }
 
-/// Final placement of every player: finalists by the final, then everyone
-/// else by how late they went out, then by score.
+/// Finalists by the final, the rest by when they went out, then score.
 List<PlayerView> finalPlacements(RoomState room) {
   final top = finalStandings(room);
   final topIds = {for (final p in top) p.id};

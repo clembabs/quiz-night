@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Quiz Night palette: blackboard green, chalk white, and the maroon and gold
-/// of a school uniform. Values come from the Quiz Night design system.
+/// Quiz Night palette: blackboard green, chalk, school maroon and gold.
 abstract final class AppColors {
   // ---- Chalk (warm neutral): backgrounds, surfaces, text
   /// e0: the page.
@@ -96,8 +95,7 @@ abstract final class AppColors {
   static const badgeInk = board;
 
   // ---- Answer options: letter + shape + colour, never colour alone
-  /// Option backgrounds A-D: blue, orange, raspberry, yellow. They separate by
-  /// lightness as well as hue, so they stay apart under colour blindness.
+  /// Option backgrounds A-D; differ in lightness too, for colour blindness.
   static const options = [
     Color(0xFF1E5BC6),
     Color(0xFFF08A24),

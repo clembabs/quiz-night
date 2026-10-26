@@ -11,8 +11,7 @@ import '../round/host_step_button.dart';
 import '../round/question_header.dart';
 import '../round_logic.dart';
 
-/// The projector during an open question: label, big question text, the
-/// countdown ring with the answered count, and the 2×2 option grid.
+/// The projector during a question: text, countdown, count and options.
 class HostQuestion extends StatelessWidget {
   final RoomState room;
   final Duration clockOffset;

@@ -3,14 +3,12 @@ import 'package:serverpod/serverpod.dart';
 import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
 
-/// AI-written questions for the host's setup screen. Rate limited inside
-/// [QuestionPacks.generate] (3 an hour per address, 150 a day overall).
+/// AI questions for host setup; rate limited in [QuestionPacks.generate].
 class QuestionsEndpoint extends Endpoint {
   /// Whether this server can write questions (an API key is set).
   Future<bool> aiAvailable(Session session) async => QuestionPacks.available;
 
-  /// Writes [questionCount] questions (10-40) on [topic] for a game with
-  /// [config].
+  /// Writes [questionCount] questions (10-40) on [topic] for [config].
   Future<PackDraft> generatePack(
     Session session,
     String topic,

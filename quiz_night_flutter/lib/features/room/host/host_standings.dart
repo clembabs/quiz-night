@@ -10,8 +10,7 @@ import '../round/host_step_button.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
 
-/// "After round N": the leaderboard in two columns with the danger line
-/// sliding in above those who would go home.
+/// "After round N": the leaderboard with the danger line sliding in.
 class HostStandings extends StatelessWidget {
   final RoomState room;
   final Map<int, int> rankMoves;
@@ -38,8 +37,7 @@ class HostStandings extends StatelessWidget {
           ];
     final ranks = {for (var i = 0; i < board.length; i++) board[i].id: i + 1};
     final left = shown.take(perColumn).toList();
-    // Nine 74 px rows plus the danger line need ~840 px; the canvas leaves
-    // ~760 under the title, so rows shrink a little on full boards.
+    // Nine rows + line need ~840 px of ~760 free, so full boards shrink.
     final rowScale = shown.length > 14 ? 0.86 : 1.0;
     final right = shown.skip(perColumn).toList();
 
@@ -117,8 +115,7 @@ class HostStandings extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         Expanded(
-          // Fits nine rows a column at 1080p; scrolls rather than overflows
-          // with very long boards or large text.
+          // Scrolls rather than overflows on long boards or large text.
           child: SingleChildScrollView(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

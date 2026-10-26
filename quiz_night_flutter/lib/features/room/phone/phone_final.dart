@@ -12,8 +12,7 @@ import '../../../widgets/qn/notices.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
 
-/// A finalist's phone in the buzzer final: the big buzzer, then the options
-/// once they hold it (answers are checked by the server).
+/// A finalist's phone in the final: the buzzer, then options once held.
 class PhoneBuzzer extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;

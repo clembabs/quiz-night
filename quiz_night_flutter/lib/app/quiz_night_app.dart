@@ -30,8 +30,7 @@ class QuizNightApp extends StatefulWidget {
   /// The cut's sounds on the projector; main.dart passes Web Audio.
   final Sounds? sounds;
 
-  /// Where to start, e.g. `/join?code=4821`. Null on the web: the router
-  /// reads the browser's address bar.
+  /// Where to start, e.g. `/join?code=4821`; null on web (uses address bar).
   final String? initialLocation;
 
   const QuizNightApp({

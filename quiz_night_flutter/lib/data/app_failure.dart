@@ -28,10 +28,7 @@ enum FailureKind {
   other,
 }
 
-/// An error from a repository, already turned into something a user can read.
-///
-/// Cubits catch this instead of transport-specific exceptions, so they do not
-/// depend on Serverpod.
+/// A user-readable repository error, so cubits don't depend on Serverpod.
 class AppFailure implements Exception {
   final String message;
   final FailureKind kind;

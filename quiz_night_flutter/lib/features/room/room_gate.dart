@@ -27,8 +27,7 @@ class RoomGateState extends Equatable {
   List<Object?> get props => [status, seat];
 }
 
-/// Finds this device's saved seat for the room in the URL. Join and host
-/// save the seat before opening the room, so this also covers a refresh.
+/// Finds this device's saved seat for the URL's room, so refreshes work.
 class RoomGateCubit extends Cubit<RoomGateState> {
   final SeatRepository _seats;
   final String code;
@@ -45,8 +44,7 @@ class RoomGateCubit extends Cubit<RoomGateState> {
   }
 }
 
-/// `/room/:code`. Opens the room with this device's seat, or sends a
-/// visitor without one to the join form for that code.
+/// `/room/:code`: opens with this device's seat, else the join form.
 class RoomGate extends StatelessWidget {
   final String code;
 

@@ -1,8 +1,5 @@
-// Renders the crest into the web app's favicon and home-screen icons.
-//
+// Renders the crest into the web icons; lives outside test/ to skip the suite.
 //   cd quiz_night_flutter && flutter test tool/generate_icons_test.dart
-//
-// Lives outside test/ so it never runs with the normal suite.
 import 'dart:io';
 import 'dart:ui' as ui;
 

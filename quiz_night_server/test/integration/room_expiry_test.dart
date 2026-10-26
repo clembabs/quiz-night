@@ -121,8 +121,7 @@ void main() {
         await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
         await endpoints.room.joinRoom(sb, room.roomCode, 'Bo');
         await endpoints.room.startGame(sb, room.roomCode, room.hostToken);
-        // Step through: reveal, end round (both are finalists), the final
-        // question, its reveal, then the podium.
+        // Reveal, end round (both finalists), final question, reveal, podium.
         for (var i = 0; i < 8; i++) {
           final s = await endpoints.room.watchRoom(sb, room.roomCode).first;
           if (s.status == RoomStatus.finished) break;

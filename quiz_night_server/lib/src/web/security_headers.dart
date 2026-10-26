@@ -1,24 +1,18 @@
 import 'package:serverpod/serverpod.dart';
 
-/// Protective headers on every page the web server sends: the Flutter app,
-/// its files and the app config.
+/// Protective headers on every web response: the app, its files and config.
 class SecurityHeadersMiddleware extends MiddlewareObject {
-  /// The API server's public address (e.g. `https://quiz-night.api.serverpod.space`),
-  /// which the app calls and opens its live room streams to.
+  /// Public API origin, which the app calls and opens room streams to.
   final Uri apiOrigin;
 
   const SecurityHeadersMiddleware({required this.apiOrigin});
 
-  /// Flutter's rendering engine (CanvasKit) and its fallback fonts come from
-  /// Google's CDN.
+  /// CanvasKit engine and its fallback fonts come from Google's CDN.
   static const _engine = 'https://www.gstatic.com';
   static const _fonts = 'https://fonts.gstatic.com';
 
-  /// Where the page may load things from. Flutter web needs:
-  /// - `'wasm-unsafe-eval'` to run the engine's WebAssembly;
-  /// - `'unsafe-inline'` styles, which Flutter sets on its own elements and
-  ///   index.html uses for the instant loading screen;
-  /// - `blob:`/`data:` images and fonts, which the engine creates in memory.
+  /// CSP for Flutter web: 'wasm-unsafe-eval' for the engine, 'unsafe-inline'
+  /// styles (Flutter, loading screen), blob:/data: images and fonts.
   String get contentSecurityPolicy {
     final api = _origin(apiOrigin);
     final sockets = _origin(
@@ -51,14 +45,12 @@ class SecurityHeadersMiddleware extends MiddlewareObject {
   /// The headers, for tests and the middleware.
   Map<String, String> get headers => {
     'content-security-policy': contentSecurityPolicy,
-    // HTTPS only from here on (browsers ignore it over plain HTTP, so local
-    // development is unaffected).
+    // HTTPS only (ignored over plain HTTP, so local dev is unaffected).
     'strict-transport-security': 'max-age=31536000; includeSubDomains',
     'x-content-type-options': 'nosniff',
     'x-frame-options': 'DENY',
     'referrer-policy': 'strict-origin-when-cross-origin',
-    // Only what the game uses: the screen staying awake. No camera,
-    // microphone, location or payments.
+    // Only the screen wake lock; no camera, microphone, location or payments.
     'permissions-policy':
         'camera=(), microphone=(), geolocation=(), payment=(), usb=(), '
         'screen-wake-lock=(self)',

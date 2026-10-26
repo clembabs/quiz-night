@@ -2,8 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// The blackboard: a faint grid of chalk-dust dots behind everything.
-/// Painted, so it costs zero image bytes.
+/// The blackboard: a painted grid of chalk-dust dots, zero image bytes.
 class ChalkBackground extends StatelessWidget {
   final Widget child;
   final Color color;

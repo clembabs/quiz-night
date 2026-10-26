@@ -2,18 +2,15 @@ import '../data/room_repositories.dart';
 import '../data/seat_repository.dart';
 import 'app_paths.dart';
 
-/// Sends a visitor who still holds a seat in a live game back into it, as a
-/// router redirect. Runs as part of each navigation, so it never pulls
-/// someone out of a page later, and only on the ways in: a reload, a
-/// rescanned QR, a phone waking up, or Back out of a room.
+/// Router redirect sending a visitor with a live seat back into their game.
+/// Runs only on ways in (reload, QR, wake, Back), never pulling you out.
 class SeatResume {
   final LobbyRepository _lobby;
   final SeatRepository _seats;
 
   SeatResume(this._lobby, this._seats);
 
-  /// Pages that lead into a game. Every other page is left alone and costs
-  /// no network call.
+  /// Pages that lead into a game; other pages cost no network call.
   static const entryPaths = {AppPaths.home, AppPaths.join, AppPaths.host};
 
   /// The room to go to instead of [uri], or null to stay.

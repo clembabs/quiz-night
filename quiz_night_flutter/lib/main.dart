@@ -14,8 +14,7 @@ import 'data/seat_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Real paths (`/faq`, `/room/4821`) instead of `/#/faq`. The server
-  // answers unknown paths with index.html, so deep links and reloads work.
+  // Path URLs, not `/#/`; the server serves index.html for unknown paths.
   usePathUrlStrategy();
   _registerFontLicenses();
   await initializeClient();
@@ -33,8 +32,7 @@ void main() async {
   );
 }
 
-/// The bundled fonts are SIL Open Font License; list them in the app's
-/// licence page alongside the package licences.
+/// Lists the bundled SIL OFL fonts on the licence page.
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
     for (final (name, file) in [

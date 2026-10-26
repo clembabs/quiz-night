@@ -154,8 +154,7 @@ abstract class RoomState
   /// Host has closed the room to new players.
   bool locked;
 
-  /// When the game's 30 minutes run out (server clock); null before the
-  /// game starts and once it has ended.
+  /// When the 30-minute game ends (server clock); null if not running.
   DateTime? sessionEndsAt;
 
   /// Why the game ended, once it has.
@@ -179,9 +178,7 @@ abstract class RoomState
   /// Whether phones show the question text (host setting).
   bool showQuestionOnPhones;
 
-  /// How many players would survive if the round ended now: the danger line.
-  /// Null when there is no end-of-round cut to predict (lobby, sudden death,
-  /// the final).
+  /// Danger line: survivors if the round ended now; null with no round cut.
   int? projectedSurvivors;
 
   /// Returns a shallow copy of this [RoomState]

@@ -4,9 +4,7 @@ import 'package:serverpod/serverpod.dart';
 
 import 'room_service.dart';
 
-/// Checks every half minute for games past their 30 minutes and rooms idle
-/// for 30 minutes, and ends them (see [RoomService.endExpired]), so a
-/// forgotten room stops costing the server anything.
+/// Every 30s, ends overdue games and idle rooms ([RoomService.endExpired]).
 abstract final class RoomExpiry {
   static const every = Duration(seconds: 30);
 
