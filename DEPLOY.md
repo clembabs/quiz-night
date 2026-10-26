@@ -29,16 +29,31 @@ What it does and what to answer:
 
 | It asks / does | Answer / notes |
 |---|---|
-| "Open the browser and create a new Serverpod Cloud project?" | **Enter**. In the Console keep the database **enabled**, choose a plan, set the project ID (e.g. `quiz-night`), **Launch Project**. |
+| "Open the browser and create a new Serverpod Cloud project?" | **Enter**. In the Console keep the database **enabled**, choose a plan, set the project ID (ours is `quiznight`), **Launch Project**. |
 | Adds pre-deploy hooks | `serverpod generate` and `serverpod run flutter_build` (our server's script builds the Flutter web app into `web/app`). Nothing to do. |
-| "Which passwords to copy?" from `config/passwords.yaml` | **Copy none.** Cloud generates its own database credentials, service secret and auth (JWT) keys. Quiz Night has no custom secrets yet (an LLM key arrives with the AI-quiz stretch; set it then with `serverpod cloud password set`). |
+| "Which passwords to copy?" from `config/passwords.yaml` | **Copy none.** Cloud generates its own database credentials, service secret and auth (JWT) keys. The one custom secret, `geminiApiKey`, is set separately (step 2a). |
 | Writes `scloud.yaml`, uploads, builds, rolls out | Wait for the 🚀 on *Rollout*. Commit `scloud.yaml` (it holds no secrets). |
 
-Your URLs (for project ID `quiz-night`):
+Your URLs (for our project ID `quiznight`):
 
-- **Play / QR target:** `https://quiz-night.serverpod.space/`
-- API: `https://quiz-night.api.serverpod.space/` (the app finds it automatically via `/assets/assets/config.json`)
-- Insights: `https://quiz-night.insights.serverpod.space/`
+- **Play / QR target:** `https://quiznight.serverpod.space/`
+- API: `https://quiznight.api.serverpod.space/` (the app finds it automatically via `/assets/assets/config.json`)
+- Insights: `https://quiznight.insights.serverpod.space/`
+
+## 2a. The Gemini key (AI-written questions)
+
+Without it the game still works, with the built-in questions only. Add it once:
+
+- **Console:** project → **Env & Passwords** → **Add password**, name `geminiApiKey`, paste the key; or
+- **Terminal:** put the key in a temporary file, then
+
+  ```bash
+  cd quiz_night_server && serverpod cloud password set geminiApiKey --from-file key.txt
+  ```
+
+  and delete `key.txt`. Never commit the key or paste it into chat.
+
+The server picks it up on the next start; the host setup page then shows the topic box.
 
 ## 3. Redeploy after changes
 
@@ -80,7 +95,7 @@ feature branch ──PR──▶ develop ──PR──▶ main ──merge─�
 3. In GitHub: **Settings → Environments → New environment** `production`, then add the secret
    `SERVERPOD_CLOUD_TOKEN` with that token. Don't paste it anywhere else.
 4. **Settings → Secrets and variables → Actions → Variables**: add `SERVERPOD_CLOUD_PROJECT` with your
-   project ID (e.g. `quiz-night`). Until it exists the deploy job is skipped, so merges before the launch
+   project ID (ours is `quiznight`). Until it exists the deploy job is skipped, so merges before the launch
    don't fail. Optional: `SITE_URL` if you attach a custom domain.
 
 ## 4. What is already prepared in the code
@@ -94,7 +109,7 @@ feature branch ──PR──▶ develop ──PR──▶ main ──merge─�
 
 ## 5. The day before the demo (checklist)
 
-- [ ] Deploy, open `https://quiz-night.serverpod.space/` on the **laptop you'll present from**, click
+- [ ] Deploy, open `https://quiznight.serverpod.space/` on the **laptop you'll present from**, click
       **Start hosting**, create a room.
 - [ ] On your **phone, on mobile data (Wi-Fi off)**: scan the QR, join. Note the first-load time.
 - [ ] Get 3–4 friends (or extra phones/tabs) in and play a full game: rounds, the cut, back a finalist,
@@ -102,7 +117,7 @@ feature branch ──PR──▶ develop ──PR──▶ main ──merge─�
 - [ ] Mid-question, **lock a phone for 20 s and unlock it**: it should rejoin and keep its answer.
 - [ ] **Refresh a phone** mid-game: it should reopen straight into the room.
 - [ ] Press **Back** on a phone mid-game: it should return to the game, not an empty join form.
-- [ ] Open `https://quiz-night.serverpod.space/faq` directly: the FAQ page should load (deep links work).
+- [ ] Open `https://quiznight.serverpod.space/faq` directly: the FAQ page should load (deep links work).
 - [ ] Check the projector: the host screens are designed for 1920×1080 and scale to fit any size.
 - [ ] Optional: attach a custom domain in the Console (TLS is automatic) and redeploy so the QR shows it.
 
