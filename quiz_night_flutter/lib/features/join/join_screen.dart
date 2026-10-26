@@ -5,12 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../app/app_paths.dart';
 import '../../data/room_repositories.dart';
 import '../../data/seat_repository.dart';
-import '../../widgets/qn/phone_frame.dart';
+import '../landing/landing_screen.dart';
+import '../landing/widgets/landing_parts.dart';
 import 'join_cubit.dart';
 import 'join_form.dart';
 
-/// `/join`: room code and nickname on a phone. [code] comes from the URL
-/// (a scanned QR, or the landing page's code box).
+/// `/join`: a website page with the room code and nickname form. [code]
+/// comes from the URL (a scanned QR, or the landing page's code box).
 class JoinScreen extends StatelessWidget {
   final String? code;
 
@@ -28,16 +29,44 @@ class JoinScreen extends StatelessWidget {
       listenWhen: (a, b) => b.seat != null && a.seat != b.seat,
       listener: (context, state) =>
           context.go(AppPaths.roomFor(state.seat!.code)),
-      child: Scaffold(
-        body: PhoneFrame(
-          child: JoinForm(
+      child: SiteScaffold(
+        current: null,
+        sections: (context) => [
+          JoinSection(
             key: ValueKey(code),
-            initialCode: code,
+            code: code,
             onHost: () => context.go(AppPaths.host),
-            onBack: () => context.go(AppPaths.home),
           ),
-        ),
+        ],
       ),
+    ),
+  );
+}
+
+/// The page's heading and the form in a card, in a narrow column.
+class JoinSection extends StatelessWidget {
+  final String? code;
+  final VoidCallback onHost;
+
+  const JoinSection({super.key, this.code, required this.onHost});
+
+  /// Wide enough for the form, narrow enough to read as one card.
+  static const maxWidth = 560.0;
+
+  @override
+  Widget build(BuildContext context) => LandingSection(
+    maxWidth: maxWidth,
+    top: 32,
+    bottom: 72,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeading(eyebrow: 'Join a game', title: 'Get in the room'),
+        const SizedBox(height: 20),
+        LandingCard(
+          child: JoinForm(initialCode: code, onHost: onHost),
+        ),
+      ],
     ),
   );
 }

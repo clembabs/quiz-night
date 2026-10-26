@@ -71,6 +71,7 @@ class LandingHeader extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: SiteBrand(
+                            key: const Key('site.home'),
                             onTap: () => onNavigate(SitePage.home),
                           ),
                         ),
