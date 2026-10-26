@@ -158,7 +158,13 @@ void main() {
       final need = QuestionPacks.questionsNeeded(RoomConfig());
       expect(need.finals, 5);
       expect(need.rounds, greaterThanOrEqualTo(15));
-      expect(need.rounds, lessThanOrEqualTo(40));
+    });
+
+    test('when the host picks a small pack then the final takes at most a '
+        'third of it', () {
+      final config = RoomConfig(finalQuestionCount: 5);
+      expect(QuestionPacks.split(10, config), (rounds: 7, finals: 3));
+      expect(QuestionPacks.split(40, config), (rounds: 35, finals: 5));
     });
 
     test('when questions are long then fewer fit in the game', () {

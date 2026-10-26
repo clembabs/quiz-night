@@ -50,35 +50,32 @@ void main() {
   });
 
   withServerpod('Given AI questions are set up', (sb, endpoints) {
-    test('when the host generates a pack then it is sized for the game and '
-        'previewed with answers', () async {
-      final config = RoomConfig(questionsPerRound: 3, finalQuestionCount: 2);
-      final draft = await endpoints.questions.generatePack(
-        sb,
-        '  Nollywood  ',
-        QuestionDifficulty.mixed,
-        config,
-      );
-      final need = QuestionPacks.questionsNeeded(config);
-      expect(draft.topic, 'Nollywood');
-      expect(
-        fake.requests.single.roundCount,
-        need.rounds + QuestionPacks.roundSpares,
-      );
-      expect(
-        fake.requests.single.finalCount,
-        need.finals + QuestionPacks.finalSpares,
-      );
-      final rounds = draft.questions.where((q) => !q.isFinal).toList();
-      final finals = draft.questions.where((q) => q.isFinal).toList();
-      expect(rounds, hasLength(need.rounds + QuestionPacks.roundSpares));
-      expect(finals, hasLength(need.finals + QuestionPacks.finalSpares));
-      // Shuffled, but the answer still points at the right option.
-      for (final q in draft.questions) {
-        expect(q.options[q.correctIndex], startsWith('Right'));
-      }
-      expect(await endpoints.questions.aiAvailable(sb), isTrue);
-    });
+    test(
+      'when the host asks for 20 questions then the pack holds the '
+      "game's finals and the rest as rounds, previewed with answers",
+      () async {
+        final config = RoomConfig(questionsPerRound: 3, finalQuestionCount: 5);
+        final draft = await endpoints.questions.generatePack(
+          sb,
+          '  Nollywood  ',
+          QuestionDifficulty.mixed,
+          20,
+          config,
+        );
+        expect(draft.topic, 'Nollywood');
+        expect(fake.requests.single.roundCount, 15);
+        expect(fake.requests.single.finalCount, 5);
+        final rounds = draft.questions.where((q) => !q.isFinal).toList();
+        final finals = draft.questions.where((q) => q.isFinal).toList();
+        expect(rounds, hasLength(15));
+        expect(finals, hasLength(5));
+        // Shuffled, but the answer still points at the right option.
+        for (final q in draft.questions) {
+          expect(q.options[q.correctIndex], startsWith('Right'));
+        }
+        expect(await endpoints.questions.aiAvailable(sb), isTrue);
+      },
+    );
 
     test(
       'when the host removes a question then the preview drops it',
@@ -88,6 +85,7 @@ void main() {
           sb,
           'Football',
           QuestionDifficulty.easy,
+          20,
           config,
         );
         final victim = draft.questions.first;
@@ -119,6 +117,7 @@ void main() {
         sb,
         'Afrobeats',
         QuestionDifficulty.mixed,
+        20,
         RoomConfig(),
       );
       final room = await endpoints.room.createRoom(
@@ -140,6 +139,7 @@ void main() {
         sb,
         'History',
         QuestionDifficulty.mixed,
+        20,
         RoomConfig(),
       );
       await expectLater(
@@ -159,10 +159,29 @@ void main() {
             sb,
             topic,
             QuestionDifficulty.mixed,
+            20,
             RoomConfig(),
           ),
           throwsQuiz(QuizErrorCode.invalidInput),
           reason: topic,
+        );
+      }
+      expect(fake.requests, isEmpty);
+    });
+
+    test('when the host asks for fewer than 10 or more than 40 questions '
+        'then nothing is generated', () async {
+      for (final count in [9, 41]) {
+        await expectLater(
+          endpoints.questions.generatePack(
+            sb,
+            'Football',
+            QuestionDifficulty.mixed,
+            count,
+            RoomConfig(),
+          ),
+          throwsQuiz(QuizErrorCode.invalidInput),
+          reason: '$count',
         );
       }
       expect(fake.requests, isEmpty);
@@ -176,6 +195,7 @@ void main() {
           sb,
           'Something odd',
           QuestionDifficulty.mixed,
+          20,
           RoomConfig(),
         ),
         throwsQuiz(QuizErrorCode.invalidInput),
@@ -186,6 +206,7 @@ void main() {
           sb,
           'Science',
           QuestionDifficulty.mixed,
+          20,
           RoomConfig(),
         ),
         throwsA(
@@ -203,6 +224,7 @@ void main() {
           sb,
           'Topic $i',
           QuestionDifficulty.mixed,
+          20,
           RoomConfig(),
         );
       }
@@ -211,6 +233,7 @@ void main() {
           sb,
           'One more',
           QuestionDifficulty.mixed,
+          20,
           RoomConfig(),
         ),
         throwsQuiz(QuizErrorCode.rateLimited),
@@ -227,6 +250,7 @@ void main() {
           sb,
           'Football',
           QuestionDifficulty.mixed,
+          20,
           RoomConfig(),
         ),
         throwsQuiz(QuizErrorCode.aiUnavailable),

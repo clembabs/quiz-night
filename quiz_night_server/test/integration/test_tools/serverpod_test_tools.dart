@@ -452,6 +452,7 @@ class _QuestionsEndpoint {
     _ist.TestSessionBuilder sessionBuilder,
     String topic,
     _i4ozqmvk.QuestionDifficulty difficulty,
+    int questionCount,
     _i3izb6ro.RoomConfig config,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
@@ -468,6 +469,7 @@ class _QuestionsEndpoint {
           parameters: _ist.testObjectToJson({
             'topic': topic,
             'difficulty': difficulty,
+            'questionCount': questionCount,
             'config': config,
           }),
           serializationManager: _serializationManager,
