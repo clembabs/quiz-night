@@ -49,6 +49,7 @@ abstract class Room
     this.startedAt,
     DateTime? lastActivityAt,
     this.endReason,
+    this.packId,
   }) : status = status ?? _ilj1at52.RoomStatus.lobby,
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
@@ -89,6 +90,7 @@ abstract class Room
     DateTime? startedAt,
     DateTime? lastActivityAt,
     _i1z47hfo.RoomEndReason? endReason,
+    int? packId,
   }) = _RoomImpl;
 
   factory Room.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -162,6 +164,7 @@ abstract class Room
           : _i1z47hfo.RoomEndReason.fromJson(
               (jsonSerialization['endReason'] as String),
             ),
+      packId: jsonSerialization['packId'] as int?,
     );
   }
 
@@ -231,6 +234,9 @@ abstract class Room
   /// Set when the game ends.
   _i1z47hfo.RoomEndReason? endReason;
 
+  /// AI-written questions played before the built-in bank.
+  int? packId;
+
   /// Returns a shallow copy of this [Room]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -263,6 +269,7 @@ abstract class Room
     DateTime? startedAt,
     DateTime? lastActivityAt,
     _i1z47hfo.RoomEndReason? endReason,
+    int? packId,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -298,6 +305,7 @@ abstract class Room
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
       'lastActivityAt': lastActivityAt.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
+      if (packId != null) 'packId': packId,
     };
   }
 
@@ -336,6 +344,7 @@ abstract class Room
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
       'lastActivityAt': lastActivityAt.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
+      if (packId != null) 'packId': packId,
     };
   }
 
@@ -377,6 +386,7 @@ class _RoomImpl extends Room {
     DateTime? startedAt,
     DateTime? lastActivityAt,
     _i1z47hfo.RoomEndReason? endReason,
+    int? packId,
   }) : super._(
          id: id,
          code: code,
@@ -406,6 +416,7 @@ class _RoomImpl extends Room {
          startedAt: startedAt,
          lastActivityAt: lastActivityAt,
          endReason: endReason,
+         packId: packId,
        );
 
   /// Returns a shallow copy of this [Room]
@@ -441,6 +452,7 @@ class _RoomImpl extends Room {
     Object? startedAt = _Undefined,
     DateTime? lastActivityAt,
     Object? endReason = _Undefined,
+    Object? packId = _Undefined,
   }) {
     return Room(
       id: id is int? ? id : this.id,
@@ -485,6 +497,7 @@ class _RoomImpl extends Room {
       endReason: endReason is _i1z47hfo.RoomEndReason?
           ? endReason
           : this.endReason,
+      packId: packId is int? ? packId : this.packId,
     );
   }
 }

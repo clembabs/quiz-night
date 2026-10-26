@@ -1,0 +1,13 @@
+### A generated pack as the host previews it, answers included (host only).
+class: PackDraft
+fields:
+  packId: int
+  ### Pass back in RoomConfig to play this pack.
+  packToken: String
+  topic: String
+  difficulty: QuestionDifficulty
+  questions: List<PackQuestionView>
+  ### How many round and final questions the game is likely to need; fewer
+  ### left (after removals) means the built-in bank fills in.
+  roundQuestionsNeeded: int
+  finalQuestionsNeeded: int

@@ -6,6 +6,10 @@ buzzer:
   - buzz:
   - submitBuzzAnswer:
   - backFinalist:
+questions:
+  - aiAvailable:
+  - generatePack:
+  - removePackQuestion:
 room:
   - createRoom:
   - joinRoom:

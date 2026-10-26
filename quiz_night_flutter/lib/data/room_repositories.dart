@@ -171,13 +171,8 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
             _client.answer.submitAnswer(player.token, questionId, choiceIndex),
       );
 
-  static Future<T> _guard<T>(Future<T> Function() call) async {
-    try {
-      return await call();
-    } catch (e) {
-      throw toFailure(e);
-    }
-  }
+  static Future<T> _guard<T>(Future<T> Function() call) =>
+      guardServerCall(call);
 
   /// Maps transport errors to [AppFailure].
   static AppFailure toFailure(Object e) {
@@ -197,4 +192,14 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
     QuizErrorCode.roomLocked => FailureKind.roomLocked,
     _ => FailureKind.other,
   };
+}
+
+/// Runs a server call, turning transport errors into [AppFailure]s with
+/// the server's own user-facing message.
+Future<T> guardServerCall<T>(Future<T> Function() call) async {
+  try {
+    return await call();
+  } catch (e) {
+    throw ServerpodRoomRepository.toFailure(e);
+  }
 }

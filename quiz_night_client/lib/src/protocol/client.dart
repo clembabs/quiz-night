@@ -17,6 +17,9 @@ import 'package:quiz_night_client/src/protocol/buzz_result.dart' as _i6x4qugu;
 import 'package:quiz_night_client/src/protocol/create_room_result.dart'
     as _if7vktiw;
 import 'package:quiz_night_client/src/protocol/join_result.dart' as _ik8s3h8i;
+import 'package:quiz_night_client/src/protocol/pack_draft.dart' as _i1m5kpiv;
+import 'package:quiz_night_client/src/protocol/question_difficulty.dart'
+    as _ih0atpad;
 import 'package:quiz_night_client/src/protocol/room_config.dart' as _i2v75h2f;
 import 'package:quiz_night_client/src/protocol/room_state.dart' as _inkt92gq;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
@@ -137,6 +140,58 @@ class EndpointBuzzer extends _isc.EndpointRef {
     {
       'playerToken': playerToken,
       'finalistId': finalistId,
+    },
+  );
+}
+
+/// AI-written questions for the host's setup screen. Rate limited inside
+/// [QuestionPacks.generate] (3 an hour per address, 150 a day overall).
+/// {@category Endpoint}
+class EndpointQuestions extends _isc.EndpointRef {
+  EndpointQuestions(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'questions';
+
+  /// Whether this server can write questions (an API key is set).
+  _ida.Future<bool> aiAvailable() => caller.callServerEndpoint<bool>(
+    'questions',
+    'aiAvailable',
+    {},
+  );
+
+  /// Writes [questionCount] questions (10-40) on [topic] for a game with
+  /// [config].
+  _ida.Future<_i1m5kpiv.PackDraft> generatePack(
+    String topic,
+    _ih0atpad.QuestionDifficulty difficulty,
+    int questionCount,
+    _i2v75h2f.RoomConfig config,
+  ) => caller.callServerEndpoint<_i1m5kpiv.PackDraft>(
+    'questions',
+    'generatePack',
+    {
+      'topic': topic,
+      'difficulty': difficulty,
+      'questionCount': questionCount,
+      'config': config,
+    },
+  );
+
+  /// Drops one question from the host's pack.
+  _ida.Future<_i1m5kpiv.PackDraft> removePackQuestion(
+    int packId,
+    String packToken,
+    int questionId,
+    _i2v75h2f.RoomConfig config,
+  ) => caller.callServerEndpoint<_i1m5kpiv.PackDraft>(
+    'questions',
+    'removePackQuestion',
+    {
+      'packId': packId,
+      'packToken': packToken,
+      'questionId': questionId,
+      'config': config,
     },
   );
 }
@@ -332,6 +387,7 @@ class Client extends _isc.ServerpodClientShared {
     jwtRefresh = EndpointJwtRefresh(this);
     answer = EndpointAnswer(this);
     buzzer = EndpointBuzzer(this);
+    questions = EndpointQuestions(this);
     room = EndpointRoom(this);
     modules = Modules(this);
   }
@@ -342,6 +398,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointBuzzer buzzer;
 
+  late final EndpointQuestions questions;
+
   late final EndpointRoom room;
 
   late final Modules modules;
@@ -351,6 +409,7 @@ class Client extends _isc.ServerpodClientShared {
     'jwtRefresh': jwtRefresh,
     'answer': answer,
     'buzzer': buzzer,
+    'questions': questions,
     'room': room,
   };
 

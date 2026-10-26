@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../widgets/qn/host_stage.dart';
 import '../../widgets/qn/loaders.dart';
+import '../../widgets/qn/notices.dart';
 import '../../widgets/qn/phone_frame.dart';
 import '../../widgets/qn/session_clock.dart';
 import 'final/final_logic.dart';
@@ -98,9 +99,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       listeners: [
         BlocListener<RoomCubit, RoomViewState>(
           listenWhen: (a, b) => a.errorSeq != b.errorSeq,
-          listener: (context, state) => ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.actionError ?? ''))),
+          listener: (context, state) =>
+              showToast(context, state.actionError ?? ''),
         ),
         BlocListener<RoomCubit, RoomViewState>(
           listenWhen: (a, b) => !a.left && b.left,

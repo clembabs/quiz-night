@@ -12,3 +12,5 @@ values:
   - rateLimited
   - roomFull
   - roomLocked
+  - aiUnavailable
+  - generationFailed

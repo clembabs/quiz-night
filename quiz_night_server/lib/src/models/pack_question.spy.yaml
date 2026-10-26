@@ -1,0 +1,14 @@
+### One question in a [QuestionPack].
+class: PackQuestion
+table: pack_question
+fields:
+  packId: int, relation(parent=question_pack, onDelete=Cascade)
+  ### Play order within its kind (rounds or final).
+  orderIndex: int
+  isFinal: bool
+  text: String
+  options: List<String>
+  correctIndex: int
+indexes:
+  pack_question_pack_idx:
+    fields: packId

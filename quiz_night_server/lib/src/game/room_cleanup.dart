@@ -22,6 +22,11 @@ abstract final class RoomCleanup {
       session,
       where: (t) => t.createdAt < cutoff,
     );
+    // Question packs, used or not, go on the same schedule.
+    await QuestionPack.db.deleteWhere(
+      session,
+      where: (t) => t.createdAt < cutoff,
+    );
     return deleted.length;
   }
 

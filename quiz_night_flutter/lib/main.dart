@@ -7,6 +7,7 @@ import 'app/quiz_night_app.dart';
 import 'core/platform/haptics.dart';
 import 'core/platform/screen_wake_lock.dart';
 import 'client.dart';
+import 'data/questions_repository.dart';
 import 'data/room_repositories.dart';
 import 'data/seat_repository.dart';
 
@@ -23,6 +24,7 @@ void main() async {
       lobby: rooms,
       game: rooms,
       seats: PrefsSeatRepository(),
+      questions: ServerpodQuestionsRepository(client),
       wakeLock: createScreenWakeLock(),
       haptics: createHaptics(),
     ),

@@ -10,6 +10,8 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:quiz_night_server/src/generated/question_difficulty.dart'
+    as _i4ozqmvk;
 import 'package:quiz_night_server/src/generated/room_config.dart' as _i3izb6ro;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -19,6 +21,7 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../endpoints/answer_endpoint.dart' as _iytsf7o6;
 import '../endpoints/buzzer_endpoint.dart' as _ikgggm1x;
+import '../endpoints/questions_endpoint.dart' as _ixz1m1z5;
 import '../endpoints/room_endpoint.dart' as _io7erjyw;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -41,6 +44,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'buzzer',
+          null,
+        ),
+      'questions': _ixz1m1z5.QuestionsEndpoint()
+        ..initialize(
+          server,
+          'questions',
           null,
         ),
       'room': _io7erjyw.RoomEndpoint()
@@ -195,6 +204,96 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['playerToken'],
                     params['finalistId'],
+                  ),
+        ),
+      },
+    );
+    connectors['questions'] = _is.EndpointConnector(
+      name: 'questions',
+      endpoint: endpoints['questions']!,
+      methodConnectors: {
+        'aiAvailable': _is.MethodConnector(
+          name: 'aiAvailable',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['questions'] as _ixz1m1z5.QuestionsEndpoint)
+                  .aiAvailable(session),
+        ),
+        'generatePack': _is.MethodConnector(
+          name: 'generatePack',
+          params: {
+            'topic': _is.ParameterDescription(
+              name: 'topic',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'difficulty': _is.ParameterDescription(
+              name: 'difficulty',
+              type: _is.getType<_i4ozqmvk.QuestionDifficulty>(),
+              nullable: false,
+            ),
+            'questionCount': _is.ParameterDescription(
+              name: 'questionCount',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'config': _is.ParameterDescription(
+              name: 'config',
+              type: _is.getType<_i3izb6ro.RoomConfig>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['questions'] as _ixz1m1z5.QuestionsEndpoint)
+                  .generatePack(
+                    session,
+                    params['topic'],
+                    params['difficulty'],
+                    params['questionCount'],
+                    params['config'],
+                  ),
+        ),
+        'removePackQuestion': _is.MethodConnector(
+          name: 'removePackQuestion',
+          params: {
+            'packId': _is.ParameterDescription(
+              name: 'packId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'packToken': _is.ParameterDescription(
+              name: 'packToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'questionId': _is.ParameterDescription(
+              name: 'questionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'config': _is.ParameterDescription(
+              name: 'config',
+              type: _is.getType<_i3izb6ro.RoomConfig>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['questions'] as _ixz1m1z5.QuestionsEndpoint)
+                  .removePackQuestion(
+                    session,
+                    params['packId'],
+                    params['packToken'],
+                    params['questionId'],
+                    params['config'],
                   ),
         ),
       },

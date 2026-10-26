@@ -36,6 +36,8 @@ fields:
   lastActivityAt: DateTime, default=now
   ### Set when the game ends.
   endReason: RoomEndReason?
+  ### AI-written questions played before the built-in bank.
+  packId: int?, relation(parent=question_pack, onDelete=SetNull)
 indexes:
   room_code_idx:
     fields: code

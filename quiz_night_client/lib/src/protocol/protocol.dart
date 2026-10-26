@@ -24,10 +24,15 @@ import 'create_room_result.dart' as _imz5iufx;
 import 'elimination_event.dart' as _i044r49r;
 import 'elimination_rule.dart' as _ix1rmfwn;
 import 'join_result.dart' as _irdkvnmr;
+import 'pack_draft.dart' as _i6u791n3;
+import 'pack_question.dart' as _ib5lmu7a;
+import 'pack_question_view.dart' as _iwaxsltl;
 import 'player.dart' as _imuqra0a;
 import 'player_status.dart' as _iarmrzsm;
 import 'player_view.dart' as _ijz1mobl;
 import 'question.dart' as _in6mynjk;
+import 'question_difficulty.dart' as _i5mrkeak;
+import 'question_pack.dart' as _i0rdilu0;
 import 'question_view.dart' as _irhyxwad;
 import 'quiz_error_code.dart' as _ig7vrbjo;
 import 'quiz_exception.dart' as _izdirdeu;
@@ -45,10 +50,15 @@ export 'create_room_result.dart';
 export 'elimination_event.dart';
 export 'elimination_rule.dart';
 export 'join_result.dart';
+export 'pack_draft.dart';
+export 'pack_question.dart';
+export 'pack_question_view.dart';
 export 'player.dart';
 export 'player_status.dart';
 export 'player_view.dart';
 export 'question.dart';
+export 'question_difficulty.dart';
+export 'question_pack.dart';
 export 'question_view.dart';
 export 'quiz_error_code.dart';
 export 'quiz_exception.dart';
@@ -118,6 +128,15 @@ class Protocol extends _isc.SerializationManager {
     if (t == _irdkvnmr.JoinResult) {
       return _irdkvnmr.JoinResult.fromJson(data) as T;
     }
+    if (t == _i6u791n3.PackDraft) {
+      return _i6u791n3.PackDraft.fromJson(data) as T;
+    }
+    if (t == _ib5lmu7a.PackQuestion) {
+      return _ib5lmu7a.PackQuestion.fromJson(data) as T;
+    }
+    if (t == _iwaxsltl.PackQuestionView) {
+      return _iwaxsltl.PackQuestionView.fromJson(data) as T;
+    }
     if (t == _imuqra0a.Player) {
       return _imuqra0a.Player.fromJson(data) as T;
     }
@@ -129,6 +148,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _in6mynjk.Question) {
       return _in6mynjk.Question.fromJson(data) as T;
+    }
+    if (t == _i5mrkeak.QuestionDifficulty) {
+      return _i5mrkeak.QuestionDifficulty.fromJson(data) as T;
+    }
+    if (t == _i0rdilu0.QuestionPack) {
+      return _i0rdilu0.QuestionPack.fromJson(data) as T;
     }
     if (t == _irhyxwad.QuestionView) {
       return _irhyxwad.QuestionView.fromJson(data) as T;
@@ -184,6 +209,16 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_irdkvnmr.JoinResult?>()) {
       return (data != null ? _irdkvnmr.JoinResult.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_i6u791n3.PackDraft?>()) {
+      return (data != null ? _i6u791n3.PackDraft.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ib5lmu7a.PackQuestion?>()) {
+      return (data != null ? _ib5lmu7a.PackQuestion.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iwaxsltl.PackQuestionView?>()) {
+      return (data != null ? _iwaxsltl.PackQuestionView.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_imuqra0a.Player?>()) {
       return (data != null ? _imuqra0a.Player.fromJson(data) : null) as T;
     }
@@ -195,6 +230,13 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_in6mynjk.Question?>()) {
       return (data != null ? _in6mynjk.Question.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i5mrkeak.QuestionDifficulty?>()) {
+      return (data != null ? _i5mrkeak.QuestionDifficulty.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i0rdilu0.QuestionPack?>()) {
+      return (data != null ? _i0rdilu0.QuestionPack.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_irhyxwad.QuestionView?>()) {
       return (data != null ? _irhyxwad.QuestionView.fromJson(data) : null) as T;
@@ -228,6 +270,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
+    if (t == List<_iwaxsltl.PackQuestionView>) {
+      return (data as List)
+              .map((e) => deserialize<_iwaxsltl.PackQuestionView>(e))
+              .toList()
+          as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -263,10 +311,15 @@ class Protocol extends _isc.SerializationManager {
       _i044r49r.EliminationEvent => 'EliminationEvent',
       _ix1rmfwn.EliminationRule => 'EliminationRule',
       _irdkvnmr.JoinResult => 'JoinResult',
+      _i6u791n3.PackDraft => 'PackDraft',
+      _ib5lmu7a.PackQuestion => 'PackQuestion',
+      _iwaxsltl.PackQuestionView => 'PackQuestionView',
       _imuqra0a.Player => 'Player',
       _iarmrzsm.PlayerStatus => 'PlayerStatus',
       _ijz1mobl.PlayerView => 'PlayerView',
       _in6mynjk.Question => 'Question',
+      _i5mrkeak.QuestionDifficulty => 'QuestionDifficulty',
+      _i0rdilu0.QuestionPack => 'QuestionPack',
       _irhyxwad.QuestionView => 'QuestionView',
       _ig7vrbjo.QuizErrorCode => 'QuizErrorCode',
       _izdirdeu.QuizException => 'QuizException',
@@ -306,6 +359,12 @@ class Protocol extends _isc.SerializationManager {
         return 'EliminationRule';
       case _irdkvnmr.JoinResult():
         return 'JoinResult';
+      case _i6u791n3.PackDraft():
+        return 'PackDraft';
+      case _ib5lmu7a.PackQuestion():
+        return 'PackQuestion';
+      case _iwaxsltl.PackQuestionView():
+        return 'PackQuestionView';
       case _imuqra0a.Player():
         return 'Player';
       case _iarmrzsm.PlayerStatus():
@@ -314,6 +373,10 @@ class Protocol extends _isc.SerializationManager {
         return 'PlayerView';
       case _in6mynjk.Question():
         return 'Question';
+      case _i5mrkeak.QuestionDifficulty():
+        return 'QuestionDifficulty';
+      case _i0rdilu0.QuestionPack():
+        return 'QuestionPack';
       case _irhyxwad.QuestionView():
         return 'QuestionView';
       case _ig7vrbjo.QuizErrorCode():
@@ -378,6 +441,15 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'JoinResult') {
       return deserialize<_irdkvnmr.JoinResult>(data['data']);
     }
+    if (dataClassName == 'PackDraft') {
+      return deserialize<_i6u791n3.PackDraft>(data['data']);
+    }
+    if (dataClassName == 'PackQuestion') {
+      return deserialize<_ib5lmu7a.PackQuestion>(data['data']);
+    }
+    if (dataClassName == 'PackQuestionView') {
+      return deserialize<_iwaxsltl.PackQuestionView>(data['data']);
+    }
     if (dataClassName == 'Player') {
       return deserialize<_imuqra0a.Player>(data['data']);
     }
@@ -389,6 +461,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Question') {
       return deserialize<_in6mynjk.Question>(data['data']);
+    }
+    if (dataClassName == 'QuestionDifficulty') {
+      return deserialize<_i5mrkeak.QuestionDifficulty>(data['data']);
+    }
+    if (dataClassName == 'QuestionPack') {
+      return deserialize<_i0rdilu0.QuestionPack>(data['data']);
     }
     if (dataClassName == 'QuestionView') {
       return deserialize<_irhyxwad.QuestionView>(data['data']);

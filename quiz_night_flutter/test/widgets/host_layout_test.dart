@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
+import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
 import 'package:quiz_night_flutter/features/room/host/host_cut.dart';
 import 'package:quiz_night_flutter/features/room/host/host_final.dart';
 import 'package:quiz_night_flutter/features/room/host/host_lobby.dart';
@@ -207,11 +208,24 @@ void main() {
       final cubit = HostSetupCubit(MockLobbyRepository(), MockSeatRepository())
         ..setRule(EliminationRule.autoScaled);
       addTearDown(cubit.close);
+      // A long AI pack in the preview: the heaviest version of the screen.
+      final questions = MockQuestionsRepository();
+      when(() => questions.aiAvailable()).thenAnswer((_) async => true);
+      when(
+        () => questions.generatePack(any(), any(), any(), any()),
+      ).thenAnswer((_) async => samplePack(rounds: 25, finals: 7));
+      final packs = QuestionPackCubit(questions)..setTopic('Nollywood');
+      addTearDown(packs.close);
+      await packs.start();
+      await packs.generate(RoomConfig());
       await t.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
-          home: BlocProvider.value(
-            value: cubit,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: cubit),
+              BlocProvider.value(value: packs),
+            ],
             child: const HostSetupScreen(),
           ),
         ),
