@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
 
+import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
 import '../security/tokens.dart';
 import 'cut_logic.dart';
@@ -114,6 +115,12 @@ class RoomService {
     RoomConfig config,
   ) async {
     _validateConfig(config);
+    // Only the host who generated a pack holds its token.
+    final packId = await QuestionPacks.verifyForRoom(
+      session,
+      config.packId,
+      config.packToken,
+    );
     final hostToken = _randomToken();
     for (var attempt = 0; attempt < 20; attempt++) {
       // Grow the code if short ones keep colliding.
@@ -135,6 +142,7 @@ class RoomService {
           finalQuestionCount: config.finalQuestionCount,
           timeLimitSeconds: config.timeLimitSeconds,
           showQuestionOnPhones: config.showQuestionOnPhones,
+          packId: packId,
         ),
       );
       return CreateRoomResult(roomCode: code, hostToken: hostToken);
@@ -937,6 +945,30 @@ class RoomService {
   }
 
   /// Inserts the next question and puts the room into answering state.
+  /// The next unplayed question of the right kind from the room's pack.
+  static Future<BankQuestion?> _nextPackQuestion(
+    Session session,
+    Transaction tx,
+    Room room,
+    Set<String> usedTexts, {
+    required bool isFinal,
+  }) async {
+    final packId = room.packId;
+    if (packId == null) return null;
+    final candidates = await PackQuestion.db.find(
+      session,
+      where: (t) => t.packId.equals(packId) & t.isFinal.equals(isFinal),
+      orderBy: (t) => t.orderIndex,
+      transaction: tx,
+    );
+    final next = candidates
+        .where((q) => !usedTexts.contains(q.text))
+        .firstOrNull;
+    return next == null
+        ? null
+        : BankQuestion(next.text, next.options, next.correctIndex);
+  }
+
   static Future<Room> _startQuestion(
     Session session,
     Transaction tx,
@@ -949,10 +981,23 @@ class RoomService {
       transaction: tx,
     );
     final usedTexts = used.map((q) => q.text).toSet();
-    final bank = isFinal ? finalQuestions : roundQuestions;
-    var fresh = bank.where((q) => !usedTexts.contains(q.text)).toList();
-    if (fresh.isEmpty) fresh = bank.toList();
-    final pick = fresh[_random.nextInt(fresh.length)];
+    // The host's AI-written pack first, in its order; then the bank.
+    final fromPack = await _nextPackQuestion(
+      session,
+      tx,
+      room,
+      usedTexts,
+      isFinal: isFinal,
+    );
+    final BankQuestion pick;
+    if (fromPack != null) {
+      pick = fromPack;
+    } else {
+      final bank = isFinal ? finalQuestions : roundQuestions;
+      var fresh = bank.where((q) => !usedTexts.contains(q.text)).toList();
+      if (fresh.isEmpty) fresh = bank.toList();
+      pick = fresh[_random.nextInt(fresh.length)];
+    }
 
     final indexInRound = isFinal
         ? room.finalQuestionsPlayed + 1

@@ -13,3 +13,6 @@ fields:
   timeLimitSeconds: int, default=20
   ### Whether players' phones show the question text, or only the projector.
   showQuestionOnPhones: bool, default=true
+  ### An AI-written pack to play, from generatePack; with its token.
+  packId: int?
+  packToken: String?

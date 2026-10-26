@@ -1,0 +1,8 @@
+### A pack question in the host's preview.
+class: PackQuestionView
+fields:
+  id: int
+  isFinal: bool
+  text: String
+  options: List<String>
+  correctIndex: int

@@ -27,6 +27,8 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    this.packId,
+    this.packToken,
   }) : questionsPerRound = questionsPerRound ?? 5,
        eliminationRule =
            eliminationRule ?? _ix1rmfwn.EliminationRule.bottomPercent,
@@ -48,6 +50,8 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    int? packId,
+    String? packToken,
   }) = _RoomConfigImpl;
 
   factory RoomConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -74,6 +78,8 @@ abstract class RoomConfig
           : _isc.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      packId: jsonSerialization['packId'] as int?,
+      packToken: jsonSerialization['packToken'] as String?,
     );
   }
 
@@ -98,6 +104,11 @@ abstract class RoomConfig
   /// Whether players' phones show the question text, or only the projector.
   bool showQuestionOnPhones;
 
+  /// An AI-written pack to play, from generatePack; with its token.
+  int? packId;
+
+  String? packToken;
+
   /// Returns a shallow copy of this [RoomConfig]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -111,6 +122,8 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    int? packId,
+    String? packToken,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -125,6 +138,8 @@ abstract class RoomConfig
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      if (packId != null) 'packId': packId,
+      if (packToken != null) 'packToken': packToken,
     };
   }
 
@@ -141,6 +156,8 @@ abstract class RoomConfig
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      if (packId != null) 'packId': packId,
+      if (packToken != null) 'packToken': packToken,
     };
   }
 
@@ -149,6 +166,8 @@ abstract class RoomConfig
     return _isc.SerializationManager.encode(this);
   }
 }
+
+class _Undefined {}
 
 class _RoomConfigImpl extends RoomConfig {
   _RoomConfigImpl({
@@ -161,6 +180,8 @@ class _RoomConfigImpl extends RoomConfig {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    int? packId,
+    String? packToken,
   }) : super._(
          questionsPerRound: questionsPerRound,
          eliminationRule: eliminationRule,
@@ -171,6 +192,8 @@ class _RoomConfigImpl extends RoomConfig {
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
+         packId: packId,
+         packToken: packToken,
        );
 
   /// Returns a shallow copy of this [RoomConfig]
@@ -187,6 +210,8 @@ class _RoomConfigImpl extends RoomConfig {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    Object? packId = _Undefined,
+    Object? packToken = _Undefined,
   }) {
     return RoomConfig(
       questionsPerRound: questionsPerRound ?? this.questionsPerRound,
@@ -198,6 +223,8 @@ class _RoomConfigImpl extends RoomConfig {
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      packId: packId is int? ? packId : this.packId,
+      packToken: packToken is String? ? packToken : this.packToken,
     );
   }
 }

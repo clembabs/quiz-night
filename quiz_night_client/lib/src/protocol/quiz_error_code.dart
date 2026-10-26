@@ -24,7 +24,9 @@ enum QuizErrorCode implements _isc.SerializableModel {
   notAllowed,
   rateLimited,
   roomFull,
-  roomLocked;
+  roomLocked,
+  aiUnavailable,
+  generationFailed;
 
   static QuizErrorCode fromJson(String name) {
     switch (name) {
@@ -52,6 +54,10 @@ enum QuizErrorCode implements _isc.SerializableModel {
         return QuizErrorCode.roomFull;
       case 'roomLocked':
         return QuizErrorCode.roomLocked;
+      case 'aiUnavailable':
+        return QuizErrorCode.aiUnavailable;
+      case 'generationFailed':
+        return QuizErrorCode.generationFailed;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "QuizErrorCode"',

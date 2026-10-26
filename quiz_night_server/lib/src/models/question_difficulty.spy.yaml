@@ -1,0 +1,6 @@
+### How hard the AI-written round questions are (final ones are always harder).
+enum: QuestionDifficulty
+values:
+  - easy
+  - mixed
+  - hard
