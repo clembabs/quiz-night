@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
+import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
 import 'package:quiz_night_flutter/features/room/host/host_cut.dart';
 import 'package:quiz_night_flutter/features/room/host/host_final.dart';
 import 'package:quiz_night_flutter/features/room/host/host_lobby.dart';
@@ -18,6 +19,9 @@ import 'package:quiz_night_flutter/widgets/qn/host_stage.dart';
 
 import '../fakes/fakes.dart';
 import 'harness.dart';
+
+class MockPackCubit extends MockCubit<QuestionPackState>
+    implements QuestionPackCubit {}
 
 class MockSetupCubit extends MockCubit<HostSetupState>
     implements HostSetupCubit {}
@@ -54,14 +58,26 @@ void main() {
 
   group('Given the host creates a game', () {
     late MockSetupCubit setup;
+    late MockPackCubit packCubit;
 
     setUp(() {
       setup = MockSetupCubit();
+      packCubit = MockPackCubit();
+      when(
+        () => packCubit.state,
+      ).thenReturn(const QuestionPackState(status: PackStatus.idle));
+      when(() => packCubit.summaryItem).thenReturn(
+        const SummaryItem('Built-in questions', 'Or type a topic.'),
+      );
+      when(() => packCubit.generate(any())).thenAnswer((_) async {});
+      when(() => packCubit.remove(any(), any())).thenAnswer((_) async {});
       when(() => setup.state).thenReturn(const HostSetupState());
       when(
         () => setup.summary,
       ).thenReturn(const [SummaryItem('Bottom 30%', 'Lowest 30% go home.')]);
-      when(() => setup.create()).thenAnswer((_) async {});
+      when(
+        () => setup.create(pack: any(named: 'pack')),
+      ).thenAnswer((_) async {});
     });
 
     Future<void> pumpSetup(WidgetTester t) async {
@@ -70,8 +86,11 @@ void main() {
       addTearDown(t.view.reset);
       await t.pumpWidget(
         MaterialApp(
-          home: BlocProvider<HostSetupCubit>.value(
-            value: setup,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<HostSetupCubit>.value(value: setup),
+              BlocProvider<QuestionPackCubit>.value(value: packCubit),
+            ],
             child: const HostSetupScreen(),
           ),
         ),
@@ -96,7 +115,54 @@ void main() {
     testWidgets('when creating then the cubit creates the room', (t) async {
       await pumpSetup(t);
       await t.tap(find.byKey(const Key('create.submit')));
-      verify(() => setup.create()).called(1);
+      verify(() => setup.create(pack: null)).called(1);
+    });
+
+    testWidgets('when a topic is typed and Write questions tapped then the '
+        'pack cubit writes for this game', (t) async {
+      when(() => packCubit.state).thenReturn(
+        const QuestionPackState(status: PackStatus.idle, topic: 'Nollywood'),
+      );
+      await pumpSetup(t);
+      await t.ensureVisible(find.byKey(const Key('topic.field')));
+      await t.enterText(find.byKey(const Key('topic.field')), 'Afrobeats');
+      verify(() => packCubit.setTopic('Afrobeats')).called(1);
+      await t.ensureVisible(find.byKey(const Key('topic.generate')));
+      await t.tap(find.byKey(const Key('topic.generate')));
+      verify(() => packCubit.generate(any())).called(1);
+    });
+
+    testWidgets('when a pack is ready then the host previews it, can remove '
+        'a question, and Create room plays it', (t) async {
+      final pack = samplePack();
+      when(() => packCubit.state).thenReturn(
+        QuestionPackState(
+          status: PackStatus.ready,
+          topic: 'Nollywood',
+          pack: pack,
+        ),
+      );
+      await pumpSetup(t);
+      expect(find.text('Preview · 4 round + 2 final'), findsOneWidget);
+      expect(find.text('✓ Right 1'), findsOneWidget);
+
+      await t.ensureVisible(find.byKey(const Key('pack.remove.2')));
+      await t.tap(find.byKey(const Key('pack.remove.2')));
+      verify(() => packCubit.remove(2, any())).called(1);
+
+      await t.ensureVisible(find.byKey(const Key('create.submit')));
+      await t.tap(find.byKey(const Key('create.submit')));
+      verify(() => setup.create(pack: pack)).called(1);
+    });
+
+    testWidgets('when AI questions are not set up then it says so and the '
+        'game uses the built-in ones', (t) async {
+      when(
+        () => packCubit.state,
+      ).thenReturn(const QuestionPackState(status: PackStatus.unavailable));
+      await pumpSetup(t);
+      expect(find.textContaining("AI questions aren't set up"), findsOneWidget);
+      expect(find.byKey(const Key('topic.field')), findsNothing);
     });
   });
 
