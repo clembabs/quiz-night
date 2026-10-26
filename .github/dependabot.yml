@@ -1,12 +1,14 @@
-# Weekly pull requests for security fixes and new versions, into develop so
-# they go through CI and the normal release to main.
+# Monthly, grouped pull requests into develop, so they go through CI and the
+# normal release to main. Security fixes come separately, as soon as GitHub
+# finds them (Dependabot security updates), not on this schedule.
 version: 2
 updates:
+  # All CI action updates in one pull request.
   - package-ecosystem: github-actions
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     commit-message:
       prefix: ci
     groups:
@@ -14,15 +16,23 @@ updates:
         patterns: ['*']
 
   # The root pubspec is a workspace holding the server, client and app.
+  # Minor and patch updates together in one pull request; major versions
+  # change APIs, so upgrade those deliberately.
   - package-ecosystem: pub
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     commit-message:
       prefix: build
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
+    groups:
+      packages:
+        patterns: ['*']
+        update-types: [minor, patch]
     ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
       # Serverpod packages move together with the CLI and generated code;
       # upgrade them deliberately (make generate, migrations), not one by one.
       - dependency-name: 'serverpod*'
