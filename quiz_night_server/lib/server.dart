@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
+import 'src/ai/host_lines.dart';
 import 'src/ai/question_packs.dart';
 import 'src/cache_busting.dart';
 import 'src/game/room_cleanup.dart';
@@ -96,8 +97,9 @@ void run(List<String> args) async {
   // Rate limits on every endpoint (see lib/src/security/guard.dart).
   Guard.enabled = true;
 
-  // AI-written questions, if the geminiApiKey password is set.
+  // AI questions and host lines, if the geminiApiKey password is set.
   QuestionPacks.configure(pod);
+  HostLines.configure(pod);
 
   await pod.start();
 

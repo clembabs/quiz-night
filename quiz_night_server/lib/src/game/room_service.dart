@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
 
+import '../ai/host_lines.dart';
 import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
 import '../security/tokens.dart';
@@ -446,6 +447,8 @@ class RoomService {
       return room.id!;
     });
     await _broadcast(session, roomId);
+    // After the broadcast, so the reveal starts while the lines are written.
+    await _writeExitLines(session, roomId);
   }
 
   /// Rescues one eliminated player, once per game, before the final starts.
@@ -488,6 +491,7 @@ class RoomService {
           status: finalsDecided ? PlayerStatus.finalist : PlayerStatus.active,
           eliminatedInRound: null,
           backedPlayerId: null,
+          exitLine: null,
         ),
         transaction: tx,
       );
@@ -1076,7 +1080,7 @@ class RoomService {
           room.currentQuestionId != questionId ||
           (room.status != RoomStatus.question &&
               room.status != RoomStatus.buzzerFinal)) {
-        return false;
+        return null;
       }
       var updated = room.copyWith(
         status: RoomStatus.reveal,
@@ -1087,10 +1091,85 @@ class RoomService {
         updated = await _applySuddenDeath(session, tx, updated, questionId);
       }
       await Room.db.updateRow(session, updated, transaction: tx);
-      return true;
+      return updated;
     });
-    if (changed) await _broadcast(session, roomId);
-    return changed;
+    if (changed == null) return false;
+    await _broadcast(session, roomId);
+    if (changed.eliminationRule == EliminationRule.suddenDeath) {
+      await _writeExitLines(session, roomId);
+    }
+    return true;
+  }
+
+  /// Gives this room's newly eliminated players their host line, then
+  /// broadcasts. Safe to repeat: players who have a line keep it.
+  static Future<void> _writeExitLines(Session session, int roomId) async {
+    final room = await Room.db.findById(session, roomId);
+    if (room == null) return;
+    final out = await Player.db.find(
+      session,
+      where: (t) =>
+          t.roomId.equals(roomId) &
+          t.status.equals(PlayerStatus.eliminated) &
+          t.eliminatedInRound.equals(room.currentRound) &
+          t.exitLine.equals(null),
+    );
+    if (out.isEmpty) return;
+    final questions = await Question.db.find(
+      session,
+      where: (t) =>
+          t.roomId.equals(roomId) &
+          t.round.equals(room.currentRound) &
+          t.isFinal.equals(false),
+      orderBy: (t) => t.orderIndex,
+    );
+    final answers = await Answer.db.find(
+      session,
+      where: (t) =>
+          t.playerId.inSet(out.map((p) => p.id!).toSet()) &
+          t.questionId.inSet(questions.map((q) => q.id!).toSet()),
+    );
+    final correct = {
+      for (final a in answers)
+        if (a.isCorrect) (a.playerId, a.questionId),
+    };
+    // In reveal order, so the built-in lines vary down the cut.
+    final order = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    out.sort((a, b) => order.indexOf(a.id!).compareTo(order.indexOf(b.id!)));
+    final subjects = [
+      for (final p in out)
+        _lineSubject(p, room.currentRound, questions.reversed, correct),
+    ];
+    final lines = await HostLines.linesFor(
+      subjects,
+      log: (m) => session.log(m, level: LogLevel.warning),
+    );
+    await Player.db.update(
+      session,
+      [for (final p in out) p.copyWith(exitLine: lines[p.id!])],
+      columns: (t) => [t.exitLine],
+    );
+    await _broadcast(session, roomId);
+  }
+
+  /// [p] for the line writer, with their latest miss this round.
+  static LineSubject _lineSubject(
+    Player p,
+    int round,
+    Iterable<Question> newestFirst,
+    Set<(int, int)> correct,
+  ) {
+    final missed = newestFirst
+        .where((q) => !correct.contains((p.id!, q.id!)))
+        .firstOrNull;
+    return LineSubject(
+      playerId: p.id!,
+      nickname: p.nickname,
+      round: round,
+      score: p.score,
+      missedQuestion: missed?.text,
+      missedAnswer: missed?.options[missed.correctIndex],
+    );
   }
 
   static Future<Room> _applySuddenDeath(
@@ -1218,6 +1297,7 @@ class RoomService {
               hasAnswered: answerBy.containsKey(p.id),
               lastPoints: open ? null : answerBy[p.id]?.pointsAwarded,
               lockedOut: lockedOut.contains(p.id),
+              exitLine: p.exitLine,
             ),
         ]..sort((a, b) {
           final byFinal = b.finalScore.compareTo(a.finalScore);
