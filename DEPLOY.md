@@ -69,8 +69,8 @@ Every deploy clears the CDN; `index.html` is never cached, so phones pick up a n
 ## 3a. CI/CD (GitHub Actions)
 
 ```
-feature branch ──PR──▶ develop ──PR──▶ main ──merge──▶ deploy to Serverpod Cloud
-                  CI runs          CI must pass        smoke-test the live site
+feature branch ──PR──▶ develop ──PR──▶ main ──merge──▶ deploy to Serverpod Cloud ──▶ tag a release
+                  CI runs          CI must pass        smoke-test the live site     vX.Y.Z + notes
 ```
 
 - **CI** (`.github/workflows/ci.yml`) runs on every PR into `develop` or `main` and on pushes to `develop`:
@@ -82,6 +82,17 @@ feature branch ──PR──▶ develop ──PR──▶ main ──merge─�
 - **Deploy** (`.github/workflows/deploy.yml`) runs on every push to `main`, or by hand from the Actions tab
   (run it on an older commit to roll back). It re-runs CI, deploys with `serverpod cloud deploy`, then
   checks that `/`, `/faq` and the app config respond on the live site.
+- **Release**: after a successful deploy from a merge, the `release` job tags the commit and publishes a
+  GitHub Release with notes grouped into Features, Fixes and Maintenance
+  (`.github/scripts/next_release.sh`). The version follows the Conventional Commits since the last tag:
+
+  | Commits since the last tag | Before 1.0 | From 1.0 |
+  |---|---|---|
+  | a breaking change (`feat!:`, or `BREAKING CHANGE:` in the body) | minor | major |
+  | a `feat` | minor | minor |
+  | only `fix`, `refactor`, `docs`, `ci`… | patch | patch |
+
+  A manual run (a rollback) makes no release. Releases: <https://github.com/clembabs/quiz-night/releases>.
 
 **One-time setup (you), after the first `make deploy-launch`:**
 

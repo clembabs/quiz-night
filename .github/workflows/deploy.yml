@@ -1,7 +1,8 @@
 name: Deploy
 
-# Merging into main deploys to Serverpod Cloud. It can also be run by hand
-# from the Actions tab, e.g. to roll back by deploying an older commit.
+# Merging into main deploys to Serverpod Cloud, then tags a release. It can
+# also be run by hand from the Actions tab, e.g. to roll back by deploying an
+# older commit (that makes no new release).
 on:
   push:
     branches: [main]
@@ -98,3 +99,33 @@ jobs:
           check /faq         'Quiz Night'   # deep links load the app
           check /assets/assets/config.json 'apiUrl'
           echo "### Deployed to $URL" >> "$GITHUB_STEP_SUMMARY"
+
+  # Tags what is now live and publishes its notes. The version comes from the
+  # Conventional Commits since the last tag (.github/scripts/next_release.sh).
+  release:
+    name: release
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # All history and tags, to find the last release.
+          fetch-depth: 0
+
+      - name: Tag and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(.github/scripts/next_release.sh "$GITHUB_SHA" notes.md)
+          if [ -z "$version" ]; then
+            echo "Nothing new to release."
+            exit 0
+          fi
+          gh release create "$version" \
+            --target "$GITHUB_SHA" \
+            --title "$version" \
+            --notes-file notes.md
+          echo "### Released [$version]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$version)" >> "$GITHUB_STEP_SUMMARY"
