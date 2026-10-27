@@ -167,6 +167,8 @@ class TestEndpoints {
 
   late final _BuzzerEndpoint buzzer;
 
+  late final _DiagnosticsEndpoint diagnostics;
+
   late final _QuestionsEndpoint questions;
 
   late final _RoomEndpoint room;
@@ -188,6 +190,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     buzzer = _BuzzerEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    diagnostics = _DiagnosticsEndpoint(
       endpoints,
       serializationManager,
     );
@@ -393,6 +399,54 @@ class _BuzzerEndpoint {
           parameters: _ist.testObjectToJson({
             'playerToken': playerToken,
             'finalistId': finalistId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _DiagnosticsEndpoint {
+  _DiagnosticsEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<void> reportError(
+    _ist.TestSessionBuilder sessionBuilder,
+    String message,
+    String? stackTrace,
+    String route,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'diagnostics',
+            method: 'reportError',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'diagnostics',
+          methodName: 'reportError',
+          parameters: _ist.testObjectToJson({
+            'message': message,
+            'stackTrace': stackTrace,
+            'route': route,
           }),
           serializationManager: _serializationManager,
         );
