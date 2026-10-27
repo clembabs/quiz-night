@@ -118,6 +118,33 @@ feature branch ──PR──▶ develop ──PR──▶ main ──merge─�
 - **No source maps** are shipped; the instant HTML loading screen shows while the ~3 MB first load runs.
 - Secrets stay out of git (`config/passwords.yaml`, `.env` are ignored).
 
+## 4a. Logs and errors (observability)
+
+Everything goes through Serverpod's own logging: no extra service or account.
+
+- **Where to look:** the Console's **Logs** tab for the project, or from a terminal:
+  `serverpod cloud log` (add `--help` for filters).
+- **Game events**, one line each, in a fixed `event key=value` shape you can search:
+
+  | Event | When | Fields |
+  |---|---|---|
+  | `room.created` | a host creates a room | `room`, `rule`, `perRound`, `finalists`, `pack` |
+  | `game.started` | Start game | `room`, `players` |
+  | `round.cut` | the end-of-round cut | `room`, `round`, `out`, `survivors`, `tie`, `finalists`, `ms` |
+  | `game.finished` | the podium, time up or idle close | `room`, `reason`, `players`, `minutes` |
+  | `ai.pack` | an AI question pack | `result` (ok, refused, failed, unusable), `asked`, `count`, `ms` |
+  | `ai.lines` | host lines after a cut | `room`, `round`, `count`, `fromAi`, `ms` |
+  | `limit.hit` | a rate limit turned a call away | `limit`, `endpoint` |
+  | `client.error` | an uncaught error in the web app | `route`, `message`, plus the stack trace |
+
+- **Searching:** `round.cut room=4821` follows one game; `limit.hit` shows abuse; `ai.pack result=failed` shows
+  AI trouble; `client.error` shows app crashes on players' phones.
+- **No personal data:** room codes and counts only; never nicknames, topics, tokens or IP addresses.
+- **Not stored in the database:** `SERVERPOD_SESSION_PERSISTENT_LOG_ENABLED=false` is set on the project
+  (`serverpod cloud variable list`), so logs go only to Cloud's log viewer and never fill the 1 GB database.
+  Serverpod Insights' log views need them stored, so they stay empty; turn the variable to `true` and
+  redeploy only to debug for a while.
+
 ## 5. The day before the demo (checklist)
 
 - [ ] Deploy, open `https://quiznight.serverpod.space/` on the **laptop you'll present from**, click
