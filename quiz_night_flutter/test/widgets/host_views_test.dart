@@ -8,6 +8,7 @@ import 'package:quiz_night_flutter/core/platform/sounds.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_cubit.dart';
 import 'package:quiz_night_flutter/features/host_setup/host_setup_screen.dart';
 import 'package:quiz_night_flutter/features/host_setup/question_pack_cubit.dart';
+import 'package:quiz_night_flutter/features/room/cut_reveal/reveal_sequence_cubit.dart';
 import 'package:quiz_night_flutter/features/room/host/host_cut.dart';
 import 'package:quiz_night_flutter/features/room/host/host_final.dart';
 import 'package:quiz_night_flutter/features/room/host/host_lobby.dart';
@@ -477,6 +478,61 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('“Dee goes home early.”'), findsOneWidget);
       expect(find.text('“Cy goes home early.”'), findsOneWidget);
+    });
+
+    testWidgets('when eight go home then every card fits on screen above the '
+        'survivors, with its line', (t) async {
+      final room = roomState(
+        status: RoomStatus.elimination,
+        round: 1,
+        players: [
+          for (var id = 1; id <= 4; id++) player(id, 'Safe $id'),
+          for (var id = 11; id <= 18; id++)
+            player(
+              id,
+              'Player $id',
+              status: PlayerStatus.eliminated,
+              eliminatedInRound: 1,
+              exitLine: 'Player $id goes home still thinking about Ogun.',
+            ),
+        ],
+        lastElimination: cut(
+          out: [for (var id = 18; id >= 11; id--) id],
+          survivors: 4,
+        ),
+      );
+      await pump(
+        t,
+        HostCut(
+          room: room,
+          createSequence: (n) => RevealSequenceCubit(total: n)..skip(),
+        ),
+      );
+      await t.pumpAndSettle();
+      final survive = t.getRect(find.byKey(const Key('cut.survivors')));
+      for (var id = 11; id <= 18; id++) {
+        final line = t.getRect(find.byKey(Key('cut.line.$id')));
+        expect(line.bottom, lessThan(survive.top), reason: 'Player $id');
+        expect(find.text('Player $id'), findsOneWidget);
+      }
+    });
+
+    testWidgets('when a full column has the danger line then every row fits '
+        'on the projector', (t) async {
+      final room = roomState(
+        status: RoomStatus.reveal,
+        round: 1,
+        players: [
+          for (var id = 1; id <= 9; id++)
+            player(id, 'Row $id', score: 10000 - id * 100),
+        ],
+        question: question(revealed: true),
+      ).copyWith(projectedSurvivors: 6);
+      await pump(t, HostStandings(room: room, rankMoves: const {}));
+      await t.pumpAndSettle();
+      final last = t.getRect(find.text('Row 9'));
+      expect(last.bottom, lessThanOrEqualTo(hostCanvas.height));
+      expect(find.text('Row 9').hitTestable(), findsOneWidget);
     });
 
     testWidgets('when skipped then it jumps to the end', (t) async {
