@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app/quiz_night_app.dart';
+import 'core/observability/error_reporter.dart';
 import 'core/platform/haptics.dart';
 import 'core/platform/screen_wake_lock.dart';
 import 'core/platform/sounds.dart';
@@ -18,6 +19,7 @@ void main() async {
   usePathUrlStrategy();
   _registerFontLicenses();
   await initializeClient();
+  ErrorReporter(client.diagnostics.reportError).install();
   final rooms = ServerpodRoomRepository(client);
   runApp(
     QuizNightApp(
