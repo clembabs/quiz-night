@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
+import 'package:quiz_night_flutter/core/platform/share_image.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
@@ -464,6 +467,69 @@ void main() {
       expect(find.text('ELIMINATED · ROUND 1'), findsOneWidget);
       await t.tap(find.text('Done'));
       verify(() => cubit.leave()).called(1);
+    });
+
+    testWidgets('when sharing the result then the card goes to the share sheet '
+        'as a full-size PNG, with the brag text', (t) async {
+      Uint8List? sentPng;
+      String? sentText;
+      Future<ShareOutcome> share(
+        Uint8List png, {
+        required String fileName,
+        required String text,
+      }) async {
+        sentPng = png;
+        sentText = text;
+        return ShareOutcome.shared;
+      }
+
+      await pump(
+        t,
+        PhonePlacement(room: room, me: room.players.first, share: share),
+      );
+      await t.pump(const Duration(seconds: 1));
+      await t.tap(find.byKey(const Key('placement.share')));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('card.place')), findsOneWidget);
+      expect(find.text('CHAMPION'), findsNWidgets(2));
+
+      await t.tap(find.byKey(const Key('card.share')));
+      // Encoding the image needs real time, not the test clock.
+      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
+      await t.pump();
+      expect(sentText, startsWith('I won Quiz Night!'));
+      // PNG signature, at 1080 wide (3× the 360 design).
+      expect(sentPng!.sublist(1, 4), 'PNG'.codeUnits);
+      final width = ByteData.sublistView(sentPng!, 16, 20).getUint32(0);
+      expect(width, 1080);
+      expect(find.byKey(const Key('card.status')), findsNothing);
+    });
+
+    testWidgets('when the browser can only download then the sheet says it '
+        'was saved', (t) async {
+      Future<ShareOutcome> share(
+        Uint8List png, {
+        required String fileName,
+        required String text,
+      }) async => ShareOutcome.downloaded;
+
+      await pump(
+        t,
+        PhonePlacement(room: room, me: room.players[2], share: share),
+      );
+      await t.pump(const Duration(seconds: 1));
+      await t.tap(find.byKey(const Key('placement.share')));
+      await t.pumpAndSettle();
+      expect(find.text('OUT IN ROUND 1'), findsOneWidget);
+      expect(find.text('✓ Backed the winner'), findsOneWidget);
+
+      await t.tap(find.byKey(const Key('card.share')));
+      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
+      await t.pump();
+      expect(
+        t.widget<Text>(find.byKey(const Key('card.status'))).data,
+        startsWith('Saved to your downloads'),
+      );
     });
   });
 }

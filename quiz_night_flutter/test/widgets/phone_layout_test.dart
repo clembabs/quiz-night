@@ -9,11 +9,13 @@ import 'package:quiz_night_flutter/core/theme/app_theme.dart';
 import 'package:quiz_night_flutter/features/join/join_cubit.dart';
 import 'package:quiz_night_flutter/features/join/join_screen.dart';
 import 'package:quiz_night_flutter/features/landing/landing_screen.dart';
+import 'package:quiz_night_flutter/features/room/final/result_summary.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_placement.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_question.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_result.dart';
+import 'package:quiz_night_flutter/features/room/phone/result_card.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_waiting.dart';
 import 'package:quiz_night_flutter/features/room/room_cubit.dart';
 import 'package:quiz_night_flutter/widgets/qn/phone_frame.dart';
@@ -136,6 +138,36 @@ void main() {
             child: SiteScaffold(
               current: null,
               sections: (_) => [JoinSection(onHost: () {})],
+            ),
+          ),
+        ),
+      );
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('when the result card has the longest of everything then '
+        'nothing overflows', (t) async {
+      await t.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: const Scaffold(
+            body: Center(
+              child: ResultCard(
+                site: 'quiznight.serverpod.space',
+                result: ResultSummary(
+                  place: 20,
+                  playerCount: 20,
+                  nickname: 'Oluwaseun Abimbola',
+                  title: 'Still in when it closed',
+                  champion: false,
+                  roundsSurvived: 12,
+                  points: 123456,
+                  backedWinner: false,
+                  hostLine:
+                      'Oluwaseun Abimbola goes home still thinking about the '
+                      'capital of Burkina Faso and the river Niger, sadly.',
+                ),
+              ),
             ),
           ),
         ),
