@@ -216,6 +216,12 @@ class _Cards extends StatelessWidget {
       builder: (context, c) {
         const gap = 28.0;
         final width = (c.maxWidth - gap * (cols - 1)) / cols;
+        // Every card must fit: nobody scrolls a projector.
+        final rows = (players.length / cols).ceil();
+        final fit = c.maxHeight.isFinite
+            ? (c.maxHeight - gap * (rows - 1)) / rows
+            : height;
+        final cardHeight = min(height, max(fit, _OutCard.minHeight));
         return SingleChildScrollView(
           child: Wrap(
             alignment: WrapAlignment.center,
@@ -225,12 +231,13 @@ class _Cards extends StatelessWidget {
               for (var i = 0; i < players.length; i++)
                 SizedBox(
                   width: width,
-                  height: height,
+                  height: cardHeight,
                   child: _OutCard(
                     player: players[i],
                     out: i < stamped,
                     wildcard: wildcard,
-                    compact: height < 380,
+                    compact: cardHeight < 380,
+                    row: cardHeight < _OutCard.rowBelow,
                   ),
                 ),
             ],
@@ -247,12 +254,19 @@ class _OutCard extends StatelessWidget {
   final bool wildcard;
   final bool compact;
 
+  /// Short cards (a big cut): badge beside the name, not above it.
+  final bool row;
+
   const _OutCard({
     required this.player,
     required this.out,
     required this.wildcard,
     required this.compact,
+    this.row = false,
   });
+
+  static const rowBelow = 200.0;
+  static const minHeight = 110.0;
 
   Future<void> _rescue(BuildContext context) async {
     final cubit = context.read<RoomCubit>();
@@ -282,7 +296,7 @@ class _OutCard extends StatelessWidget {
     transitionBuilder: _flip,
     child: out
         ? KeyedSubtree(key: const ValueKey('front'), child: _front(context))
-        : _FaceDown(key: const ValueKey('back'), compact: compact),
+        : _FaceDown(key: const ValueKey('back'), compact: compact || row),
   );
 
   /// Turns the card over: the old face folds away, the new one unfolds.
@@ -309,6 +323,25 @@ class _OutCard extends StatelessWidget {
 
   Widget _front(BuildContext context) {
     final badge = compact ? 80.0 : 110.0;
+    final name = Text(
+      player.nickname,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.chip.copyWith(
+        fontSize: row ? 28 : (compact ? 32 : 44),
+        fontWeight: FontWeight.w800,
+        decoration: TextDecoration.lineThrough,
+        decorationColor: AppColors.wrong,
+        decorationThickness: 3,
+      ),
+    );
+    final line = HostLine(
+      key: Key('cut.line.${player.id}'),
+      line: player.exitLine,
+      fontSize: row ? 18 : (compact ? 20 : 24),
+      maxLines: compact || row ? 2 : 3,
+      textAlign: row ? TextAlign.start : TextAlign.center,
+    );
     return Container(
       decoration: BoxDecoration(
         color: AppColors.maroonDarkest,
@@ -317,49 +350,58 @@ class _OutCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InitialBadge(
-                  nickname: player.nickname,
-                  size: badge,
-                  eliminated: true,
-                ),
-                SizedBox(height: compact ? 12 : 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    player.nickname,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.chip.copyWith(
-                      fontSize: compact ? 32 : 44,
-                      fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: AppColors.wrong,
-                      decorationThickness: 3,
+          if (row)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Row(
+                children: [
+                  InitialBadge(
+                    nickname: player.nickname,
+                    size: 56,
+                    eliminated: true,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        name,
+                        Flexible(child: line),
+                      ],
                     ),
                   ),
-                ),
-                Text(
-                  formatScore(player.score),
-                  style: AppProjectorText.caption.copyWith(fontSize: 26),
-                ),
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: HostLine(
-                      key: Key('cut.line.${player.id}'),
-                      line: player.exitLine,
-                      fontSize: compact ? 20 : 24,
-                      maxLines: compact ? 2 : 3,
+                ],
+              ),
+            )
+          else
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InitialBadge(
+                    nickname: player.nickname,
+                    size: badge,
+                    eliminated: true,
+                  ),
+                  SizedBox(height: compact ? 12 : 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: name,
+                  ),
+                  Text(
+                    formatScore(player.score),
+                    style: AppProjectorText.caption.copyWith(fontSize: 26),
+                  ),
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: line,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           // The stamp slams down just after the card has turned.
           Positioned.fill(
             child: IgnorePointer(

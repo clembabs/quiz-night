@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
@@ -18,6 +20,11 @@ class HostStandings extends StatelessWidget {
   /// Rows per column on the 1080p canvas.
   static const perColumn = 9;
 
+  /// A row and the gap under it, and the danger line with its gap, at full
+  /// size.
+  static const _rowPitch = 74.0 + 10;
+  static const _linePitch = 44.0 + 10;
+
   const HostStandings({
     super.key,
     required this.room,
@@ -37,16 +44,29 @@ class HostStandings extends StatelessWidget {
           ];
     final ranks = {for (var i = 0; i < board.length; i++) board[i].id: i + 1};
     final left = shown.take(perColumn).toList();
-    // Nine rows + line need ~840 px of ~760 free, so full boards shrink.
-    final rowScale = shown.length > 14 ? 0.86 : 1.0;
     final right = shown.skip(perColumn).toList();
 
-    Widget column(List<PlayerView> rows, {required int delayOffset}) => Column(
+    /// Rows shrink so the fuller column, with its danger line, fits [height].
+    double scaleFor(double height) {
+      bool hasLine(List<PlayerView> rows) =>
+          rows.any((p) => ranks[p.id] == line + 1);
+      double need(List<PlayerView> rows) =>
+          rows.length * _rowPitch + (hasLine(rows) ? _linePitch : 0);
+      final tallest = max(need(left), need(right));
+      if (tallest == 0 || !height.isFinite) return 1;
+      return (height / tallest).clamp(0.6, 1.0);
+    }
+
+    Widget column(
+      List<PlayerView> rows, {
+      required int delayOffset,
+      double rowScale = 1,
+    }) => Column(
       children: [
         for (var i = 0; i < rows.length; i++) ...[
           if (ranks[rows[i].id] == line + 1) ...[
             _SlideIn(child: DangerLine(scale: rowScale)),
-            const SizedBox(height: 10),
+            SizedBox(height: 10 * rowScale),
           ],
           _Stagger(
             delay: Duration(milliseconds: (i + delayOffset) * 50),
@@ -70,6 +90,8 @@ class HostStandings extends StatelessWidget {
     );
     final summary = Text(
       cutSummary(room),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
       style: AppProjectorText.body.copyWith(color: AppColors.muted),
     );
 
@@ -115,16 +137,33 @@ class HostStandings extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         Expanded(
-          // Scrolls rather than overflows on long boards or large text.
-          child: SingleChildScrollView(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: column(left, delayOffset: 0)),
-                const SizedBox(width: 48),
-                Expanded(child: column(right, delayOffset: 4)),
-              ],
-            ),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final rowScale = scaleFor(box.maxHeight);
+              // Scrolls only with very large text; the scale fits the rest.
+              return SingleChildScrollView(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: column(
+                        left,
+                        delayOffset: 0,
+                        rowScale: rowScale,
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                    Expanded(
+                      child: column(
+                        right,
+                        delayOffset: 4,
+                        rowScale: rowScale,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],
