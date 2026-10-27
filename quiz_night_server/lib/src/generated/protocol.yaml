@@ -6,6 +6,8 @@ buzzer:
   - buzz:
   - submitBuzzAnswer:
   - backFinalist:
+diagnostics:
+  - reportError:
 questions:
   - aiAvailable:
   - generatePack:

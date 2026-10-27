@@ -6,6 +6,7 @@ import 'package:serverpod/serverpod.dart';
 import '../ai/host_lines.dart';
 import '../ai/question_packs.dart';
 import '../generated/protocol.dart';
+import '../observability/events.dart';
 import '../security/tokens.dart';
 import 'cut_logic.dart';
 import 'nickname.dart';
@@ -141,6 +142,13 @@ class RoomService {
           packId: packId,
         ),
       );
+      Events.log(session, 'room.created', {
+        'room': code,
+        'rule': config.eliminationRule,
+        'perRound': config.questionsPerRound,
+        'finalists': config.finalistTarget,
+        'pack': packId != null,
+      });
       return CreateRoomResult(roomCode: code, hostToken: hostToken);
     }
     throw _error(QuizErrorCode.invalidState, 'Could not allocate a room code');
@@ -292,6 +300,10 @@ class RoomService {
       );
       return _startQuestion(session, tx, room, isFinal: false);
     });
+    Events.log(session, 'game.started', {
+      'room': room.code,
+      'players': room.startingPlayerCount,
+    });
     await _afterQuestionStarted(session, room);
   }
 
@@ -347,6 +359,7 @@ class RoomService {
       );
     });
     if (room.status == RoomStatus.finished) {
+      _logFinished(session, room);
       await _broadcast(session, room.id!);
     } else {
       await _afterQuestionStarted(session, room);
@@ -378,6 +391,8 @@ class RoomService {
     String code,
     String hostToken,
   ) async {
+    final timer = Stopwatch()..start();
+    EliminationEvent? cutMade;
     final roomId = await session.db.transaction((tx) async {
       final room = await _hostRoom(
         session,
@@ -429,23 +444,35 @@ class RoomService {
       if (updates.isNotEmpty) {
         await Player.db.update(session, updates, transaction: tx);
       }
+      cutMade = EliminationEvent(
+        round: room.currentRound,
+        eliminatedPlayerIds: cut.eliminatedIds,
+        survivorsCount: cut.survivorIds.length,
+        tieBrokenBySpeed: cut.tieBrokenBySpeed,
+        finalistsDecided: finalists,
+      );
       await Room.db.updateRow(
         session,
         room.copyWith(
           status: RoomStatus.elimination,
           lastCutRound: room.currentRound,
-          lastElimination: EliminationEvent(
-            round: room.currentRound,
-            eliminatedPlayerIds: cut.eliminatedIds,
-            survivorsCount: cut.survivorIds.length,
-            tieBrokenBySpeed: cut.tieBrokenBySpeed,
-            finalistsDecided: finalists,
-          ),
+          lastElimination: cutMade,
         ),
         transaction: tx,
       );
       return room.id!;
     });
+    if (cutMade case final c?) {
+      Events.log(session, 'round.cut', {
+        'room': code,
+        'round': c.round,
+        'out': c.eliminatedPlayerIds.length,
+        'survivors': c.survivorsCount,
+        'tie': c.tieBrokenBySpeed,
+        'finalists': c.finalistsDecided,
+        'ms': timer.elapsed,
+      });
+    }
     await _broadcast(session, roomId);
     // After the broadcast, so the reveal starts while the lines are written.
     await _writeExitLines(session, roomId);
@@ -532,7 +559,7 @@ class RoomService {
             !room.startedAt!.isAfter(at.subtract(sessionLength));
         final idle = !room.lastActivityAt.isAfter(at.subtract(idleLimit));
         if (!timeUp && !idle) return null;
-        await Room.db.updateRow(
+        final ended = await Room.db.updateRow(
           session,
           room.copyWith(
             status: RoomStatus.finished,
@@ -542,6 +569,7 @@ class RoomService {
           ),
           transaction: tx,
         );
+        _logFinished(session, ended);
         return room.id;
       });
       if (roomId != null) {
@@ -1101,6 +1129,16 @@ class RoomService {
     return true;
   }
 
+  static void _logFinished(Session session, Room room) =>
+      Events.log(session, 'game.finished', {
+        'room': room.code,
+        'reason': room.endReason,
+        'players': room.startingPlayerCount,
+        'minutes': room.startedAt == null
+            ? null
+            : DateTime.now().toUtc().difference(room.startedAt!).inMinutes,
+      });
+
   /// Gives this room's newly eliminated players their host line, then
   /// broadcasts. Safe to repeat: players who have a line keep it.
   static Future<void> _writeExitLines(Session session, int roomId) async {
@@ -1140,10 +1178,20 @@ class RoomService {
       for (final p in out)
         _lineSubject(p, room.currentRound, questions.reversed, correct),
     ];
+    final timer = Stopwatch()..start();
+    var fromAi = 0;
     final lines = await HostLines.linesFor(
       subjects,
       log: (m) => session.log(m, level: LogLevel.warning),
+      onDone: (n) => fromAi = n,
     );
+    Events.log(session, 'ai.lines', {
+      'room': room.code,
+      'round': room.currentRound,
+      'count': lines.length,
+      'fromAi': fromAi,
+      'ms': timer.elapsed,
+    });
     await Player.db.update(
       session,
       [for (final p in out) p.copyWith(exitLine: lines[p.id!])],

@@ -6,6 +6,7 @@ import '../game/cut_logic.dart';
 import '../game/nickname.dart';
 import '../game/room_service.dart';
 import '../generated/protocol.dart';
+import '../observability/events.dart';
 import '../security/client_address.dart';
 import '../security/guard.dart';
 import '../security/rate_limiter.dart';
@@ -127,6 +128,16 @@ abstract final class QuestionPacks {
 
     final need = questionsNeeded(config);
     final ask = split(questionCount, config);
+    final timer = Stopwatch()..start();
+    void logPack(String result, {int? count, String? reason}) =>
+        Events.log(session, 'ai.pack', {
+          'result': result,
+          'asked': questionCount,
+          'count': count,
+          'difficulty': difficulty,
+          'reason': reason,
+          'ms': timer.elapsed,
+        }, result == 'ok' ? LogLevel.info : LogLevel.warning);
     final List<DraftQuestion> drafts;
     try {
       drafts = await gen.generate(
@@ -137,16 +148,14 @@ abstract final class QuestionPacks {
           finalCount: ask.finals,
         ),
       );
-    } on GenerationRefused {
+    } on GenerationRefused catch (e) {
+      logPack('refused', reason: e.reason);
       throw _error(
         QuizErrorCode.invalidInput,
         "We can't write questions on that topic. Try another one.",
       );
     } on GenerationFailed catch (e) {
-      session.log(
-        'Question generation failed: ${e.reason}',
-        level: LogLevel.warning,
-      );
+      logPack('failed', reason: e.reason);
       throw _error(
         QuizErrorCode.generationFailed,
         e.reason == 'quota'
@@ -159,6 +168,7 @@ abstract final class QuestionPacks {
 
     final checked = checkQuestions(drafts, random: _rng);
     if (checked.where((q) => !q.isFinal).isEmpty) {
+      logPack('unusable', count: 0, reason: 'none passed the checks');
       throw _error(
         QuizErrorCode.generationFailed,
         "Couldn't write usable questions on that topic. Try wording it "
@@ -187,6 +197,7 @@ abstract final class QuestionPacks {
       ], transaction: tx);
       return pack;
     });
+    logPack('ok', count: checked.length);
     return _draft(session, pack, token, need);
   }
 

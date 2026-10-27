@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
+import '../observability/events.dart';
 import 'client_address.dart';
 import 'rate_limiter.dart';
 
@@ -8,6 +9,10 @@ import 'rate_limiter.dart';
 abstract final class Limits {
   /// New rooms per address.
   static const createRoom = RateLimit('createRoom', 20, Duration(hours: 1));
+
+  /// Error reports from the web app per address: enough for a buggy screen
+  /// on a room's Wi-Fi, not enough to flood the logs.
+  static const clientError = RateLimit('clientError', 30, Duration(minutes: 1));
 
   /// Joins per address: a roomful on one Wi-Fi, but not a room-hopping script.
   static const joinRoom = RateLimit('joinRoom', 60, Duration(minutes: 1));
@@ -62,14 +67,23 @@ abstract final class Guard {
   static void check(Session session, RateLimit limit, {String? key}) {
     if (!enabled) return;
     if (!limiter.tryAcquire(key ?? clientAddress(session), limit, now())) {
+      _hit(session, limit);
       throw _tooMany;
     }
   }
+
+  /// Which limit was hit, never by whom: no addresses or tokens in logs.
+  static void _hit(Session session, RateLimit limit) =>
+      Events.log(session, 'limit.hit', {
+        'limit': limit.name,
+        'endpoint': session.endpoint,
+      }, LogLevel.warning);
 
   /// Throws if [limit] is used up, without counting; pair with [recordFailure].
   static void checkFailures(Session session, RateLimit limit) {
     if (!enabled) return;
     if (limiter.isExhausted(clientAddress(session), limit, now())) {
+      _hit(session, limit);
       throw _tooMany;
     }
   }
@@ -83,7 +97,13 @@ abstract final class Guard {
   static void Function() openStream(Session session) {
     if (!enabled) return () {};
     final key = clientAddress(session);
-    if (!streams.tryOpen(key, Limits.maxOpenStreams)) throw _tooMany;
+    if (!streams.tryOpen(key, Limits.maxOpenStreams)) {
+      Events.log(session, 'limit.hit', {
+        'limit': 'openStreams',
+        'endpoint': session.endpoint,
+      }, LogLevel.warning);
+      throw _tooMany;
+    }
     var closed = false;
     return () {
       if (closed) return;

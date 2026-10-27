@@ -21,6 +21,7 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../endpoints/answer_endpoint.dart' as _iytsf7o6;
 import '../endpoints/buzzer_endpoint.dart' as _ikgggm1x;
+import '../endpoints/diagnostics_endpoint.dart' as _i9j3ee4w;
 import '../endpoints/questions_endpoint.dart' as _ixz1m1z5;
 import '../endpoints/room_endpoint.dart' as _io7erjyw;
 
@@ -44,6 +45,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'buzzer',
+          null,
+        ),
+      'diagnostics': _i9j3ee4w.DiagnosticsEndpoint()
+        ..initialize(
+          server,
+          'diagnostics',
           null,
         ),
       'questions': _ixz1m1z5.QuestionsEndpoint()
@@ -205,6 +212,44 @@ class Endpoints extends _is.EndpointDispatch {
                     params['playerToken'],
                     params['finalistId'],
                   ),
+        ),
+      },
+    );
+    connectors['diagnostics'] = _is.EndpointConnector(
+      name: 'diagnostics',
+      endpoint: endpoints['diagnostics']!,
+      methodConnectors: {
+        'reportError': _is.MethodConnector(
+          name: 'reportError',
+          params: {
+            'message': _is.ParameterDescription(
+              name: 'message',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'stackTrace': _is.ParameterDescription(
+              name: 'stackTrace',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'route': _is.ParameterDescription(
+              name: 'route',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['diagnostics'] as _i9j3ee4w.DiagnosticsEndpoint)
+                      .reportError(
+                        session,
+                        params['message'],
+                        params['stackTrace'],
+                        params['route'],
+                      ),
         ),
       },
     );

@@ -179,10 +179,11 @@ abstract final class HostLines {
       !Nickname.isOffensive(line);
 
   /// One line per subject, by player id. Never throws; [log] hears why an
-  /// AI attempt fell back.
+  /// AI attempt fell back, [onDone] how many lines the AI wrote.
   static Future<Map<int, String>> linesFor(
     List<LineSubject> subjects, {
     void Function(String message)? log,
+    void Function(int fromAi)? onDone,
   }) async {
     var ai = const <int, String>{};
     final w = writer;
@@ -196,13 +197,19 @@ abstract final class HostLines {
         log?.call('Host lines fell back: $e');
       }
     }
-    return {
-      for (final (i, s) in subjects.indexed)
-        s.playerId: switch (ai[s.playerId]?.trim()) {
-          final line? when usable(line, s) => line,
-          _ => builtIn(s, i),
-        },
-    };
+    var fromAi = 0;
+    final lines = <int, String>{};
+    for (final (i, s) in subjects.indexed) {
+      final line = ai[s.playerId]?.trim();
+      if (line != null && usable(line, s)) {
+        lines[s.playerId] = line;
+        fromAi++;
+      } else {
+        lines[s.playerId] = builtIn(s, i);
+      }
+    }
+    onDone?.call(fromAi);
+    return lines;
   }
 
   /// Uses Gemini if the `geminiApiKey` password is set.

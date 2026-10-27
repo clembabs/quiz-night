@@ -143,6 +143,31 @@ class EndpointBuzzer extends _isc.EndpointRef {
   );
 }
 
+/// Errors from the web app, written to the server log so they show up next
+/// to the server's own (Serverpod Cloud Logs and Insights).
+/// {@category Endpoint}
+class EndpointDiagnostics extends _isc.EndpointRef {
+  EndpointDiagnostics(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'diagnostics';
+
+  /// Logs one app error. [route] is the page it happened on (`/room/4821`).
+  _ida.Future<void> reportError(
+    String message,
+    String? stackTrace,
+    String route,
+  ) => caller.callServerEndpoint<void>(
+    'diagnostics',
+    'reportError',
+    {
+      'message': message,
+      'stackTrace': stackTrace,
+      'route': route,
+    },
+  );
+}
+
 /// AI questions for host setup; rate limited in [QuestionPacks.generate].
 /// {@category Endpoint}
 class EndpointQuestions extends _isc.EndpointRef {
@@ -381,6 +406,7 @@ class Client extends _isc.ServerpodClientShared {
     jwtRefresh = EndpointJwtRefresh(this);
     answer = EndpointAnswer(this);
     buzzer = EndpointBuzzer(this);
+    diagnostics = EndpointDiagnostics(this);
     questions = EndpointQuestions(this);
     room = EndpointRoom(this);
     modules = Modules(this);
@@ -391,6 +417,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointAnswer answer;
 
   late final EndpointBuzzer buzzer;
+
+  late final EndpointDiagnostics diagnostics;
 
   late final EndpointQuestions questions;
 
@@ -403,6 +431,7 @@ class Client extends _isc.ServerpodClientShared {
     'jwtRefresh': jwtRefresh,
     'answer': answer,
     'buzzer': buzzer,
+    'diagnostics': diagnostics,
     'questions': questions,
     'room': room,
   };
