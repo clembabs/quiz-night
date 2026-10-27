@@ -2,21 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
+import '../../../core/platform/share_image.dart';
+import '../../../core/platform/site_url.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../final/final_logic.dart';
+import '../final/result_summary.dart';
 import '../room_cubit.dart';
 import '../standings_logic.dart';
+import 'result_card.dart';
 
 /// The phone at the end: placement, title, the winner and who you backed.
 class PhonePlacement extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;
 
-  const PhonePlacement({super.key, required this.room, required this.me});
+  /// Overridable for tests.
+  final ImageSharer share;
+
+  const PhonePlacement({
+    super.key,
+    required this.room,
+    required this.me,
+    this.share = shareImage,
+  });
 
   /// "CHAMPION", "FINALIST" or "ELIMINATED · ROUND 2".
   static String titleFor(RoomState room, PlayerView me) {
@@ -140,6 +152,20 @@ class PhonePlacement extends StatelessWidget {
               ),
             ),
           ),
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              key: const Key('placement.share'),
+              onPressed: () => ResultCardSheet.show(
+                context,
+                result: resultFor(room, me),
+                site: siteRoot(),
+                share: share,
+              ),
+              child: const Text('Share my result'),
+            ),
+          ),
+          const SizedBox(height: 10),
           SizedBox(
             height: 48,
             child: OutlinedButton(
