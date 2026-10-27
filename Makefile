@@ -6,7 +6,7 @@ export PATH := $(PATH):$(HOME)/.pub-cache/bin
 
 .DEFAULT_GOAL := help
 .PHONY: help setup start phone phone-build build-web test test-server \
-        test-flutter analyze format check generate migration icons fonts \
+        test-flutter analyze format check generate migration icons fonts shots \
         deploy-login deploy-launch deploy clean
 
 help: ## List the commands
@@ -62,6 +62,12 @@ migration: generate ## Create a database migration after changing a model with a
 
 icons: ## Re-render the favicon and home-screen icons from the crest
 	cd $(FLUTTER) && flutter test tool/generate_icons_test.dart
+
+shots: ## Re-render the README screenshots into docs/screenshots
+	cd $(FLUTTER) && SHOT_DIR=$(CURDIR)/docs/screenshots flutter test test/widgets/readme_shots_test.dart
+	mkdir -p docs/screenshots/.landing
+	cd $(FLUTTER) && SHOT_DIR=$(CURDIR)/docs/screenshots/.landing flutter test test/widgets/landing_test.dart --plain-name "home page on a desktop"
+	mv docs/screenshots/.landing/home_desktop_0.png docs/screenshots/landing.png && rm -rf docs/screenshots/.landing
 
 fonts: ## Rebuild the bundled font subsets (needs fonttools; see tool/make_fonts.py)
 	@echo "Download the source fonts listed in $(FLUTTER)/tool/make_fonts.py into SRC, then:"
