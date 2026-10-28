@@ -20,6 +20,7 @@ enum QuizErrorCode implements _is.SerializableModel {
   nicknameTaken,
   invalidInput,
   tooLate,
+  tooEarly,
   alreadyAnswered,
   notAllowed,
   rateLimited,
@@ -44,6 +45,8 @@ enum QuizErrorCode implements _is.SerializableModel {
         return QuizErrorCode.invalidInput;
       case 'tooLate':
         return QuizErrorCode.tooLate;
+      case 'tooEarly':
+        return QuizErrorCode.tooEarly;
       case 'alreadyAnswered':
         return QuizErrorCode.alreadyAnswered;
       case 'notAllowed':

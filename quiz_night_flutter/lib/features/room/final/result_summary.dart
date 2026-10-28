@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:equatable/equatable.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
@@ -79,6 +81,7 @@ ResultSummary resultFor(RoomState room, PlayerView me) {
         room.endReason == RoomEndReason.timeUp
             ? "Still in at time's up"
             : 'Still in when it closed',
+      _ when me.eliminatedInRound == 0 => 'Joined late',
       _ => 'Out in round ${me.eliminatedInRound ?? room.round}',
     },
     champion: champion,
@@ -86,7 +89,7 @@ ResultSummary resultFor(RoomState room, PlayerView me) {
     roundsSurvived: switch (me) {
       // Every cut before the final.
       _ when finalist => room.lastElimination?.round ?? room.round,
-      _ when out => (me.eliminatedInRound ?? room.round) - 1,
+      _ when out => max(0, (me.eliminatedInRound ?? room.round) - 1),
       _ => room.round > 0 ? room.round - 1 : 0,
     },
     points: me.score,

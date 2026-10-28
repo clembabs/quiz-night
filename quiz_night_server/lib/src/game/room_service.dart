@@ -43,6 +43,10 @@ class RoomService {
   /// Enabled in `server.dart`; off in tests.
   static bool autoRevealEnabled = false;
 
+  /// The 3-2-1 before each question: answers and buzzes open after it.
+  /// `server.dart` sets 3 s; tests keep 0 so they need not wait.
+  static Duration getReady = Duration.zero;
+
   /// MVP room size; traffic grows with its square, so batch updates first.
   static const maxPlayers = 20;
 
@@ -199,16 +203,11 @@ class RoomService {
     }
     final result = await session.db.transaction((tx) async {
       final room = await _roomByCode(session, code, tx: tx, lock: true);
-      // A finished room no longer exists; a running one refuses late joiners.
+      // A finished room no longer exists to someone holding its code.
       if (room.status == RoomStatus.finished) {
         throw _error(QuizErrorCode.roomNotFound, 'This game session has ended');
       }
-      if (room.status != RoomStatus.lobby) {
-        throw _error(
-          QuizErrorCode.invalidState,
-          'The game has already started',
-        );
-      }
+
       final players = await Player.db.find(
         session,
         where: (t) => t.roomId.equals(room.id!),
@@ -230,10 +229,22 @@ class RoomService {
       if (players.any((p) => p.nickname.toLowerCase() == name.toLowerCase())) {
         throw _error(QuizErrorCode.nicknameTaken, 'That nickname is taken');
       }
+      // Late joiners play until the first cut; after it (or in the final)
+      // they would be cut at once, so they watch as spectators instead.
+      // eliminatedInRound 0 marks "joined late", not "knocked out".
+      final spectator =
+          room.status != RoomStatus.lobby &&
+          (room.lastCutRound > 0 || room.finalQuestionsPlayed > 0);
       final token = _randomToken();
       final player = await Player.db.insertRow(
         session,
-        Player(roomId: room.id!, nickname: name, token: token),
+        Player(
+          roomId: room.id!,
+          nickname: name,
+          token: token,
+          status: spectator ? PlayerStatus.eliminated : PlayerStatus.active,
+          eliminatedInRound: spectator ? 0 : null,
+        ),
         transaction: tx,
       );
       return (
@@ -677,6 +688,9 @@ class RoomService {
       if (now.isAfter(room.questionEndsAt!.add(answerGrace))) {
         throw _error(QuizErrorCode.tooLate, 'Time is up');
       }
+      if (now.isBefore(room.questionStartedAt!)) {
+        throw _error(QuizErrorCode.tooEarly, 'Wait for the countdown');
+      }
       final question = await Question.db.findById(
         session,
         questionId,
@@ -805,6 +819,9 @@ class RoomService {
           room.currentQuestionId != questionId ||
           now.isAfter(room.questionEndsAt!)) {
         return (null, BuzzResult(gotBuzzer: false, reason: 'Question closed'));
+      }
+      if (now.isBefore(room.questionStartedAt!)) {
+        return (null, BuzzResult(gotBuzzer: false, reason: 'Not yet'));
       }
       final previous = await Buzz.db.count(
         session,
@@ -1048,8 +1065,10 @@ class RoomService {
         finalQuestionsPlayed: isFinal
             ? indexInRound
             : room.finalQuestionsPlayed,
-        questionStartedAt: now,
-        questionEndsAt: now.add(Duration(seconds: room.timeLimitSeconds)),
+        questionStartedAt: now.add(getReady),
+        questionEndsAt: now.add(
+          getReady + Duration(seconds: room.timeLimitSeconds),
+        ),
         buzzerHolderId: null,
       ),
       transaction: tx,
@@ -1379,6 +1398,7 @@ class RoomService {
               correctIndex: open ? null : question.correctIndex,
               answerCounts: counts,
             ),
+      questionStartsAt: open ? room.questionStartedAt : null,
       questionEndsAt: open ? room.questionEndsAt : null,
       serverTime: DateTime.now().toUtc(),
       players: views,

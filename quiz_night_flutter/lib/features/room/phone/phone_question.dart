@@ -144,8 +144,8 @@ class _Answer extends StatelessWidget {
                       QnBanner(
                         kind: BannerKind.eliminated,
                         text:
-                            'Eliminated in Round '
-                            '${me!.eliminatedInRound ?? room.round}'
+                            '${joinedLate(me) ? 'Joined late' : 'Eliminated in '
+                                      'Round ${me!.eliminatedInRound ?? room.round}'}'
                             ' · answers count for a shadow score',
                       ),
                     ],

@@ -95,8 +95,8 @@ class _PhoneResultState extends State<PhoneResult> {
             QnBanner(
               kind: BannerKind.eliminated,
               text:
-                  'Eliminated in Round ${me?.eliminatedInRound ?? room.round}'
-                  ' · answers count for a shadow score',
+                  '${_capital(outIn(room, me))} · answers count for a shadow '
+                  'score',
             ),
             const SizedBox(height: 12),
           ],
@@ -365,3 +365,6 @@ class _Shake extends StatelessWidget {
     );
   }
 }
+
+String _capital(String s) =>
+    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);

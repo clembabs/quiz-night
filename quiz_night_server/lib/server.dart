@@ -94,6 +94,9 @@ void run(List<String> args) async {
   // Reveal questions server-side when their deadline passes.
   RoomService.autoRevealEnabled = true;
 
+  // A 3-2-1 before each question, so everyone starts together.
+  RoomService.getReady = const Duration(seconds: 3);
+
   // Rate limits on every endpoint (see lib/src/security/guard.dart).
   Guard.enabled = true;
 

@@ -74,6 +74,20 @@ void main() {
     });
   });
 
+  group('Given someone who joined after the first cut', () {
+    test('when the game ends then their card says they joined late, with no '
+        'negative rounds', () {
+      final room = finished();
+      final late = player(9, 'Kemi', status: out, eliminatedInRound: 0);
+      final r = resultFor(
+        room.copyWith(players: [...room.players, late]),
+        late,
+      );
+      expect(r.title, 'Joined late');
+      expect(r.roundsSurvived, 0);
+    });
+  });
+
   group('Given a game that ran out of time', () {
     test('when a player still in looks then it says time ran out', () {
       final room = roomState(

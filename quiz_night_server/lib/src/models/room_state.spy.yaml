@@ -17,6 +17,8 @@ fields:
   ### Why the game ended, once it has.
   endReason: RoomEndReason?
   question: QuestionView?
+  ### When answers open (after the 3-2-1); null when no question is open.
+  questionStartsAt: DateTime?
   questionEndsAt: DateTime?
   serverTime: DateTime
   players: List<PlayerView>
