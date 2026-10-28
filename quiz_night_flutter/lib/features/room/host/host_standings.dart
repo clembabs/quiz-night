@@ -12,6 +12,7 @@ import '../round/host_step_button.dart';
 import 'remove_player.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// "After round N": the leaderboard with the danger line sliding in.
 class HostStandings extends StatelessWidget {
@@ -111,7 +112,7 @@ class HostStandings extends StatelessWidget {
           summary,
           const SizedBox(height: 28),
           Expanded(
-            child: SingleChildScrollView(
+            child: AppScroll(
               child: column(shown, delayOffset: 0),
             ),
           ),
@@ -143,7 +144,7 @@ class HostStandings extends StatelessWidget {
             builder: (context, box) {
               final rowScale = scaleFor(box.maxHeight);
               // Scrolls only with very large text; the scale fits the rest.
-              return SingleChildScrollView(
+              return AppScroll(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

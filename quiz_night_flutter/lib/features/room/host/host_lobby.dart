@@ -16,6 +16,7 @@ import '../room_cubit.dart';
 import '../round/host_step_button.dart';
 import 'remove_player.dart';
 import '../round_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// The projector lobby: code + QR on the left, players arriving on the right.
 class HostLobby extends StatelessWidget {
@@ -213,7 +214,7 @@ class HostLobby extends StatelessWidget {
             )
           else
             Expanded(
-              child: SingleChildScrollView(
+              child: AppScroll(
                 child: Wrap(
                   spacing: 16,
                   runSpacing: 16,

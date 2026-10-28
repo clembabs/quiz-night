@@ -12,6 +12,7 @@ import 'widgets/hero_section.dart';
 import 'widgets/info_sections.dart';
 import 'widgets/landing_header.dart';
 import 'widgets/landing_parts.dart';
+import '../../widgets/layout/app_scroll.dart';
 
 /// A website page: header, [sections] and footer, each page with its own URL.
 class SiteScaffold extends StatelessWidget {
@@ -43,30 +44,26 @@ class SiteScaffold extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, box) => SingleChildScrollView(
-                    key: const Key('landing.scroll'),
-                    child: ConstrainedBox(
-                      // So the footer sits at the bottom of a short page.
-                      constraints: BoxConstraints(minHeight: box.maxHeight),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: AppScroll(
+                  key: const Key('landing.scroll'),
+                  // So the footer sits at the bottom of a short page.
+                  fillViewport: true,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: sections(context),
-                          ),
-                          LandingFooter(
-                            onHow: () => context.go(AppPaths.howItWorks),
-                            onHostingGuide: () => context.go(AppPaths.hosting),
-                            onFaq: () => context.go(AppPaths.faq),
-                            onJoin: () => context.go(AppPaths.join),
-                            onHost: () => context.go(AppPaths.host),
-                          ),
-                        ],
+                        children: sections(context),
                       ),
-                    ),
+                      LandingFooter(
+                        onHow: () => context.go(AppPaths.howItWorks),
+                        onHostingGuide: () => context.go(AppPaths.hosting),
+                        onFaq: () => context.go(AppPaths.faq),
+                        onJoin: () => context.go(AppPaths.join),
+                        onHost: () => context.go(AppPaths.host),
+                      ),
+                    ],
                   ),
                 ),
               ),

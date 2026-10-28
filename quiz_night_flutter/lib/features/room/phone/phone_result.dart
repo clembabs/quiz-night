@@ -11,6 +11,7 @@ import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// After a reveal: Correct / Wrong, score, rank and the danger line.
 class PhoneResult extends StatefulWidget {
@@ -86,7 +87,7 @@ class _PhoneResultState extends State<PhoneResult> {
     };
 
     final score = spectator ? me?.shadowScore ?? 0 : me?.score ?? 0;
-    return SingleChildScrollView(
+    return AppScroll(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

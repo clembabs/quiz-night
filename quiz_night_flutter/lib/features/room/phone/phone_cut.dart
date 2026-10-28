@@ -20,6 +20,7 @@ import '../final/final_logic.dart';
 import '../room_cubit.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// Background a phone cut screen paints behind itself.
 Color cutBackground(
@@ -355,7 +356,7 @@ class _Survived extends StatelessWidget {
       children: [
         const Align(alignment: Alignment(0, -0.16), child: ShapeBurst()),
         // Scrolls on short phones: the finalist hint and the list add lines.
-        SingleChildScrollView(
+        AppScroll(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -454,7 +455,7 @@ class GoingHome extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Flexible(
-            child: SingleChildScrollView(
+            child: AppScroll(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

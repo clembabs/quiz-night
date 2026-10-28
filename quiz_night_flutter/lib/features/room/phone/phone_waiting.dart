@@ -8,6 +8,7 @@ import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/player_chip.dart';
 import '../round_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// What happens in this game, before it starts.
 class _HowItWorks extends StatelessWidget {
@@ -55,7 +56,7 @@ class PhoneWaiting extends StatelessWidget {
     final me = this.me;
     final byJoin = [...room.players]..sort((a, b) => a.id.compareTo(b.id));
     // Scrolls on short phones: how it works and a full room add up.
-    return SingleChildScrollView(
+    return AppScroll(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
