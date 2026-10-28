@@ -226,7 +226,8 @@ class _Survived extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         const Align(alignment: Alignment(0, -0.16), child: ShapeBurst()),
-        Padding(
+        // Scrolls on short phones: the finalist hint and the list add lines.
+        SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -267,10 +268,93 @@ class _Survived extends StatelessWidget {
                   color: const Color(0xFFE3F2E8),
                 ),
               ),
+              if (finalist) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Buzzer final: tap BUZZ first to answer. Right is +1000; '
+                  'wrong locks you out of that question and the others can '
+                  'buzz.',
+                  key: const Key('cut.buzzerHint'),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 15,
+                    color: AppColors.goldPale,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              GoingHome(room: room),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Who this cut sent home, worst first, each with the host's line: so every
+/// phone sees the cut, not only the big screen.
+class GoingHome extends StatelessWidget {
+  final RoomState room;
+
+  const GoingHome({super.key, required this.room});
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    final byId = {for (final p in room.players) p.id: p};
+    final out = [for (final id in ids) ?byId[id]];
+    if (out.isEmpty) return const SizedBox.shrink();
+    return Container(
+      key: const Key('cut.goingHome'),
+      constraints: const BoxConstraints(maxHeight: 260),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      decoration: BoxDecoration(
+        color: AppColors.boardDeep.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            out.length == 1 ? 'GOING HOME' : 'GOING HOME · ${out.length}',
+            style: AppTextStyles.label.copyWith(
+              color: AppColors.maroonPale,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final p in out)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '✕ ${p.nickname}',
+                            style: AppTextStyles.chip.copyWith(fontSize: 15),
+                          ),
+                          HostLine(
+                            line: p.exitLine,
+                            fontSize: 14,
+                            maxLines: 2,
+                            textAlign: TextAlign.start,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -334,6 +418,18 @@ class _Eliminated extends StatelessWidget {
                     fontSize: 18,
                     maxLines: 4,
                   ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "You're a spectator now. Keep answering for a shadow "
+                    'score (bragging rights only), and back the finalist '
+                    'you think will win.',
+                    key: const Key('cut.spectatorHint'),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 15,
+                      color: AppColors.maroonPale,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -382,15 +478,10 @@ class _Spectating extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const PulsingDots(size: 10),
-              const SizedBox(height: 16),
+              GoingHome(room: room),
+              const SizedBox(height: 20),
               Text(
-                'Watch the big screen',
-                style: AppTextStyles.title,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Your answers next round count for a shadow score.',
+                'Keep answering: it counts for your shadow score.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySoft.copyWith(fontSize: 15),
               ),
@@ -441,7 +532,8 @@ class BackFinalist extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Pick before the final starts. Bragging rights only.',
+                  'Pick who you think will win, before the final starts. The '
+                  'podium shows who backed the winner.',
                   style: AppTextStyles.bodySoft.copyWith(fontSize: 15),
                 ),
               ],

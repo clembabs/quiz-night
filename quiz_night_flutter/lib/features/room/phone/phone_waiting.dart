@@ -7,8 +7,43 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/initial_badge.dart';
 import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/player_chip.dart';
+import '../round_logic.dart';
 
-/// "You're in!": your own chip, the live count, and everyone's badges.
+/// What happens in this game, before it starts.
+class _HowItWorks extends StatelessWidget {
+  final RoomState room;
+
+  const _HowItWorks({required this.room});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const Key('waiting.howItWorks'),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.green,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'HOW IT WORKS',
+          style: AppTextStyles.label.copyWith(
+            color: AppColors.gold,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          howItWorks(room),
+          style: AppTextStyles.body.copyWith(fontSize: 15, height: 1.4),
+        ),
+      ],
+    ),
+  );
+}
+
+/// "You're in!": how it works, your chip, the count and everyone's badges.
 class PhoneWaiting extends StatelessWidget {
   final RoomState room;
   final PlayerView? me;
@@ -19,38 +54,39 @@ class PhoneWaiting extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = this.me;
     final byJoin = [...room.players]..sort((a, b) => a.id.compareTo(b.id));
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    // Scrolls on short phones: how it works and a full room add up.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: AppDurations.slow,
-                  curve: AppCurves.stamp,
-                  builder: (context, t, child) => Opacity(
-                    opacity: t.clamp(0.0, 1.0),
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - t)),
-                      child: child,
-                    ),
-                  ),
-                  child: Text(
-                    "YOU'RE IN!",
-                    style: AppTextStyles.displayL.copyWith(fontSize: 48),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: AppDurations.slow,
+                curve: AppCurves.stamp,
+                builder: (context, t, child) => Opacity(
+                  opacity: t.clamp(0.0, 1.0),
+                  child: Transform.translate(
+                    offset: Offset(0, 20 * (1 - t)),
+                    child: child,
                   ),
                 ),
-                const SizedBox(height: 14),
-                if (me != null)
-                  PlayerChip(nickname: me.nickname, isYou: true, height: 52),
-              ],
-            ),
+                child: Text(
+                  "YOU'RE IN!",
+                  style: AppTextStyles.displayL.copyWith(fontSize: 48),
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (me != null)
+                PlayerChip(nickname: me.nickname, isYou: true, height: 52),
+            ],
           ),
+          const SizedBox(height: 24),
+          _HowItWorks(room: room),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

@@ -49,14 +49,28 @@ class HostQuestion extends StatelessWidget {
         ),
       ],
     );
-    final answered = Text(
-      '${answeredCount(room)}/${activeCount(room)} answered',
-      key: const Key('host.answered'),
-      style: AppProjectorText.label.copyWith(
-        fontSize: 32,
-        color: AppColors.chalk,
-        letterSpacing: 0,
-      ),
+    final answered = Column(
+      crossAxisAlignment: portrait
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${answeredCount(room)}/${activeCount(room)} answered',
+          key: const Key('host.answered'),
+          style: AppProjectorText.label.copyWith(
+            fontSize: 32,
+            color: AppColors.chalk,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          roomHeadcount(room),
+          key: const Key('host.headcount'),
+          style: AppProjectorText.caption.copyWith(fontSize: 24),
+        ),
+      ],
     );
     Widget ring(double size) => endsAt == null
         ? SizedBox.square(dimension: size)

@@ -37,6 +37,9 @@ abstract interface class GameRepository {
   /// Stops (or allows again) new players joining.
   Future<void> setLocked(Seat host, bool locked);
 
+  /// The player tapped Leave; the game stops waiting for their answers.
+  Future<void> leaveRoom(Seat player);
+
   /// Answers [questionId]; eliminated players' answers are shadow only.
   Future<void> submitAnswer(Seat player, int questionId, int choiceIndex);
 
@@ -134,6 +137,10 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   Future<void> setLocked(Seat host, bool locked) => _guard(
     () => _client.room.setLocked(host.code, host.token, locked),
   );
+
+  @override
+  Future<void> leaveRoom(Seat player) =>
+      _guard(() => _client.room.leaveRoom(player.code, player.token));
 
   @override
   Future<void> removePlayer(Seat host, int playerId) => _guard(

@@ -36,6 +36,12 @@ class RoomEndpoint extends Endpoint {
     return RoomService.rejoin(session, code, playerToken);
   }
 
+  /// The player tapped Leave.
+  Future<void> leaveRoom(Session session, String code, String playerToken) {
+    Guard.check(session, Limits.playerAction, key: playerToken);
+    return RoomService.leaveRoom(session, code, playerToken);
+  }
+
   Future<void> startGame(Session session, String code, String hostToken) {
     Guard.check(session, Limits.hostAction, key: hostToken);
     return RoomService.startGame(session, code, hostToken);

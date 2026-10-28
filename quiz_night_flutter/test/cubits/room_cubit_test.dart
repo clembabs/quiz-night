@@ -152,7 +152,29 @@ void main() {
       build: build,
       act: (c) => c.leave(),
       expect: () => [isA<RoomViewState>().having((s) => s.left, 'left', true)],
-      verify: (_) => verify(() => seats.clear()).called(1),
+      verify: (_) {
+        verify(() => seats.clear()).called(1);
+        // The host only runs the game: nothing to tell the server.
+        verifyNever(() => game.leaveRoom(any()));
+      },
+    );
+
+    blocTest<RoomCubit, RoomViewState>(
+      'when a player leaves then the server is told, and they leave even '
+      'when it cannot be reached',
+      setUp: () {
+        when(() => seats.clear()).thenAnswer((_) async {});
+        when(
+          () => game.leaveRoom(playerSeat),
+        ).thenThrow(const AppFailure('Could not reach the server'));
+      },
+      build: () => RoomCubit(game, seats, playerSeat),
+      act: (c) => c.leave(),
+      expect: () => [isA<RoomViewState>().having((s) => s.left, 'left', true)],
+      verify: (_) {
+        verify(() => game.leaveRoom(playerSeat)).called(1);
+        verify(() => seats.clear()).called(1);
+      },
     );
   });
 
