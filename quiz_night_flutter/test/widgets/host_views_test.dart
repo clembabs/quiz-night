@@ -397,6 +397,31 @@ void main() {
       expect(find.text('2 in · 1 out · 1 left'), findsOneWidget);
     });
 
+    testWidgets('when revealed then the projector shows the top three and who '
+        'is in danger', (t) async {
+      final room = roomState(
+        status: RoomStatus.reveal,
+        question: question(revealed: true, answerCounts: [1, 3, 0, 1]),
+        players: [
+          player(1, 'Ada', score: 3000),
+          player(2, 'Bo', score: 2000),
+          player(3, 'Cy', score: 1000),
+          player(4, 'Dee', score: 500),
+          player(5, 'Eve', score: 100),
+        ],
+      ).copyWith(projectedSurvivors: 3);
+      await pump(t, HostReveal(room: room));
+      await t.pump(const Duration(seconds: 2));
+      expect(
+        t.widget<Text>(find.byKey(const Key('reveal.top'))).data,
+        '1 Ada 3,000  ·  2 Bo 2,000  ·  3 Cy 1,000',
+      );
+      expect(
+        t.widget<Text>(find.byKey(const Key('reveal.danger'))).data,
+        'In danger: Dee, Eve',
+      );
+    });
+
     testWidgets('when revealed then counts and who got it right', (t) async {
       final room = roomState(
         status: RoomStatus.reveal,
