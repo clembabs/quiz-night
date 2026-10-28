@@ -12,6 +12,7 @@ import '../../../widgets/qn/finalist_desk.dart';
 import '../../../widgets/qn/notices.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
+import '../round_logic.dart';
 
 /// A finalist's phone in the final: the buzzer, then options once held.
 class PhoneBuzzer extends StatelessWidget {
@@ -167,9 +168,7 @@ class PhoneWatching extends StatelessWidget {
         children: [
           QnBanner(
             kind: BannerKind.eliminated,
-            text:
-                'Spectating · eliminated in Round '
-                '${me?.eliminatedInRound ?? room.round}',
+            text: 'Spectating · ${outIn(room, me)}',
           ),
           const SizedBox(height: 24),
           Text(

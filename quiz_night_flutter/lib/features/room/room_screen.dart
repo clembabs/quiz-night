@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 
 import '../../app/app_paths.dart';
+import '../../core/platform/haptics.dart';
 import '../../core/platform/screen_wake_lock.dart';
 import '../../core/platform/site_url.dart';
 import '../../core/platform/sounds.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../widgets/qn/get_ready.dart';
 import '../../widgets/qn/host_stage.dart';
 import '../../widgets/qn/loaders.dart';
 import '../../widgets/qn/notices.dart';
@@ -156,18 +158,22 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final inFinal = q != null && q.isFinal;
     return switch (room.status) {
       RoomStatus.lobby => HostLobby(room: room, appUrl: siteRoot()),
-      RoomStatus.question when q != null && !inFinal => HostQuestion(
-        room: room,
+      RoomStatus.question when q != null && !inFinal => GetReady(
+        startsAt: room.questionStartsAt,
         clockOffset: state.clockOffset,
+        large: true,
+        child: HostQuestion(room: room, clockOffset: state.clockOffset),
       ),
       RoomStatus.reveal when q != null && !inFinal =>
         state.showingStandings
             ? HostStandings(room: room, rankMoves: state.rankMoves)
             : HostReveal(room: room),
       RoomStatus.elimination => HostCut(room: room),
-      RoomStatus.buzzerFinal || RoomStatus.reveal when inFinal => HostFinal(
-        room: room,
+      RoomStatus.buzzerFinal || RoomStatus.reveal when inFinal => GetReady(
+        startsAt: room.questionStartsAt,
         clockOffset: state.clockOffset,
+        large: true,
+        child: HostFinal(room: room, clockOffset: state.clockOffset),
       ),
       RoomStatus.finished when closedBeforeStart(room) => const _Closed(
         large: true,
@@ -193,6 +199,15 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     );
   }
 
+  /// The 3-2-1 over a phone's question, with a tick on each number.
+  Widget _getReady(RoomState room, RoomViewState state, Widget child) =>
+      GetReady(
+        startsAt: room.questionStartsAt,
+        clockOffset: state.clockOffset,
+        onTick: () => context.read<Haptics>().play(HapticToken.tick),
+        child: child,
+      );
+
   Widget _phoneBody(RoomState? room, RoomViewState state) {
     if (state.roomGone) return const _Gone();
     if (room == null) return const LoadingView();
@@ -202,11 +217,15 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final inFinal = q != null && q.isFinal;
     return switch (room.status) {
       RoomStatus.lobby => PhoneWaiting(room: room, me: me),
-      RoomStatus.question when q != null && !inFinal => PhoneQuestion(
-        room: room,
-        me: me,
-        myChoice: state.myChoice,
-        clockOffset: state.clockOffset,
+      RoomStatus.question when q != null && !inFinal => _getReady(
+        room,
+        state,
+        PhoneQuestion(
+          room: room,
+          me: me,
+          myChoice: state.myChoice,
+          clockOffset: state.clockOffset,
+        ),
       ),
       RoomStatus.reveal when q != null && !inFinal => PhoneResult(
         key: ValueKey('result-${q.id}'),
@@ -221,7 +240,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         myBackedId: state.myBackedId,
         keepWatching: state.keepWatching,
       ),
-      RoomStatus.buzzerFinal || RoomStatus.reveal when inFinal =>
+      RoomStatus.buzzerFinal || RoomStatus.reveal when inFinal => _getReady(
+        room,
+        state,
         me?.status == PlayerStatus.finalist
             ? PhoneBuzzer(
                 room: room,
@@ -229,7 +250,12 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 myChoice: state.myChoice,
                 buzzing: state.buzzing,
               )
-            : PhoneWatching(room: room, me: me, myBackedId: state.myBackedId),
+            : PhoneWatching(
+                room: room,
+                me: me,
+                myBackedId: state.myBackedId,
+              ),
+      ),
       RoomStatus.finished when closedBeforeStart(room) => const _Closed(),
       RoomStatus.finished => PhonePlacement(room: room, me: me),
       _ => const _Waiting(),

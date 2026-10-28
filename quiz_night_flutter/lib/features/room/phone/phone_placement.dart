@@ -12,6 +12,7 @@ import '../../../widgets/qn/standings_row.dart';
 import '../final/final_logic.dart';
 import '../final/result_summary.dart';
 import '../room_cubit.dart';
+import '../round_logic.dart';
 import '../standings_logic.dart';
 import 'result_card.dart';
 
@@ -41,6 +42,7 @@ class PhonePlacement extends StatelessWidget {
     if (me.status == PlayerStatus.finalist) {
       return finalPlaceOf(room, me.id) == 1 ? 'Champion' : 'Finalist';
     }
+    if (joinedLate(me)) return 'Spectator · joined late';
     return 'Eliminated · Round ${me.eliminatedInRound ?? room.round}';
   }
 

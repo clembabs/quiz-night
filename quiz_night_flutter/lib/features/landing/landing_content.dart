@@ -142,7 +142,8 @@ abstract final class LandingContent {
       'Choose 2, 3 or 4 finalists for the buzzer final.',
     ]),
     GuideCard('During the game', 'Keep the pace', [
-      'Wait for the joined count to stop rising before you start.',
+      'Latecomers can still join: they play until the first cut, then watch '
+          'as spectators. Lock the room to stop new joins.',
       'Turn “Question on phones” off to make everyone look up at the big '
           'screen.',
       'Pause between rounds to read out who survived; the screen does the '
@@ -154,7 +155,8 @@ abstract final class LandingContent {
           'straight back in with their score.',
       '“This game session doesn’t exist”: check the four digits on the big '
           'screen.',
-      '“The game has already started”: late joiners can join the next game.',
+      'Playing over a call? Pick Remote in setup and paste the join link in '
+          'the chat: every phone then shows the whole game.',
       'The host screen fits any screen, from a projector to a phone.',
     ]),
   ];

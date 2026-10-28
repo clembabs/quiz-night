@@ -57,6 +57,15 @@ int activeCount(RoomState room) => room.players
     .where((p) => p.status == PlayerStatus.active && !p.left)
     .length;
 
+/// Joined after the first cut, so they watch as a spectator; the server
+/// marks it with round 0.
+bool joinedLate(PlayerView? p) => p?.eliminatedInRound == 0;
+
+/// "eliminated in Round 2", or "joined late" for a late spectator.
+String outIn(RoomState room, PlayerView? me) => joinedLate(me)
+    ? 'joined late'
+    : 'eliminated in Round ${me?.eliminatedInRound ?? room.round}';
+
 /// How this room's game works, for the lobby: the cut, then the final.
 String howItWorks(RoomState room) {
   final n = room.questionsPerRound;

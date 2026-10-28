@@ -598,9 +598,7 @@ class _Spectating extends StatelessWidget {
       children: [
         QnBanner(
           kind: BannerKind.eliminated,
-          text:
-              'Spectating · eliminated in Round '
-              '${me?.eliminatedInRound ?? room.round}',
+          text: 'Spectating · ${outIn(room, me)}',
         ),
         Expanded(
           child: Column(
@@ -645,9 +643,9 @@ class BackFinalist extends StatelessWidget {
         children: [
           QnBanner(
             kind: BannerKind.eliminated,
-            text:
-                'You were eliminated in Round '
-                '${me?.eliminatedInRound ?? room.round}',
+            text: joinedLate(me)
+                ? 'You joined after the first cut'
+                : 'You were ${outIn(room, me)}',
           ),
           Expanded(
             child: Column(
