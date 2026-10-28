@@ -638,6 +638,41 @@ class _RoomEndpoint {
     });
   }
 
+  _ida.Future<void> leaveRoom(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+    String playerToken,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'room',
+            method: 'leaveRoom',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'room',
+          methodName: 'leaveRoom',
+          parameters: _ist.testObjectToJson({
+            'code': code,
+            'playerToken': playerToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<void> startGame(
     _ist.TestSessionBuilder sessionBuilder,
     String code,
