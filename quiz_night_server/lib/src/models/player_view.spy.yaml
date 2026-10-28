@@ -16,3 +16,5 @@ fields:
   lockedOut: bool
   ### The host's line when this player was cut; arrives just after the cut.
   exitLine: String?
+  ### They tapped Leave and are no longer playing.
+  left: bool, default=false

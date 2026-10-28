@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/platform/haptics.dart';
+import '../../core/platform/sounds.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_spacing.dart';
@@ -149,7 +150,11 @@ class _PhoneHeaderState extends State<PhoneHeader> {
               label: soundOn ? 'Sound on' : 'Muted',
               onTap: haptics == null
                   ? null
-                  : () => setState(() => haptics.enabled = !soundOn),
+                  // Mutes the buzz and, in remote games, the cut's sounds.
+                  : () => setState(() {
+                      haptics.enabled = !soundOn;
+                      Sounds.of(context).enabled = !soundOn;
+                    }),
             ),
             if (widget.onLeave != null) ...[
               const SizedBox(width: 6),

@@ -66,33 +66,38 @@ void main() {
       expect(PhonePlacement.titleFor(room, p(2)), 'Champion');
       expect(
         PhonePlacement.detailFor(room, p(2)),
-        'You win Quiz Night with 2,000 final points.',
+        'You win Quiz Night! 1,000 round points, 2,000 in the final.',
       );
     });
 
     test('when another finalist looks then they are a finalist', () {
       expect(PhonePlacement.titleFor(room, p(3)), 'Finalist');
       expect(PhonePlacement.detailFor(room, p(3)), contains('Ada wins'));
+      expect(
+        PhonePlacement.detailFor(room, p(3)),
+        endsWith('You: 2,000 round points, 1,000 in the final.'),
+      );
     });
 
     test('when a spectator backed the winner then it says so', () {
       expect(
         PhonePlacement.detailFor(room, p(4)),
-        'You backed the winner, Ada. Shadow score 900.',
+        'You backed the winner, Ada. 0 points, shadow score 900.',
       );
     });
 
     test('when a spectator backed someone else then it says who', () {
       expect(
         PhonePlacement.detailFor(room, p(5)),
-        'You backed Bo. Ada won. Shadow score 2,400.',
+        'You backed Bo. Ada won. 0 points, shadow score 2,400.',
       );
     });
 
-    test('when a spectator backed nobody then it nudges them', () {
+    test('when a spectator backed nobody, with no shadow score, then it '
+        'nudges them and leaves the zero out', () {
       expect(
         PhonePlacement.detailFor(room, p(6)),
-        'Shadow score 0. Back a finalist next time.',
+        '0 points. Back a finalist next time.',
       );
     });
   });
@@ -144,9 +149,38 @@ void main() {
       expect(buzzerSeatFor(room, null), BuzzerSeat.spectator);
     });
 
-    test('when describing it then the status line names the holder', () {
-      expect(finalStatusLine(open()), 'Buzz to answer!');
+    test('when describing it then the status line names the holder, or who '
+        'just missed', () {
+      // Bo answered wrong: everyone is told, and buzzing reopens.
+      expect(
+        finalStatusLine(open()),
+        'Bo got it wrong and is locked out. Buzz to answer!',
+      );
       expect(finalStatusLine(open(holder: 3)), 'Cy is answering…');
+    });
+
+    test('when two have missed then both are named', () {
+      final room = open().copyWith(
+        players: [
+          for (final x in open().players)
+            x.id == 1 ? x.copyWith(lockedOut: true) : x,
+        ],
+      );
+      expect(lockoutLine(room), 'Ada and Bo got it wrong and are locked out.');
+      expect(namesList(['Ada', 'Bo', 'Cy']), 'Ada, Bo and Cy');
+    });
+
+    test('when nobody has missed then it just invites a buzz', () {
+      final room = roomState(
+        status: RoomStatus.buzzerFinal,
+        question: question(isFinal: true),
+        players: [
+          player(1, 'Ada', status: f),
+          player(2, 'Bo', status: f),
+        ],
+      );
+      expect(finalStatusLine(room), 'Buzz to answer!');
+      expect(lockoutLine(room), isNull);
     });
   });
 

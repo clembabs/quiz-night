@@ -13,6 +13,8 @@ fields:
   backedPlayerId: int?
   ### The host's line when this player was cut (AI-written or built-in).
   exitLine: String?
+  ### When they tapped Leave; null while in the game. Rejoining clears it.
+  leftAt: DateTime?
   joinedAt: DateTime, default=now
 indexes:
   player_room_idx:

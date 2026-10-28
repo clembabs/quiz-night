@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -112,6 +113,8 @@ void main() {
       verify(() => setup.setFinalists(4)).called(1);
       await t.tap(find.byKey(const Key('pick.Question on phones.off')));
       verify(() => setup.setShowQuestionOnPhones(false)).called(1);
+      await t.tap(find.byKey(const Key('setup.where.remote')));
+      verify(() => setup.setRemote(true)).called(1);
     });
 
     testWidgets('when creating then the cubit creates the room', (t) async {
@@ -234,6 +237,38 @@ void main() {
       players: [for (var i = 1; i <= n; i++) player(i, 'P$i')],
     );
 
+    testWidgets('when the host copies the join link then it is on the '
+        'clipboard, with a toast', (t) async {
+      String? copied;
+      t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pump(
+        t,
+        HostLobby(
+          room: lobby(3).copyWith(remote: true),
+          appUrl: Uri.parse('https://quiznight.serverpod.space/'),
+        ),
+      );
+      expect(find.textContaining('Share the link'), findsOneWidget);
+      await t.tap(find.byKey(const Key('lobby.copyLink')));
+      await t.pump();
+      expect(copied, 'https://quiznight.serverpod.space/join?code=4821');
+      expect(find.byKey(const Key('toast.success')), findsOneWidget);
+    });
+
     testWidgets('when empty then waits for the first player, Start disabled', (
       t,
     ) async {
@@ -340,6 +375,51 @@ void main() {
       expect(find.text('1/2 answered'), findsOneWidget);
       await t.tap(find.byKey(const Key('host.step')));
       verify(() => cubit.reveal()).called(1);
+    });
+
+    testWidgets('when players have left or gone home then the host sees who '
+        'is still in', (t) async {
+      final room = roomState(
+        status: RoomStatus.question,
+        question: question(),
+        questionEndsAt: later,
+        players: [
+          player(1, 'A', hasAnswered: true),
+          player(2, 'B'),
+          player(3, 'C').copyWith(left: true),
+          player(4, 'D', status: PlayerStatus.eliminated),
+        ],
+      );
+      await pump(t, HostQuestion(room: room, clockOffset: Duration.zero));
+      await t.pump(const Duration(seconds: 1));
+      // C left, so the question no longer waits for them.
+      expect(find.text('1/2 answered'), findsOneWidget);
+      expect(find.text('2 in · 1 out · 1 left'), findsOneWidget);
+    });
+
+    testWidgets('when revealed then the projector shows the top three and who '
+        'is in danger', (t) async {
+      final room = roomState(
+        status: RoomStatus.reveal,
+        question: question(revealed: true, answerCounts: [1, 3, 0, 1]),
+        players: [
+          player(1, 'Ada', score: 3000),
+          player(2, 'Bo', score: 2000),
+          player(3, 'Cy', score: 1000),
+          player(4, 'Dee', score: 500),
+          player(5, 'Eve', score: 100),
+        ],
+      ).copyWith(projectedSurvivors: 3);
+      await pump(t, HostReveal(room: room));
+      await t.pump(const Duration(seconds: 2));
+      expect(
+        t.widget<Text>(find.byKey(const Key('reveal.top'))).data,
+        '1 Ada 3,000  ·  2 Bo 2,000  ·  3 Cy 1,000',
+      );
+      expect(
+        t.widget<Text>(find.byKey(const Key('reveal.danger'))).data,
+        'In danger: Dee, Eve',
+      );
     });
 
     testWidgets('when revealed then counts and who got it right', (t) async {

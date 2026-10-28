@@ -53,8 +53,47 @@ bool _suddenDeathDecided(RoomState room) =>
     room.eliminationRule == EliminationRule.suddenDeath &&
     activeCount(room) <= room.finalistTarget;
 
-int activeCount(RoomState room) =>
-    room.players.where((p) => p.status == PlayerStatus.active).length;
+int activeCount(RoomState room) => room.players
+    .where((p) => p.status == PlayerStatus.active && !p.left)
+    .length;
+
+/// Joined after the first cut, so they watch as a spectator; the server
+/// marks it with round 0.
+bool joinedLate(PlayerView? p) => p?.eliminatedInRound == 0;
+
+/// "eliminated in Round 2", or "joined late" for a late spectator.
+String outIn(RoomState room, PlayerView? me) => joinedLate(me)
+    ? 'joined late'
+    : 'eliminated in Round ${me?.eliminatedInRound ?? room.round}';
+
+/// How this room's game works, for the lobby: the cut, then the final.
+String howItWorks(RoomState room) {
+  final n = room.questionsPerRound;
+  final finalists = room.finalistTarget;
+  final cut = switch (room.eliminationRule) {
+    EliminationRule.bottomPercent =>
+      'After every $n questions the bottom 30% go home.',
+    EliminationRule.autoScaled =>
+      'After every $n questions the bottom of the table goes home.',
+    EliminationRule.suddenDeath => 'One wrong answer and you go home.',
+  };
+  return '$cut Faster right answers score more. The last $finalists play a '
+      'buzzer final: buzz first to answer.';
+}
+
+/// "8 in · 3 out · 1 left" for the host while a question is open; "left" is
+/// players who tapped Leave, shown only when there are some.
+String roomHeadcount(RoomState room) {
+  final out = room.players
+      .where((p) => p.status == PlayerStatus.eliminated)
+      .length;
+  final left = room.players.where((p) => p.left).length;
+  return [
+    '${activeCount(room)} in',
+    '$out out',
+    if (left > 0) '$left left',
+  ].join(' · ');
+}
 
 /// Players still competing, best first.
 List<PlayerView> leaderboard(RoomState room) {
@@ -76,7 +115,7 @@ int? rankOf(RoomState room, int playerId) {
 
 /// How many competing players have answered the open question.
 int answeredCount(RoomState room) => room.players
-    .where((p) => p.status == PlayerStatus.active && p.hasAnswered)
+    .where((p) => p.status == PlayerStatus.active && !p.left && p.hasAnswered)
     .length;
 
 /// Time left on the server's clock; [clockOffset] is server minus local time.

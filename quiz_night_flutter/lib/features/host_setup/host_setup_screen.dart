@@ -297,6 +297,34 @@ class _Form extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         _Section(
+          title: 'Where are the players?',
+          subtitle: state.remote
+              ? 'On a call: everyone joins with a link, and every phone shows '
+                    'the whole game.'
+              : 'In one room, looking at your big screen.',
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Choice(
+                key: const Key('setup.where.room'),
+                text: 'In the room',
+                width: 170,
+                selected: !state.remote,
+                onTap: () => cubit.setRemote(false),
+              ),
+              _Choice(
+                key: const Key('setup.where.remote'),
+                text: 'Remote',
+                width: 170,
+                selected: state.remote,
+                onTap: () => cubit.setRemote(true),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        _Section(
           title: 'Elimination rule',
           child: LayoutBuilder(
             builder: (context, box) {
@@ -361,11 +389,13 @@ class _Form extends StatelessWidget {
                 selected: state.secondsPerQuestion,
                 onPick: cubit.setSecondsPerQuestion,
               ),
-              _Toggle(
-                label: 'Question on phones',
-                value: state.showQuestionOnPhones,
-                onChanged: cubit.setShowQuestionOnPhones,
-              ),
+              // Remote games always show it: there may be no big screen.
+              if (!state.remote)
+                _Toggle(
+                  label: 'Question on phones',
+                  value: state.showQuestionOnPhones,
+                  onChanged: cubit.setShowQuestionOnPhones,
+                ),
               if (state.rule == EliminationRule.autoScaled)
                 _Picker(
                   label: 'Rounds before final',

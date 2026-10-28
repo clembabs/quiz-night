@@ -29,7 +29,8 @@ abstract class PlayerView
     this.lastPoints,
     required this.lockedOut,
     this.exitLine,
-  });
+    bool? left,
+  }) : left = left ?? false;
 
   factory PlayerView({
     required int id,
@@ -44,6 +45,7 @@ abstract class PlayerView
     int? lastPoints,
     required bool lockedOut,
     String? exitLine,
+    bool? left,
   }) = _PlayerViewImpl;
 
   factory PlayerView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -64,6 +66,9 @@ abstract class PlayerView
       lastPoints: jsonSerialization['lastPoints'] as int?,
       lockedOut: _is.BoolJsonExtension.fromJson(jsonSerialization['lockedOut']),
       exitLine: jsonSerialization['exitLine'] as String?,
+      left: jsonSerialization['left'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['left']),
     );
   }
 
@@ -94,6 +99,9 @@ abstract class PlayerView
   /// The host's line when this player was cut; arrives just after the cut.
   String? exitLine;
 
+  /// They tapped Leave and are no longer playing.
+  bool left;
+
   /// Returns a shallow copy of this [PlayerView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -110,6 +118,7 @@ abstract class PlayerView
     int? lastPoints,
     bool? lockedOut,
     String? exitLine,
+    bool? left,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -127,6 +136,7 @@ abstract class PlayerView
       if (lastPoints != null) 'lastPoints': lastPoints,
       'lockedOut': lockedOut,
       if (exitLine != null) 'exitLine': exitLine,
+      'left': left,
     };
   }
 
@@ -146,6 +156,7 @@ abstract class PlayerView
       if (lastPoints != null) 'lastPoints': lastPoints,
       'lockedOut': lockedOut,
       if (exitLine != null) 'exitLine': exitLine,
+      'left': left,
     };
   }
 
@@ -171,6 +182,7 @@ class _PlayerViewImpl extends PlayerView {
     int? lastPoints,
     required bool lockedOut,
     String? exitLine,
+    bool? left,
   }) : super._(
          id: id,
          nickname: nickname,
@@ -184,6 +196,7 @@ class _PlayerViewImpl extends PlayerView {
          lastPoints: lastPoints,
          lockedOut: lockedOut,
          exitLine: exitLine,
+         left: left,
        );
 
   /// Returns a shallow copy of this [PlayerView]
@@ -203,6 +216,7 @@ class _PlayerViewImpl extends PlayerView {
     Object? lastPoints = _Undefined,
     bool? lockedOut,
     Object? exitLine = _Undefined,
+    bool? left,
   }) {
     return PlayerView(
       id: id ?? this.id,
@@ -221,6 +235,7 @@ class _PlayerViewImpl extends PlayerView {
       lastPoints: lastPoints is int? ? lastPoints : this.lastPoints,
       lockedOut: lockedOut ?? this.lockedOut,
       exitLine: exitLine is String? ? exitLine : this.exitLine,
+      left: left ?? this.left,
     );
   }
 }

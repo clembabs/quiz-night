@@ -36,6 +36,7 @@ abstract class RoomState
     this.sessionEndsAt,
     this.endReason,
     this.question,
+    this.questionStartsAt,
     this.questionEndsAt,
     required this.serverTime,
     required this.players,
@@ -43,9 +44,11 @@ abstract class RoomState
     this.buzzerHolderId,
     this.buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     this.projectedSurvivors,
   }) : locked = locked ?? false,
-       showQuestionOnPhones = showQuestionOnPhones ?? true;
+       showQuestionOnPhones = showQuestionOnPhones ?? true,
+       remote = remote ?? false;
 
   factory RoomState({
     required String code,
@@ -61,6 +64,7 @@ abstract class RoomState
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     required DateTime serverTime,
     required List<_ijz1mobl.PlayerView> players,
@@ -68,6 +72,7 @@ abstract class RoomState
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   }) = _RoomStateImpl;
 
@@ -106,6 +111,11 @@ abstract class RoomState
           : _izn0xfae.Protocol().deserialize<_irhyxwad.QuestionView>(
               jsonSerialization['question'],
             ),
+      questionStartsAt: jsonSerialization['questionStartsAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['questionStartsAt'],
+            ),
       questionEndsAt: jsonSerialization['questionEndsAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(
@@ -129,6 +139,9 @@ abstract class RoomState
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      remote: jsonSerialization['remote'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['remote']),
       projectedSurvivors: jsonSerialization['projectedSurvivors'] as int?,
     );
   }
@@ -162,6 +175,9 @@ abstract class RoomState
 
   _irhyxwad.QuestionView? question;
 
+  /// When answers open (after the 3-2-1); null when no question is open.
+  DateTime? questionStartsAt;
+
   DateTime? questionEndsAt;
 
   DateTime serverTime;
@@ -177,6 +193,9 @@ abstract class RoomState
 
   /// Whether phones show the question text (host setting).
   bool showQuestionOnPhones;
+
+  /// Remote game: phones run the reveals and the cut themselves.
+  bool remote;
 
   /// Danger line: survivors if the round ended now; null with no round cut.
   int? projectedSurvivors;
@@ -198,6 +217,7 @@ abstract class RoomState
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     DateTime? serverTime,
     List<_ijz1mobl.PlayerView>? players,
@@ -205,6 +225,7 @@ abstract class RoomState
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   });
   @override
@@ -224,6 +245,8 @@ abstract class RoomState
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJson(),
+      if (questionStartsAt != null)
+        'questionStartsAt': questionStartsAt?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
       'players': players.toJson(valueToJson: (v) => v.toJson()),
@@ -231,6 +254,7 @@ abstract class RoomState
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
@@ -252,6 +276,8 @@ abstract class RoomState
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJsonForProtocol(),
+      if (questionStartsAt != null)
+        'questionStartsAt': questionStartsAt?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
       'players': players.toJson(valueToJson: (v) => v.toJsonForProtocol()),
@@ -260,6 +286,7 @@ abstract class RoomState
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
@@ -287,6 +314,7 @@ class _RoomStateImpl extends RoomState {
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     required DateTime serverTime,
     required List<_ijz1mobl.PlayerView> players,
@@ -294,6 +322,7 @@ class _RoomStateImpl extends RoomState {
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   }) : super._(
          code: code,
@@ -309,6 +338,7 @@ class _RoomStateImpl extends RoomState {
          sessionEndsAt: sessionEndsAt,
          endReason: endReason,
          question: question,
+         questionStartsAt: questionStartsAt,
          questionEndsAt: questionEndsAt,
          serverTime: serverTime,
          players: players,
@@ -316,6 +346,7 @@ class _RoomStateImpl extends RoomState {
          buzzerHolderId: buzzerHolderId,
          buzzWinnerId: buzzWinnerId,
          showQuestionOnPhones: showQuestionOnPhones,
+         remote: remote,
          projectedSurvivors: projectedSurvivors,
        );
 
@@ -337,6 +368,7 @@ class _RoomStateImpl extends RoomState {
     Object? sessionEndsAt = _Undefined,
     Object? endReason = _Undefined,
     Object? question = _Undefined,
+    Object? questionStartsAt = _Undefined,
     Object? questionEndsAt = _Undefined,
     DateTime? serverTime,
     List<_ijz1mobl.PlayerView>? players,
@@ -344,6 +376,7 @@ class _RoomStateImpl extends RoomState {
     Object? buzzerHolderId = _Undefined,
     Object? buzzWinnerId = _Undefined,
     bool? showQuestionOnPhones,
+    bool? remote,
     Object? projectedSurvivors = _Undefined,
   }) {
     return RoomState(
@@ -366,6 +399,9 @@ class _RoomStateImpl extends RoomState {
       question: question is _irhyxwad.QuestionView?
           ? question
           : this.question?.copyWith(),
+      questionStartsAt: questionStartsAt is DateTime?
+          ? questionStartsAt
+          : this.questionStartsAt,
       questionEndsAt: questionEndsAt is DateTime?
           ? questionEndsAt
           : this.questionEndsAt,
@@ -379,6 +415,7 @@ class _RoomStateImpl extends RoomState {
           : this.buzzerHolderId,
       buzzWinnerId: buzzWinnerId is int? ? buzzWinnerId : this.buzzWinnerId,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      remote: remote ?? this.remote,
       projectedSurvivors: projectedSurvivors is int?
           ? projectedSurvivors
           : this.projectedSurvivors,

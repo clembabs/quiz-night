@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
 import 'package:quiz_night_flutter/core/platform/haptics.dart';
+import 'package:quiz_night_flutter/core/platform/sounds.dart';
 import 'package:quiz_night_flutter/core/platform/share_image.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_cut.dart';
 import 'package:quiz_night_flutter/features/room/phone/phone_final.dart';
@@ -59,6 +60,11 @@ void main() {
       expect(find.text('Ọlá'), findsOneWidget);
       expect(find.text('players joined'), findsOneWidget);
       expect(find.text('Waiting for the host to start'), findsOneWidget);
+      expect(
+        find.textContaining('the bottom 30% go home'),
+        findsOneWidget,
+        reason: 'the rules are explained before the game',
+      );
     });
   });
 
@@ -174,6 +180,23 @@ void main() {
       players: [me, for (var i = 2; i <= 10; i++) player(i, 'P$i', score: 100)],
     ).copyWith(projectedSurvivors: line);
 
+    testWidgets('when it is a remote game then the top three show too', (
+      t,
+    ) async {
+      final me = player(1, 'Ada', score: 1800, lastPoints: 850);
+      await pump(
+        t,
+        PhoneResult(
+          room: revealed(me).copyWith(remote: true),
+          me: me,
+          myChoice: 1,
+        ),
+      );
+      await t.pump(const Duration(seconds: 1));
+      expect(find.byKey(const Key('result.topThree')), findsOneWidget);
+      expect(find.text('Ada (you)'), findsOneWidget);
+    });
+
     testWidgets('when right then Correct, the points, rank and safe status', (
       t,
     ) async {
@@ -250,6 +273,35 @@ void main() {
       expect(find.text('ARE YOU SAFE?'), findsOneWidget);
     });
 
+    testWidgets('when it is a remote game then the phone runs the reveal: '
+        'names drop one by one with sounds, then your fate', (t) async {
+      final sounds = RecordingSounds();
+      final room = cutRoom().copyWith(remote: true);
+      await pumpScreen(
+        t,
+        PhoneCut(
+          room: room,
+          me: room.players.first,
+          createSequence: fastSequence,
+        ),
+        cubit: cubit,
+        haptics: haptics,
+        sounds: sounds,
+      );
+      expect(find.byKey(const Key('cut.remoteReveal')), findsOneWidget);
+      expect(find.text('Cy'), findsNothing, reason: 'still face down');
+      expect(sounds.played, [SoundCue.drumroll]);
+
+      await t.pump(const Duration(seconds: 1));
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('Cy'), findsOneWidget);
+      expect(sounds.played, contains(SoundCue.stamp));
+
+      await t.pump(const Duration(seconds: 1));
+      await t.pump(const Duration(seconds: 1));
+      expect(find.text('YOU\nSURVIVED'), findsOneWidget);
+    });
+
     testWidgets('when you survive then the green screen and a celebration', (
       t,
     ) async {
@@ -267,6 +319,9 @@ void main() {
       await t.pump(const Duration(seconds: 1));
 
       expect(find.text('YOU\nSURVIVED'), findsOneWidget);
+      // Survivors see who went home, not just their own fate.
+      expect(find.byKey(const Key('cut.goingHome')), findsOneWidget);
+      expect(find.text('✕ Cy'), findsOneWidget);
       // A buzz as the name dropped, then the celebration.
       expect(haptics.played, [HapticToken.medium, HapticToken.celebrate]);
     });
@@ -285,6 +340,7 @@ void main() {
 
       expect(find.text('ELIMINATED'), findsOneWidget);
       expect(find.text('✕ OUT'), findsOneWidget);
+      expect(find.byKey(const Key('cut.spectatorHint')), findsOneWidget);
       expect(haptics.played, [HapticToken.heavy]);
       await t.tap(find.byKey(const Key('cut.keepWatching')));
       verify(() => cubit.keepWatchingAsSpectator()).called(1);
@@ -414,6 +470,22 @@ void main() {
       verifyNever(() => cubit.buzz());
     });
 
+    testWidgets('when another finalist misses then the others are told and '
+        'feel it', (t) async {
+      Widget buzzer(RoomState room) => PhoneBuzzer(
+        room: room,
+        me: room.players[1],
+        myChoice: null,
+        buzzing: false,
+      );
+      await pump(t, buzzer(finalRoom()));
+      expect(prompt(t), 'Buzz first when you know the answer.');
+
+      await pump(t, buzzer(finalRoom(lockedOut: true)));
+      expect(prompt(t), 'Ada got it wrong. Buzz now!');
+      expect(haptics.played, contains(HapticToken.medium));
+    });
+
     testWidgets('when locked out then the buzzer is locked', (t) async {
       final room = finalRoom(lockedOut: true);
       await pump(
@@ -450,6 +522,21 @@ void main() {
         player(3, 'Cy', status: out, eliminatedInRound: 1, backedPlayerId: 1),
       ],
     );
+
+    testWidgets('when a remote game ends then the phone shows the top three '
+        'of the final', (t) async {
+      await pump(
+        t,
+        PhonePlacement(
+          room: room.copyWith(remote: true),
+          me: room.players[2],
+        ),
+      );
+      await t.pump(const Duration(seconds: 1));
+      expect(find.byKey(const Key('placement.finalTop')), findsOneWidget);
+      expect(find.text('Ada'), findsOneWidget);
+      expect(find.text('3,000'), findsOneWidget);
+    });
 
     testWidgets('when the champion looks then 1st and Champion', (t) async {
       await pump(t, PhonePlacement(room: room, me: room.players.first));

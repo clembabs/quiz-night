@@ -56,7 +56,7 @@ class HostCut extends StatelessWidget {
         };
         final showDesks = seq.isDone && finalists;
         final portrait = HostLayout.isPortrait(context);
-        return _CutSounds(
+        return CutSounds(
           sequence: seq,
           anyoneOut: out.isNotEmpty,
           finalists: finalists,
@@ -110,13 +110,14 @@ class HostCut extends StatelessWidget {
 }
 
 /// Plays the cut's drumroll, stamps and closing chime as [sequence] moves.
-class _CutSounds extends StatefulWidget {
+class CutSounds extends StatefulWidget {
   final RevealSequenceState sequence;
   final bool anyoneOut;
   final bool finalists;
   final Widget child;
 
-  const _CutSounds({
+  const CutSounds({
+    super.key,
     required this.sequence,
     required this.anyoneOut,
     required this.finalists,
@@ -124,10 +125,10 @@ class _CutSounds extends StatefulWidget {
   });
 
   @override
-  State<_CutSounds> createState() => _CutSoundsState();
+  State<CutSounds> createState() => _CutSoundsState();
 }
 
-class _CutSoundsState extends State<_CutSounds> {
+class _CutSoundsState extends State<CutSounds> {
   late final Sounds _sounds = Sounds.of(context);
 
   @override
@@ -139,7 +140,7 @@ class _CutSoundsState extends State<_CutSounds> {
   }
 
   @override
-  void didUpdateWidget(_CutSounds old) {
+  void didUpdateWidget(CutSounds old) {
     super.didUpdateWidget(old);
     final was = old.sequence;
     final now = widget.sequence;

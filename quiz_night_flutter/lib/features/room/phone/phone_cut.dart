@@ -14,6 +14,7 @@ import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../cut_reveal/cut_reveal_scope.dart';
+import '../host/host_cut.dart' show CutSounds;
 import '../cut_reveal/reveal_sequence_cubit.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
@@ -69,8 +70,19 @@ class PhoneCut extends StatelessWidget {
           fateKnown: known,
           keepWatching: keepWatching,
         );
+        final ids = event?.eliminatedPlayerIds ?? const <int>[];
         final Widget body;
-        if (!known) {
+        if (room.remote &&
+            !seq.isDone &&
+            (!known || outcome == CutOutcome.alreadyOut)) {
+          // No big screen to watch: the phone runs the reveal itself.
+          body = CutSounds(
+            sequence: seq,
+            anyoneOut: ids.isNotEmpty,
+            finalists: event?.finalistsDecided ?? false,
+            child: _RemoteReveal(room: room, sequence: seq),
+          );
+        } else if (!known) {
           body = _Suspense(sequence: seq);
         } else if (outcome == CutOutcome.survived ||
             outcome == CutOutcome.finalist) {
@@ -143,6 +155,122 @@ class _FateHapticState extends State<_FateHaptic> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// The cut on a remote player's phone: names drop one at a time, each
+/// stamped OUT with the host's line, the rest still hidden.
+class _RemoteReveal extends StatelessWidget {
+  final RoomState room;
+  final RevealSequenceState sequence;
+
+  const _RemoteReveal({required this.room, required this.sequence});
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    final byId = {for (final p in room.players) p.id: p};
+    final title = switch (sequence) {
+      _ when ids.isEmpty => 'IS ANYONE GOING HOME?',
+      RevealSequenceState(waitingForLast: true) => 'AND THE LAST ONE…',
+      RevealSequenceState(phase: RevealPhase.intro) => 'WHO’S GOING HOME?',
+      _ => 'GOING HOME…',
+    };
+    return ListView(
+      key: const Key('cut.remoteReveal'),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.displayL.copyWith(fontSize: 34),
+        ),
+        const SizedBox(height: 20),
+        for (final (i, id) in ids.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              child: i < sequence.revealed
+                  ? _RevealedRow(key: ValueKey('out-$id'), player: byId[id])
+                  : const _HiddenRow(key: ValueKey('hidden')),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HiddenRow extends StatelessWidget {
+  const _HiddenRow({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 64,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.line),
+    ),
+    child: Text(
+      '?',
+      style: AppTextStyles.displayL.copyWith(
+        fontSize: 32,
+        color: AppColors.chalk.withValues(alpha: 0.25),
+      ),
+    ),
+  );
+}
+
+class _RevealedRow extends StatelessWidget {
+  final PlayerView? player;
+
+  const _RevealedRow({super.key, required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = player;
+    if (p == null) return const SizedBox(height: 64);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: AppColors.maroonDarkest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.maroon, width: 2),
+      ),
+      child: Row(
+        children: [
+          InitialBadge(nickname: p.nickname, size: 40, eliminated: true),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.chip.copyWith(
+                    fontSize: 17,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: AppColors.wrong,
+                  ),
+                ),
+                HostLine(
+                  line: p.exitLine,
+                  fontSize: 13,
+                  maxLines: 2,
+                  textAlign: TextAlign.start,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const OutStamp(fontSize: 16, tilt: -10),
+        ],
+      ),
+    );
+  }
 }
 
 /// "Are you safe?", with a buzz each time a name drops on the big screen.
@@ -226,7 +354,8 @@ class _Survived extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         const Align(alignment: Alignment(0, -0.16), child: ShapeBurst()),
-        Padding(
+        // Scrolls on short phones: the finalist hint and the list add lines.
+        SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -267,10 +396,93 @@ class _Survived extends StatelessWidget {
                   color: const Color(0xFFE3F2E8),
                 ),
               ),
+              if (finalist) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Buzzer final: tap BUZZ first to answer. Right is +1000; '
+                  'wrong locks you out of that question and the others can '
+                  'buzz.',
+                  key: const Key('cut.buzzerHint'),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 15,
+                    color: AppColors.goldPale,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              GoingHome(room: room),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Who this cut sent home, worst first, each with the host's line: so every
+/// phone sees the cut, not only the big screen.
+class GoingHome extends StatelessWidget {
+  final RoomState room;
+
+  const GoingHome({super.key, required this.room});
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    final byId = {for (final p in room.players) p.id: p};
+    final out = [for (final id in ids) ?byId[id]];
+    if (out.isEmpty) return const SizedBox.shrink();
+    return Container(
+      key: const Key('cut.goingHome'),
+      constraints: const BoxConstraints(maxHeight: 260),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      decoration: BoxDecoration(
+        color: AppColors.boardDeep.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            out.length == 1 ? 'GOING HOME' : 'GOING HOME · ${out.length}',
+            style: AppTextStyles.label.copyWith(
+              color: AppColors.maroonPale,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final p in out)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '✕ ${p.nickname}',
+                            style: AppTextStyles.chip.copyWith(fontSize: 15),
+                          ),
+                          HostLine(
+                            line: p.exitLine,
+                            fontSize: 14,
+                            maxLines: 2,
+                            textAlign: TextAlign.start,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -334,6 +546,18 @@ class _Eliminated extends StatelessWidget {
                     fontSize: 18,
                     maxLines: 4,
                   ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "You're a spectator now. Keep answering for a shadow "
+                    'score (bragging rights only), and back the finalist '
+                    'you think will win.',
+                    key: const Key('cut.spectatorHint'),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 15,
+                      color: AppColors.maroonPale,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -374,23 +598,16 @@ class _Spectating extends StatelessWidget {
       children: [
         QnBanner(
           kind: BannerKind.eliminated,
-          text:
-              'Spectating · eliminated in Round '
-              '${me?.eliminatedInRound ?? room.round}',
+          text: 'Spectating · ${outIn(room, me)}',
         ),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const PulsingDots(size: 10),
-              const SizedBox(height: 16),
+              GoingHome(room: room),
+              const SizedBox(height: 20),
               Text(
-                'Watch the big screen',
-                style: AppTextStyles.title,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Your answers next round count for a shadow score.',
+                'Keep answering: it counts for your shadow score.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySoft.copyWith(fontSize: 15),
               ),
@@ -426,9 +643,9 @@ class BackFinalist extends StatelessWidget {
         children: [
           QnBanner(
             kind: BannerKind.eliminated,
-            text:
-                'You were eliminated in Round '
-                '${me?.eliminatedInRound ?? room.round}',
+            text: joinedLate(me)
+                ? 'You joined after the first cut'
+                : 'You were ${outIn(room, me)}',
           ),
           Expanded(
             child: Column(
@@ -441,7 +658,8 @@ class BackFinalist extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Pick before the final starts. Bragging rights only.',
+                  'Pick who you think will win, before the final starts. The '
+                  'podium shows who backed the winner.',
                   style: AppTextStyles.bodySoft.copyWith(fontSize: 15),
                 ),
               ],

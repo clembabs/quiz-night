@@ -8,6 +8,7 @@ import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/brand/option_shape.dart';
 import '../../../widgets/qn/host_stage.dart';
+import '../../../widgets/qn/standings_row.dart';
 import '../round/host_step_button.dart';
 import '../round_logic.dart';
 
@@ -69,11 +70,21 @@ class HostReveal extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: Text(
-                '${_correctCount(q)} of ${activeCount(room)} got it right',
-                style: AppProjectorText.bodySoft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_correctCount(q)} of ${activeCount(room)} got it right',
+                    style: AppProjectorText.bodySoft,
+                  ),
+                  // The table's top and its danger zone, without stopping
+                  // for the full board every question.
+                  ..._strip(room),
+                ],
               ),
             ),
             HostStepButton(room: room),
@@ -81,6 +92,43 @@ class HostReveal extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  static List<Widget> _strip(RoomState room) {
+    final board = leaderboard(room);
+    if (board.isEmpty) return const [];
+    final top = [
+      for (final (i, p) in board.take(3).indexed)
+        '${i + 1} ${p.nickname} ${formatScore(p.score)}',
+    ].join('  ·  ');
+    final line = room.projectedSurvivors;
+    final danger = line == null || line >= board.length
+        ? const <String>[]
+        : [for (final p in board.skip(line)) p.nickname];
+    return [
+      const SizedBox(height: 8),
+      Text(
+        top,
+        key: const Key('reveal.top'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppProjectorText.caption.copyWith(
+          fontSize: 28,
+          color: AppColors.chalk,
+        ),
+      ),
+      if (danger.isNotEmpty)
+        Text(
+          'In danger: ${danger.join(', ')}',
+          key: const Key('reveal.danger'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppProjectorText.caption.copyWith(
+            fontSize: 28,
+            color: AppColors.maroonPale,
+          ),
+        ),
+    ];
   }
 
   static int _correctCount(QuestionView q) {

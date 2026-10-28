@@ -12,6 +12,7 @@ import '../../../widgets/qn/standings_row.dart';
 import '../final/final_logic.dart';
 import '../final/result_summary.dart';
 import '../room_cubit.dart';
+import '../round_logic.dart';
 import '../standings_logic.dart';
 import 'result_card.dart';
 
@@ -41,6 +42,7 @@ class PhonePlacement extends StatelessWidget {
     if (me.status == PlayerStatus.finalist) {
       return finalPlaceOf(room, me.id) == 1 ? 'Champion' : 'Finalist';
     }
+    if (joinedLate(me)) return 'Spectator · joined late';
     return 'Eliminated · Round ${me.eliminatedInRound ?? room.round}';
   }
 
@@ -60,18 +62,26 @@ class PhonePlacement extends StatelessWidget {
         : '${winner.nickname} wins Quiz Night with '
               '${formatScore(winner.finalScore)} final points.';
     if (me.status == PlayerStatus.finalist) {
+      final yours =
+          '${formatScore(me.score)} round points, '
+          '${formatScore(me.finalScore)} in the final.';
       return me.id == winner?.id
-          ? 'You win Quiz Night with ${formatScore(me.finalScore)} final points.'
-          : winLine;
+          ? 'You win Quiz Night! $yours'
+          : '$winLine You: $yours';
     }
-    final shadow = 'Shadow score ${formatScore(me.shadowScore)}.';
+    // Round points always; a shadow score only once one was earned (a 0
+    // reads like a bug).
+    final points = [
+      '${formatScore(me.score)} points',
+      if (me.shadowScore > 0) 'shadow score ${formatScore(me.shadowScore)}',
+    ].join(', ');
     final backed = me.backedPlayerId;
-    if (backed == null) return '$shadow Back a finalist next time.';
+    if (backed == null) return '$points. Back a finalist next time.';
     if (backed == winner?.id) {
-      return 'You backed the winner, ${winner!.nickname}. $shadow';
+      return 'You backed the winner, ${winner!.nickname}. $points.';
     }
     return 'You backed ${nicknameOf(room, backed)}. '
-        '${winner?.nickname ?? 'Someone else'} won. $shadow';
+        '${winner?.nickname ?? 'Someone else'} won. $points.';
   }
 
   @override
@@ -145,6 +155,11 @@ class PhonePlacement extends StatelessWidget {
                             style: AppTextStyles.bodySoft,
                           ),
                         ),
+                        // No podium on a shared screen: the top three here.
+                        if (room.remote) ...[
+                          const SizedBox(height: 20),
+                          _FinalTop(room: room, meId: me.id),
+                        ],
                       ],
                     ),
                   ),
@@ -173,6 +188,64 @@ class PhonePlacement extends StatelessWidget {
               child: const Text('Done'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The final's top three with their final points, for remote games.
+class _FinalTop extends StatelessWidget {
+  final RoomState room;
+  final int meId;
+
+  const _FinalTop({required this.room, required this.meId});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = finalStandings(room).take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    const medals = ['1st', '2nd', '3rd'];
+    return Container(
+      key: const Key('placement.finalTop'),
+      width: 300,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          for (final (i, p) in top.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 44,
+                    child: Text(
+                      medals[i],
+                      style: AppTextStyles.numeric.copyWith(
+                        fontSize: 18,
+                        color: i == 0 ? AppColors.gold : null,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      p.id == meId ? '${p.nickname} (you)' : p.nickname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.chip.copyWith(fontSize: 16),
+                    ),
+                  ),
+                  Text(
+                    formatScore(p.finalScore),
+                    style: AppTextStyles.numeric.copyWith(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

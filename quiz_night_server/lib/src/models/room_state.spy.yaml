@@ -17,6 +17,8 @@ fields:
   ### Why the game ended, once it has.
   endReason: RoomEndReason?
   question: QuestionView?
+  ### When answers open (after the 3-2-1); null when no question is open.
+  questionStartsAt: DateTime?
   questionEndsAt: DateTime?
   serverTime: DateTime
   players: List<PlayerView>
@@ -26,5 +28,7 @@ fields:
   buzzWinnerId: int?
   ### Whether phones show the question text (host setting).
   showQuestionOnPhones: bool, default=true
+  ### Remote game: phones run the reveals and the cut themselves.
+  remote: bool, default=false
   ### Danger line: survivors if the round ended now; null with no round cut.
   projectedSurvivors: int?
