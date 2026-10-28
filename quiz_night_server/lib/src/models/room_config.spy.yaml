@@ -15,6 +15,8 @@ fields:
   showQuestionOnPhones: bool, default=true
   ### Players are not in one room (a call): every screen shows the whole game.
   remote: bool, default=false
+  ### Lock the room to new players as soon as the game starts.
+  lockOnStart: bool, default=false
   ### An AI-written pack to play, from generatePack; with its token.
   packId: int?
   packToken: String?
