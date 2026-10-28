@@ -342,6 +342,26 @@ void main() {
       verify(() => cubit.reveal()).called(1);
     });
 
+    testWidgets('when players have left or gone home then the host sees who '
+        'is still in', (t) async {
+      final room = roomState(
+        status: RoomStatus.question,
+        question: question(),
+        questionEndsAt: later,
+        players: [
+          player(1, 'A', hasAnswered: true),
+          player(2, 'B'),
+          player(3, 'C').copyWith(left: true),
+          player(4, 'D', status: PlayerStatus.eliminated),
+        ],
+      );
+      await pump(t, HostQuestion(room: room, clockOffset: Duration.zero));
+      await t.pump(const Duration(seconds: 1));
+      // C left, so the question no longer waits for them.
+      expect(find.text('1/2 answered'), findsOneWidget);
+      expect(find.text('2 in · 1 out · 1 left'), findsOneWidget);
+    });
+
     testWidgets('when revealed then counts and who got it right', (t) async {
       final room = roomState(
         status: RoomStatus.reveal,

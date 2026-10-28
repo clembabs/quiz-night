@@ -59,6 +59,11 @@ void main() {
       expect(find.text('Ọlá'), findsOneWidget);
       expect(find.text('players joined'), findsOneWidget);
       expect(find.text('Waiting for the host to start'), findsOneWidget);
+      expect(
+        find.textContaining('the bottom 30% go home'),
+        findsOneWidget,
+        reason: 'the rules are explained before the game',
+      );
     });
   });
 
@@ -267,6 +272,9 @@ void main() {
       await t.pump(const Duration(seconds: 1));
 
       expect(find.text('YOU\nSURVIVED'), findsOneWidget);
+      // Survivors see who went home, not just their own fate.
+      expect(find.byKey(const Key('cut.goingHome')), findsOneWidget);
+      expect(find.text('✕ Cy'), findsOneWidget);
       // A buzz as the name dropped, then the celebration.
       expect(haptics.played, [HapticToken.medium, HapticToken.celebrate]);
     });
@@ -285,6 +293,7 @@ void main() {
 
       expect(find.text('ELIMINATED'), findsOneWidget);
       expect(find.text('✕ OUT'), findsOneWidget);
+      expect(find.byKey(const Key('cut.spectatorHint')), findsOneWidget);
       expect(haptics.played, [HapticToken.heavy]);
       await t.tap(find.byKey(const Key('cut.keepWatching')));
       verify(() => cubit.keepWatchingAsSpectator()).called(1);
@@ -412,6 +421,22 @@ void main() {
       expect(prompt(t), 'If Bo is wrong, buzzing reopens.');
       await t.press(find.byKey(const Key('buzz')));
       verifyNever(() => cubit.buzz());
+    });
+
+    testWidgets('when another finalist misses then the others are told and '
+        'feel it', (t) async {
+      Widget buzzer(RoomState room) => PhoneBuzzer(
+        room: room,
+        me: room.players[1],
+        myChoice: null,
+        buzzing: false,
+      );
+      await pump(t, buzzer(finalRoom()));
+      expect(prompt(t), 'Buzz first when you know the answer.');
+
+      await pump(t, buzzer(finalRoom(lockedOut: true)));
+      expect(prompt(t), 'Ada got it wrong. Buzz now!');
+      expect(haptics.played, contains(HapticToken.medium));
     });
 
     testWidgets('when locked out then the buzzer is locked', (t) async {
