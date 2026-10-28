@@ -11,6 +11,7 @@ import '../data/room_repositories.dart';
 import '../data/seat_repository.dart';
 import 'app_router.dart';
 import 'seat_resume.dart';
+import '../widgets/layout/app_scroll.dart';
 
 /// App root. Takes its repositories from outside, so tests can pass fakes.
 class QuizNightApp extends StatefulWidget {
@@ -86,6 +87,7 @@ class _QuizNightAppState extends State<QuizNightApp> {
           title: 'Quiz Night',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.dark(),
+          scrollBehavior: const AppScrollBehavior(),
           routerConfig: _router,
         ),
       ),

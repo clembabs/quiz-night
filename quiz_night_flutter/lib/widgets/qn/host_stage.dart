@@ -7,6 +7,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../brand/chalk_background.dart';
 import '../brand/crest.dart';
 import 'notices.dart';
+import '../layout/app_scroll.dart';
 
 /// Size of the projector canvas every host screen is designed on.
 const hostCanvas = Size(1920, 1080);
@@ -184,7 +185,7 @@ class HostSplit extends StatelessWidget {
           Expanded(child: second),
         ],
       ),
-      null => SingleChildScrollView(
+      null => AppScroll(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [first, portraitGap, second],

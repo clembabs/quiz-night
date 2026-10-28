@@ -15,6 +15,7 @@ import '../landing/widgets/landing_header.dart';
 import '../landing/widgets/landing_parts.dart';
 import 'host_setup_cubit.dart';
 import 'question_pack_cubit.dart';
+import '../../widgets/layout/app_scroll.dart';
 
 /// Host "New game": form, with summary + CREATE ROOM beside it (or below).
 class HostSetupScreen extends StatelessWidget {
@@ -114,7 +115,7 @@ class HostSetupScreen extends StatelessWidget {
     final gutter = AppWebLayout.gutter(MediaQuery.sizeOf(context).width);
     return Stack(
       children: [
-        SingleChildScrollView(
+        AppScroll(
           key: const Key('setup.scroll'),
           child: LandingSection(
             top: _pageTop,
@@ -148,7 +149,7 @@ class HostSetupScreen extends StatelessWidget {
                           const _Label('Summary'),
                           const SizedBox(height: 20),
                           Flexible(
-                            child: SingleChildScrollView(
+                            child: AppScroll(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: summary,
@@ -171,31 +172,30 @@ class HostSetupScreen extends StatelessWidget {
   }
 
   /// One column, the summary after the form.
-  Widget _narrow(HostSetupState state, List<Widget> summary) =>
-      SingleChildScrollView(
-        key: const Key('setup.scroll'),
-        child: LandingSection(
-          top: 28,
-          bottom: 40,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Form(state: state),
-              const SizedBox(height: 32),
-              LandingCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _Label('Summary'),
-                    const SizedBox(height: 20),
-                    ...summary,
-                  ],
-                ),
-              ),
-            ],
+  Widget _narrow(HostSetupState state, List<Widget> summary) => AppScroll(
+    key: const Key('setup.scroll'),
+    child: LandingSection(
+      top: 28,
+      bottom: 40,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _Form(state: state),
+          const SizedBox(height: 32),
+          LandingCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _Label('Summary'),
+                const SizedBox(height: 20),
+                ...summary,
+              ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   /// CREATE ROOM along the bottom of a phone, always in reach.
   Widget _bottomBar(BuildContext context, Widget create) {
