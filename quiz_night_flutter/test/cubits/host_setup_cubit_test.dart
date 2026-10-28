@@ -102,6 +102,7 @@ void main() {
     test('when summarising the defaults then each choice is explained', () {
       final c = HostSetupCubit(lobby, seats);
       expect(c.summary.map((i) => i.title), [
+        'Everyone in the room',
         'Bottom 30%',
         '5 questions a round, 20s each',
         'Top 3 go to the buzzer final',
@@ -115,8 +116,25 @@ void main() {
       final c = HostSetupCubit(lobby, seats)
         ..setRule(EliminationRule.autoScaled)
         ..setFinalists(4);
-      expect(c.summary.first.detail, contains('4 finalists in 3 rounds'));
-      expect(c.summary[2].title, 'Top 4 go to the buzzer final');
+      expect(c.summary[1].detail, contains('4 finalists in 3 rounds'));
+      expect(c.summary[3].title, 'Top 4 go to the buzzer final');
+      c.close();
+    });
+
+    test('when remote is picked then phones always get the question and the '
+        'summary says how it works', () {
+      final c = HostSetupCubit(lobby, seats)
+        ..setShowQuestionOnPhones(false)
+        ..setRemote(true);
+      final config = c.state.toConfig();
+      expect(config.remote, isTrue);
+      expect(config.showQuestionOnPhones, isTrue);
+      expect(c.summary.first.title, 'Remote game');
+      // The phones switch is moot remotely, so it leaves the summary.
+      expect(
+        c.summary.map((i) => i.title),
+        isNot(contains('Question on the big screen only')),
+      );
       c.close();
     });
   });
