@@ -36,6 +36,7 @@ abstract class Room
     required this.finalQuestionCount,
     required this.timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     this.startingPlayerCount,
@@ -54,6 +55,7 @@ abstract class Room
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
        showQuestionOnPhones = showQuestionOnPhones ?? true,
+       remote = remote ?? false,
        wildcardUsed = wildcardUsed ?? false,
        locked = locked ?? false,
        lastCutRound = lastCutRound ?? 0,
@@ -77,6 +79,7 @@ abstract class Room
     required int finalQuestionCount,
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -123,6 +126,9 @@ abstract class Room
           : _isc.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      remote: jsonSerialization['remote'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['remote']),
       wildcardUsed: jsonSerialization['wildcardUsed'] == null
           ? null
           : _isc.BoolJsonExtension.fromJson(jsonSerialization['wildcardUsed']),
@@ -202,6 +208,9 @@ abstract class Room
 
   bool showQuestionOnPhones;
 
+  /// Players join from wherever they are; phones show the whole game.
+  bool remote;
+
   bool wildcardUsed;
 
   /// Host has closed the room to new players.
@@ -255,6 +264,7 @@ abstract class Room
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -289,6 +299,7 @@ abstract class Room
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       'wildcardUsed': wildcardUsed,
       'locked': locked,
       if (startingPlayerCount != null)
@@ -327,6 +338,7 @@ abstract class Room
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       'wildcardUsed': wildcardUsed,
       'locked': locked,
       if (startingPlayerCount != null)
@@ -372,6 +384,7 @@ class _RoomImpl extends Room {
     required int finalQuestionCount,
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -402,6 +415,7 @@ class _RoomImpl extends Room {
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
+         remote: remote,
          wildcardUsed: wildcardUsed,
          locked: locked,
          startingPlayerCount: startingPlayerCount,
@@ -438,6 +452,7 @@ class _RoomImpl extends Room {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     Object? startingPlayerCount = _Undefined,
@@ -471,6 +486,7 @@ class _RoomImpl extends Room {
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      remote: remote ?? this.remote,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
       locked: locked ?? this.locked,
       startingPlayerCount: startingPlayerCount is int?

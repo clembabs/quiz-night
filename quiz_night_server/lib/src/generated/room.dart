@@ -36,6 +36,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required this.finalQuestionCount,
     required this.timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     this.startingPlayerCount,
@@ -54,6 +55,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
        currentRound = currentRound ?? 0,
        currentQuestionIndex = currentQuestionIndex ?? 0,
        showQuestionOnPhones = showQuestionOnPhones ?? true,
+       remote = remote ?? false,
        wildcardUsed = wildcardUsed ?? false,
        locked = locked ?? false,
        lastCutRound = lastCutRound ?? 0,
@@ -78,6 +80,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required int finalQuestionCount,
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -125,6 +128,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      remote: jsonSerialization['remote'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['remote']),
       wildcardUsed: jsonSerialization['wildcardUsed'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['wildcardUsed']),
@@ -208,6 +214,9 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
 
   bool showQuestionOnPhones;
 
+  /// Players join from wherever they are; phones show the whole game.
+  bool remote;
+
   bool wildcardUsed;
 
   /// Host has closed the room to new players.
@@ -265,6 +274,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -300,6 +310,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       'wildcardUsed': wildcardUsed,
       'locked': locked,
       if (startingPlayerCount != null)
@@ -338,6 +349,7 @@ abstract class Room implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       'wildcardUsed': wildcardUsed,
       'locked': locked,
       if (startingPlayerCount != null)
@@ -406,6 +418,7 @@ class _RoomImpl extends Room {
     required int finalQuestionCount,
     required int timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     int? startingPlayerCount,
@@ -437,6 +450,7 @@ class _RoomImpl extends Room {
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
+         remote: remote,
          wildcardUsed: wildcardUsed,
          locked: locked,
          startingPlayerCount: startingPlayerCount,
@@ -474,6 +488,7 @@ class _RoomImpl extends Room {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     bool? wildcardUsed,
     bool? locked,
     Object? startingPlayerCount = _Undefined,
@@ -508,6 +523,7 @@ class _RoomImpl extends Room {
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      remote: remote ?? this.remote,
       wildcardUsed: wildcardUsed ?? this.wildcardUsed,
       locked: locked ?? this.locked,
       startingPlayerCount: startingPlayerCount is int?
@@ -622,6 +638,11 @@ class RoomUpdateTable extends _is.UpdateTable<RoomTable> {
         table.showQuestionOnPhones,
         value,
       );
+
+  _is.ColumnValue<bool, bool> remote(bool value) => _is.ColumnValue(
+    table.remote,
+    value,
+  );
 
   _is.ColumnValue<bool, bool> wildcardUsed(bool value) => _is.ColumnValue(
     table.wildcardUsed,
@@ -772,6 +793,11 @@ class RoomTable extends _is.Table<int?> {
       this,
       hasDefault: true,
     );
+    remote = _is.ColumnBool(
+      'remote',
+      this,
+      hasDefault: true,
+    );
     wildcardUsed = _is.ColumnBool(
       'wildcardUsed',
       this,
@@ -870,6 +896,9 @@ class RoomTable extends _is.Table<int?> {
 
   late final _is.ColumnBool showQuestionOnPhones;
 
+  /// Players join from wherever they are; phones show the whole game.
+  late final _is.ColumnBool remote;
+
   late final _is.ColumnBool wildcardUsed;
 
   /// Host has closed the room to new players.
@@ -922,6 +951,7 @@ class RoomTable extends _is.Table<int?> {
     finalQuestionCount,
     timeLimitSeconds,
     showQuestionOnPhones,
+    remote,
     wildcardUsed,
     locked,
     startingPlayerCount,

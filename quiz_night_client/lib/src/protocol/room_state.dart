@@ -43,9 +43,11 @@ abstract class RoomState
     this.buzzerHolderId,
     this.buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     this.projectedSurvivors,
   }) : locked = locked ?? false,
-       showQuestionOnPhones = showQuestionOnPhones ?? true;
+       showQuestionOnPhones = showQuestionOnPhones ?? true,
+       remote = remote ?? false;
 
   factory RoomState({
     required String code,
@@ -68,6 +70,7 @@ abstract class RoomState
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   }) = _RoomStateImpl;
 
@@ -129,6 +132,9 @@ abstract class RoomState
           : _isc.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      remote: jsonSerialization['remote'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['remote']),
       projectedSurvivors: jsonSerialization['projectedSurvivors'] as int?,
     );
   }
@@ -178,6 +184,9 @@ abstract class RoomState
   /// Whether phones show the question text (host setting).
   bool showQuestionOnPhones;
 
+  /// Remote game: phones run the reveals and the cut themselves.
+  bool remote;
+
   /// Danger line: survivors if the round ended now; null with no round cut.
   int? projectedSurvivors;
 
@@ -205,6 +214,7 @@ abstract class RoomState
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   });
   @override
@@ -231,6 +241,7 @@ abstract class RoomState
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
@@ -260,6 +271,7 @@ abstract class RoomState
       if (buzzerHolderId != null) 'buzzerHolderId': buzzerHolderId,
       if (buzzWinnerId != null) 'buzzWinnerId': buzzWinnerId,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (projectedSurvivors != null) 'projectedSurvivors': projectedSurvivors,
     };
   }
@@ -294,6 +306,7 @@ class _RoomStateImpl extends RoomState {
     int? buzzerHolderId,
     int? buzzWinnerId,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? projectedSurvivors,
   }) : super._(
          code: code,
@@ -316,6 +329,7 @@ class _RoomStateImpl extends RoomState {
          buzzerHolderId: buzzerHolderId,
          buzzWinnerId: buzzWinnerId,
          showQuestionOnPhones: showQuestionOnPhones,
+         remote: remote,
          projectedSurvivors: projectedSurvivors,
        );
 
@@ -344,6 +358,7 @@ class _RoomStateImpl extends RoomState {
     Object? buzzerHolderId = _Undefined,
     Object? buzzWinnerId = _Undefined,
     bool? showQuestionOnPhones,
+    bool? remote,
     Object? projectedSurvivors = _Undefined,
   }) {
     return RoomState(
@@ -379,6 +394,7 @@ class _RoomStateImpl extends RoomState {
           : this.buzzerHolderId,
       buzzWinnerId: buzzWinnerId is int? ? buzzWinnerId : this.buzzWinnerId,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      remote: remote ?? this.remote,
       projectedSurvivors: projectedSurvivors is int?
           ? projectedSurvivors
           : this.projectedSurvivors,

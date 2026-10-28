@@ -29,6 +29,9 @@ class HostSetupState extends Equatable {
 
   /// Whether phones show the question text, or only the projector.
   final bool showQuestionOnPhones;
+
+  /// Players are not in one room (a call): their screens show everything.
+  final bool remote;
   final bool submitting;
   final String? error;
 
@@ -42,6 +45,7 @@ class HostSetupState extends Equatable {
     this.roundsBeforeFinal = 3,
     this.secondsPerQuestion = 20,
     this.showQuestionOnPhones = true,
+    this.remote = false,
     this.submitting = false,
     this.error,
     this.seat,
@@ -54,6 +58,7 @@ class HostSetupState extends Equatable {
     int? roundsBeforeFinal,
     int? secondsPerQuestion,
     bool? showQuestionOnPhones,
+    bool? remote,
   }) => HostSetupState(
     rule: rule ?? this.rule,
     questionsPerRound: questionsPerRound ?? this.questionsPerRound,
@@ -61,6 +66,7 @@ class HostSetupState extends Equatable {
     roundsBeforeFinal: roundsBeforeFinal ?? this.roundsBeforeFinal,
     secondsPerQuestion: secondsPerQuestion ?? this.secondsPerQuestion,
     showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+    remote: remote ?? this.remote,
   );
 
   HostSetupState withStatus({
@@ -74,6 +80,7 @@ class HostSetupState extends Equatable {
     roundsBeforeFinal: roundsBeforeFinal,
     secondsPerQuestion: secondsPerQuestion,
     showQuestionOnPhones: showQuestionOnPhones,
+    remote: remote,
     submitting: submitting,
     error: error,
     seat: seat,
@@ -87,7 +94,8 @@ class HostSetupState extends Equatable {
     finalistTarget: finalists,
     roundsBeforeFinal: roundsBeforeFinal,
     timeLimitSeconds: secondsPerQuestion,
-    showQuestionOnPhones: showQuestionOnPhones,
+    showQuestionOnPhones: remote || showQuestionOnPhones,
+    remote: remote,
   );
 
   @override
@@ -98,6 +106,7 @@ class HostSetupState extends Equatable {
     roundsBeforeFinal,
     secondsPerQuestion,
     showQuestionOnPhones,
+    remote,
     submitting,
     error,
     seat,
@@ -146,11 +155,24 @@ class HostSetupCubit extends Cubit<HostSetupState> {
   void setShowQuestionOnPhones(bool show) =>
       emit(state.copyWith(showQuestionOnPhones: show));
 
+  void setRemote(bool remote) => emit(state.copyWith(remote: remote));
+
   /// What each choice means for the game, for the summary panel.
   List<SummaryItem> get summary {
     final s = state;
     final finalQuestions = s.toConfig().finalQuestionCount;
     return [
+      s.remote
+          ? const SummaryItem(
+              'Remote game',
+              'Players join from anywhere with the link. Every phone shows '
+                  'the questions, the cut and the podium; sharing your '
+                  'screen is optional.',
+            )
+          : const SummaryItem(
+              'Everyone in the room',
+              'Questions and the cut play on your big screen; phones answer.',
+            ),
       switch (s.rule) {
         EliminationRule.bottomPercent => const SummaryItem(
           'Bottom 30%',
@@ -177,15 +199,16 @@ class HostSetupCubit extends Cubit<HostSetupState> {
         '$finalQuestions questions. First to buzz answers; a wrong answer '
             'locks them out.',
       ),
-      s.showQuestionOnPhones
-          ? const SummaryItem(
-              'Question on phones',
-              'Phones show the question and the options too.',
-            )
-          : const SummaryItem(
-              'Question on the big screen only',
-              'Phones show just the answer buttons, so everyone looks up.',
-            ),
+      if (!s.remote)
+        s.showQuestionOnPhones
+            ? const SummaryItem(
+                'Question on phones',
+                'Phones show the question and the options too.',
+              )
+            : const SummaryItem(
+                'Question on the big screen only',
+                'Phones show just the answer buttons, so everyone looks up.',
+              ),
       const SummaryItem(
         'Knocked out? Keep playing',
         'They answer for a shadow score and back a finalist.',

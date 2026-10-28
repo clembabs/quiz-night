@@ -26,5 +26,7 @@ fields:
   buzzWinnerId: int?
   ### Whether phones show the question text (host setting).
   showQuestionOnPhones: bool, default=true
+  ### Remote game: phones run the reveals and the cut themselves.
+  remote: bool, default=false
   ### Danger line: survivors if the round ended now; null with no round cut.
   projectedSurvivors: int?
