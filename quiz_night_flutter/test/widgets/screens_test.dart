@@ -100,6 +100,31 @@ void main() {
       expect(code.controller!.text, '4821');
     });
 
+    testWidgets('when typing the nickname with the keyboard up then JOIN GAME '
+        'is scrolled into view', (tester) async {
+      // A 390-wide phone with the keyboard taking half the screen.
+      tester.view.physicalSize = const Size(390, 420);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      when(() => seats.load()).thenAnswer((_) async => null);
+      await tester.pumpWidget(
+        QuizNightApp(
+          lobby: lobby,
+          game: game,
+          seats: seats,
+          initialLocation: '/join?code=4821',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('join.nickname')));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      final join = tester.getRect(find.byKey(const Key('join.submit')));
+      expect(join.bottom, lessThanOrEqualTo(420));
+      expect(join.top, greaterThanOrEqualTo(0));
+    });
+
     testWidgets('when joining fails then the error shows under the field '
         'and as a toast', (tester) async {
       when(() => seats.load()).thenAnswer((_) async => null);

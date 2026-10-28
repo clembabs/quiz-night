@@ -132,8 +132,11 @@ class ResultCard extends StatelessWidget {
                                     : 'Survived ${r.roundsSurvived} rounds',
                               ),
                               _Stat('${formatScore(r.points)} pts'),
-                              if (r.finalist)
-                                const _Stat('★ Buzzer finalist', good: true),
+                              if (r.finalPoints case final f?)
+                                _Stat(
+                                  '★ Final: ${formatScore(f)} pts',
+                                  good: true,
+                                ),
                               if (r.backedWinner case final backed?)
                                 _Stat(
                                   backed
