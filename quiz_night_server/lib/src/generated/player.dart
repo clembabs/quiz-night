@@ -27,6 +27,7 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
     this.eliminatedInRound,
     this.backedPlayerId,
     this.exitLine,
+    this.leftAt,
     DateTime? joinedAt,
   }) : score = score ?? 0,
        shadowScore = shadowScore ?? 0,
@@ -48,6 +49,7 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   }) = _PlayerImpl;
 
@@ -69,6 +71,9 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
       eliminatedInRound: jsonSerialization['eliminatedInRound'] as int?,
       backedPlayerId: jsonSerialization['backedPlayerId'] as int?,
       exitLine: jsonSerialization['exitLine'] as String?,
+      leftAt: jsonSerialization['leftAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(jsonSerialization['leftAt']),
       joinedAt: jsonSerialization['joinedAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(jsonSerialization['joinedAt']),
@@ -105,6 +110,9 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
   /// The host's line when this player was cut (AI-written or built-in).
   String? exitLine;
 
+  /// When they tapped Leave; null while in the game. Rejoining clears it.
+  DateTime? leftAt;
+
   DateTime joinedAt;
 
   @override
@@ -126,6 +134,7 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   });
   @override
@@ -144,6 +153,7 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
       if (exitLine != null) 'exitLine': exitLine,
+      if (leftAt != null) 'leftAt': leftAt?.toJson(),
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -163,6 +173,7 @@ abstract class Player implements _is.TableRow<int?>, _is.ProtocolSerialization {
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
       if (exitLine != null) 'exitLine': exitLine,
+      if (leftAt != null) 'leftAt': leftAt?.toJson(),
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -211,6 +222,7 @@ class _PlayerImpl extends Player {
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   }) : super._(
          id: id,
@@ -225,6 +237,7 @@ class _PlayerImpl extends Player {
          eliminatedInRound: eliminatedInRound,
          backedPlayerId: backedPlayerId,
          exitLine: exitLine,
+         leftAt: leftAt,
          joinedAt: joinedAt,
        );
 
@@ -245,6 +258,7 @@ class _PlayerImpl extends Player {
     Object? eliminatedInRound = _Undefined,
     Object? backedPlayerId = _Undefined,
     Object? exitLine = _Undefined,
+    Object? leftAt = _Undefined,
     DateTime? joinedAt,
   }) {
     return Player(
@@ -264,6 +278,7 @@ class _PlayerImpl extends Player {
           ? backedPlayerId
           : this.backedPlayerId,
       exitLine: exitLine is String? ? exitLine : this.exitLine,
+      leftAt: leftAt is DateTime? ? leftAt : this.leftAt,
       joinedAt: joinedAt ?? this.joinedAt,
     );
   }
@@ -329,6 +344,12 @@ class PlayerUpdateTable extends _is.UpdateTable<PlayerTable> {
     value,
   );
 
+  _is.ColumnValue<DateTime, DateTime> leftAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.leftAt,
+        value,
+      );
+
   _is.ColumnValue<DateTime, DateTime> joinedAt(DateTime value) =>
       _is.ColumnValue(
         table.joinedAt,
@@ -389,6 +410,10 @@ class PlayerTable extends _is.Table<int?> {
       'exitLine',
       this,
     );
+    leftAt = _is.ColumnDateTime(
+      'leftAt',
+      this,
+    );
     joinedAt = _is.ColumnDateTime(
       'joinedAt',
       this,
@@ -421,6 +446,9 @@ class PlayerTable extends _is.Table<int?> {
   /// The host's line when this player was cut (AI-written or built-in).
   late final _is.ColumnString exitLine;
 
+  /// When they tapped Leave; null while in the game. Rejoining clears it.
+  late final _is.ColumnDateTime leftAt;
+
   late final _is.ColumnDateTime joinedAt;
 
   @override
@@ -437,6 +465,7 @@ class PlayerTable extends _is.Table<int?> {
     eliminatedInRound,
     backedPlayerId,
     exitLine,
+    leftAt,
     joinedAt,
   ];
 }

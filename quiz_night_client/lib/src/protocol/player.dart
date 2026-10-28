@@ -27,6 +27,7 @@ abstract class Player
     this.eliminatedInRound,
     this.backedPlayerId,
     this.exitLine,
+    this.leftAt,
     DateTime? joinedAt,
   }) : score = score ?? 0,
        shadowScore = shadowScore ?? 0,
@@ -47,6 +48,7 @@ abstract class Player
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   }) = _PlayerImpl;
 
@@ -67,6 +69,9 @@ abstract class Player
       eliminatedInRound: jsonSerialization['eliminatedInRound'] as int?,
       backedPlayerId: jsonSerialization['backedPlayerId'] as int?,
       exitLine: jsonSerialization['exitLine'] as String?,
+      leftAt: jsonSerialization['leftAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['leftAt']),
       joinedAt: jsonSerialization['joinedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['joinedAt']),
@@ -99,6 +104,9 @@ abstract class Player
   /// The host's line when this player was cut (AI-written or built-in).
   String? exitLine;
 
+  /// When they tapped Leave; null while in the game. Rejoining clears it.
+  DateTime? leftAt;
+
   DateTime joinedAt;
 
   /// Returns a shallow copy of this [Player]
@@ -116,6 +124,7 @@ abstract class Player
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   });
   @override
@@ -133,6 +142,7 @@ abstract class Player
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
       if (exitLine != null) 'exitLine': exitLine,
+      if (leftAt != null) 'leftAt': leftAt?.toJson(),
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -152,6 +162,7 @@ abstract class Player
       if (eliminatedInRound != null) 'eliminatedInRound': eliminatedInRound,
       if (backedPlayerId != null) 'backedPlayerId': backedPlayerId,
       if (exitLine != null) 'exitLine': exitLine,
+      if (leftAt != null) 'leftAt': leftAt?.toJson(),
       'joinedAt': joinedAt.toJson(),
     };
   }
@@ -177,6 +188,7 @@ class _PlayerImpl extends Player {
     int? eliminatedInRound,
     int? backedPlayerId,
     String? exitLine,
+    DateTime? leftAt,
     DateTime? joinedAt,
   }) : super._(
          id: id,
@@ -190,6 +202,7 @@ class _PlayerImpl extends Player {
          eliminatedInRound: eliminatedInRound,
          backedPlayerId: backedPlayerId,
          exitLine: exitLine,
+         leftAt: leftAt,
          joinedAt: joinedAt,
        );
 
@@ -209,6 +222,7 @@ class _PlayerImpl extends Player {
     Object? eliminatedInRound = _Undefined,
     Object? backedPlayerId = _Undefined,
     Object? exitLine = _Undefined,
+    Object? leftAt = _Undefined,
     DateTime? joinedAt,
   }) {
     return Player(
@@ -227,6 +241,7 @@ class _PlayerImpl extends Player {
           ? backedPlayerId
           : this.backedPlayerId,
       exitLine: exitLine is String? ? exitLine : this.exitLine,
+      leftAt: leftAt is DateTime? ? leftAt : this.leftAt,
       joinedAt: joinedAt ?? this.joinedAt,
     );
   }

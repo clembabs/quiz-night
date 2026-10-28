@@ -369,6 +369,31 @@ class Endpoints extends _is.EndpointDispatch {
                 params['playerToken'],
               ),
         ),
+        'leaveRoom': _is.MethodConnector(
+          name: 'leaveRoom',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'playerToken': _is.ParameterDescription(
+              name: 'playerToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['room'] as _io7erjyw.RoomEndpoint).leaveRoom(
+                    session,
+                    params['code'],
+                    params['playerToken'],
+                  ),
+        ),
         'startGame': _is.MethodConnector(
           name: 'startGame',
           params: {

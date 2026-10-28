@@ -234,6 +234,19 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
+  /// The player tapped Leave.
+  _ida.Future<void> leaveRoom(
+    String code,
+    String playerToken,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'leaveRoom',
+    {
+      'code': code,
+      'playerToken': playerToken,
+    },
+  );
+
   _ida.Future<void> startGame(
     String code,
     String hostToken,

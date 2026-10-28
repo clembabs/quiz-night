@@ -258,11 +258,41 @@ class RoomService {
     if (player.roomId != room.id) {
       throw _error(QuizErrorCode.playerNotFound, 'Player not in this room');
     }
+    if (player.leftAt != null) {
+      // Back after tapping Leave: in the game again.
+      await Player.db.updateRow(
+        session,
+        player.copyWith(leftAt: null),
+        columns: (t) => [t.leftAt],
+      );
+      await _broadcast(session, room.id!);
+    }
     return JoinResult(
       roomCode: room.code,
       playerId: player.id!,
       playerToken: playerToken,
     );
+  }
+
+  /// A player tapped Leave: they stop counting as someone to wait for.
+  static Future<void> leaveRoom(
+    Session session,
+    String code,
+    String playerToken,
+  ) async {
+    final room = await _roomByCode(session, code);
+    final player = await _playerByToken(session, playerToken);
+    if (player.roomId != room.id || player.leftAt != null) return;
+    await Player.db.updateRow(
+      session,
+      player.copyWith(leftAt: DateTime.now().toUtc()),
+      columns: (t) => [t.leftAt],
+    );
+    await _broadcast(session, room.id!);
+    // They may have been the last answer the question waited for.
+    if (room.status == RoomStatus.question && room.currentQuestionId != null) {
+      await _revealIfAllAnswered(session, room.id!, room.currentQuestionId!);
+    }
   }
 
   // ------------------------------------------------------------ host flow
@@ -1226,16 +1256,23 @@ class RoomService {
     int roomId,
     int questionId,
   ) async {
-    final active = await Player.db.count(
+    // Players who left are not waited for.
+    final playing = await Player.db.find(
       session,
       where: (t) =>
-          t.roomId.equals(roomId) & t.status.equals(PlayerStatus.active),
+          t.roomId.equals(roomId) &
+          t.status.equals(PlayerStatus.active) &
+          t.leftAt.equals(null),
     );
+    if (playing.isEmpty) return false;
     final answered = await Answer.db.count(
       session,
-      where: (t) => t.questionId.equals(questionId) & t.isShadow.equals(false),
+      where: (t) =>
+          t.questionId.equals(questionId) &
+          t.isShadow.equals(false) &
+          t.playerId.inSet(playing.map((p) => p.id!).toSet()),
     );
-    if (answered < active) return false;
+    if (answered < playing.length) return false;
     return _revealIfCurrent(session, roomId, questionId);
   }
 
@@ -1298,6 +1335,7 @@ class RoomService {
               lastPoints: open ? null : answerBy[p.id]?.pointsAwarded,
               lockedOut: lockedOut.contains(p.id),
               exitLine: p.exitLine,
+              left: p.leftAt != null,
             ),
         ]..sort((a, b) {
           final byFinal = b.finalScore.compareTo(a.finalScore);
