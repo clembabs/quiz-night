@@ -13,6 +13,8 @@ fields:
   timeLimitSeconds: int, default=20
   ### Whether players' phones show the question text, or only the projector.
   showQuestionOnPhones: bool, default=true
+  ### Players are not in one room (a call): every screen shows the whole game.
+  remote: bool, default=false
   ### An AI-written pack to play, from generatePack; with its token.
   packId: int?
   packToken: String?

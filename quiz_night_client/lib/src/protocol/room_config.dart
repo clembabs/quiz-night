@@ -27,6 +27,7 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     this.packId,
     this.packToken,
   }) : questionsPerRound = questionsPerRound ?? 5,
@@ -38,7 +39,8 @@ abstract class RoomConfig
        tiebreakMode = tiebreakMode ?? _ixk2jfuv.TiebreakMode.speed,
        finalQuestionCount = finalQuestionCount ?? 5,
        timeLimitSeconds = timeLimitSeconds ?? 20,
-       showQuestionOnPhones = showQuestionOnPhones ?? true;
+       showQuestionOnPhones = showQuestionOnPhones ?? true,
+       remote = remote ?? false;
 
   factory RoomConfig({
     int? questionsPerRound,
@@ -50,6 +52,7 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? packId,
     String? packToken,
   }) = _RoomConfigImpl;
@@ -78,6 +81,9 @@ abstract class RoomConfig
           : _isc.BoolJsonExtension.fromJson(
               jsonSerialization['showQuestionOnPhones'],
             ),
+      remote: jsonSerialization['remote'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['remote']),
       packId: jsonSerialization['packId'] as int?,
       packToken: jsonSerialization['packToken'] as String?,
     );
@@ -104,6 +110,9 @@ abstract class RoomConfig
   /// Whether players' phones show the question text, or only the projector.
   bool showQuestionOnPhones;
 
+  /// Players are not in one room (a call): every screen shows the whole game.
+  bool remote;
+
   /// An AI-written pack to play, from generatePack; with its token.
   int? packId;
 
@@ -122,6 +131,7 @@ abstract class RoomConfig
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? packId,
     String? packToken,
   });
@@ -138,6 +148,7 @@ abstract class RoomConfig
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (packId != null) 'packId': packId,
       if (packToken != null) 'packToken': packToken,
     };
@@ -156,6 +167,7 @@ abstract class RoomConfig
       'finalQuestionCount': finalQuestionCount,
       'timeLimitSeconds': timeLimitSeconds,
       'showQuestionOnPhones': showQuestionOnPhones,
+      'remote': remote,
       if (packId != null) 'packId': packId,
       if (packToken != null) 'packToken': packToken,
     };
@@ -180,6 +192,7 @@ class _RoomConfigImpl extends RoomConfig {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     int? packId,
     String? packToken,
   }) : super._(
@@ -192,6 +205,7 @@ class _RoomConfigImpl extends RoomConfig {
          finalQuestionCount: finalQuestionCount,
          timeLimitSeconds: timeLimitSeconds,
          showQuestionOnPhones: showQuestionOnPhones,
+         remote: remote,
          packId: packId,
          packToken: packToken,
        );
@@ -210,6 +224,7 @@ class _RoomConfigImpl extends RoomConfig {
     int? finalQuestionCount,
     int? timeLimitSeconds,
     bool? showQuestionOnPhones,
+    bool? remote,
     Object? packId = _Undefined,
     Object? packToken = _Undefined,
   }) {
@@ -223,6 +238,7 @@ class _RoomConfigImpl extends RoomConfig {
       finalQuestionCount: finalQuestionCount ?? this.finalQuestionCount,
       timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
+      remote: remote ?? this.remote,
       packId: packId is int? ? packId : this.packId,
       packToken: packToken is String? ? packToken : this.packToken,
     );

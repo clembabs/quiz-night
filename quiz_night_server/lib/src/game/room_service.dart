@@ -137,7 +137,9 @@ class RoomService {
           tiebreakMode: config.tiebreakMode,
           finalQuestionCount: config.finalQuestionCount,
           timeLimitSeconds: config.timeLimitSeconds,
-          showQuestionOnPhones: config.showQuestionOnPhones,
+          // With no shared screen, the phone is where the question is.
+          showQuestionOnPhones: config.remote || config.showQuestionOnPhones,
+          remote: config.remote,
           packId: packId,
         ),
       );
@@ -1360,6 +1362,7 @@ class RoomService {
           : room.startedAt?.add(sessionLength),
       endReason: room.endReason,
       showQuestionOnPhones: room.showQuestionOnPhones,
+      remote: room.remote,
       projectedSurvivors: _projectedSurvivors(room, question, players),
       question: question == null
           ? null

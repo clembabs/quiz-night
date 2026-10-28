@@ -757,6 +757,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'true',
         ),
         _isp.ColumnDefinition(
+          name: 'remote',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
           name: 'wildcardUsed',
           columnType: _isp.ColumnType.boolean,
           isNullable: false,
