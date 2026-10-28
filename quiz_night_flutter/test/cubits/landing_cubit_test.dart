@@ -5,12 +5,24 @@ import 'package:quiz_night_flutter/features/landing/landing_cubit.dart';
 void main() {
   group('Given the landing page', () {
     blocTest<LandingCubit, LandingState>(
-      'when a code with letters and extra digits is typed then only the '
-      'first four digits stay',
+      'when a code is typed in lower case with symbols then capitals and '
+      'letters and digits stay, at most five',
       build: LandingCubit.new,
-      act: (c) => c.setCode('48ab219'),
-      expect: () => [const LandingState(code: '4821')],
+      act: (c) => c
+        ..setCode('k7-qm')
+        ..setCode('k7qm2x9'),
+      expect: () => [
+        const LandingState(code: 'K7QM'),
+        const LandingState(code: 'K7QM2'),
+      ],
       verify: (c) => expect(c.state.codeComplete, isTrue),
+    );
+
+    blocTest<LandingCubit, LandingState>(
+      'when only three characters are typed then the code is not complete',
+      build: LandingCubit.new,
+      act: (c) => c.setCode('K7Q'),
+      verify: (c) => expect(c.state.codeComplete, isFalse),
     );
 
     blocTest<LandingCubit, LandingState>(

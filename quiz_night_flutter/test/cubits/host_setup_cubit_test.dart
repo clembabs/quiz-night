@@ -107,6 +107,7 @@ void main() {
         '5 questions a round, 20s each',
         'Top 3 go to the buzzer final',
         'Question on phones',
+        'Latecomers welcome',
         'Knocked out? Keep playing',
       ]);
       c.close();

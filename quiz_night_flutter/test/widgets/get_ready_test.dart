@@ -7,14 +7,14 @@ void main() {
     testWidgets('when it counts down then 3, 2, 1 cover the question, a tick '
         'each, then the question is free', (t) async {
       var taps = 0, ticks = 0;
-      final startsAt = DateTime.now().toUtc().add(
-        const Duration(milliseconds: 2900),
-      );
+      final start = DateTime.utc(2026, 1, 1, 12);
+      var now = start;
       await t.pumpWidget(
         MaterialApp(
           home: GetReady(
-            startsAt: startsAt,
+            startsAt: start.add(const Duration(milliseconds: 2900)),
             clockOffset: Duration.zero,
+            clock: () => now,
             onTick: () => ticks++,
             child: Center(
               child: TextButton(
@@ -27,20 +27,20 @@ void main() {
       );
       String count() =>
           t.widget<Text>(find.byKey(const Key('getReady.count'))).data!;
+      Future<void> advance(Duration d) async {
+        now = now.add(d);
+        await t.pump(const Duration(milliseconds: 150));
+      }
+
       expect(count(), '3');
       await t.tap(find.text('Mars'), warnIfMissed: false);
       expect(taps, 0, reason: 'nothing can be pressed during the count');
 
-      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
-      await t.pump(const Duration(milliseconds: 150));
+      await advance(const Duration(seconds: 1));
       expect(count(), '2');
-
-      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
-      await t.pump(const Duration(milliseconds: 150));
+      await advance(const Duration(seconds: 1));
       expect(count(), '1');
-
-      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
-      await t.pump(const Duration(milliseconds: 150));
+      await advance(const Duration(seconds: 1));
       await t.pump(const Duration(milliseconds: 500));
       expect(find.byKey(const Key('getReady')), findsNothing);
       expect(ticks, 3);
