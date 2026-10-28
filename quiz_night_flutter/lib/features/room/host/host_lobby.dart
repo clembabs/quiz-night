@@ -12,6 +12,7 @@ import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/player_chip.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
+import '../round_logic.dart';
 
 /// The projector lobby: code + QR on the left, players arriving on the right.
 class HostLobby extends StatelessWidget {
@@ -189,7 +190,18 @@ class HostLobby extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          // The projector has room to explain; a host's phone does not.
+          if (!portrait) ...[
+            const SizedBox(height: 8),
+            Text(
+              howItWorks(room),
+              key: const Key('lobby.howItWorks'),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: AppProjectorText.bodySoft.copyWith(fontSize: 28),
+            ),
+          ],
+          const SizedBox(height: 28),
           if (count == 0)
             Expanded(
               child: Container(

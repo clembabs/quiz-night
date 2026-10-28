@@ -107,6 +107,27 @@ BuzzerSeat buzzerSeatFor(
 String? nicknameOf(RoomState room, int? id) =>
     room.players.where((p) => p.id == id).firstOrNull?.nickname;
 
+/// Finalists locked out of the open final question, by join order.
+List<String> lockedOutNames(RoomState room) => [
+  for (final p in finalistsByJoin(room))
+    if (p.lockedOut) p.nickname,
+];
+
+/// "Ada" / "Ada and Bo" / "Ada, Bo and Cy".
+String namesList(List<String> names) => switch (names) {
+  [] => '',
+  [final one] => one,
+  _ => '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}',
+};
+
+/// "Ada got it wrong and is locked out." for the latest misses, or null.
+String? lockoutLine(RoomState room) {
+  final names = lockedOutNames(room);
+  if (names.isEmpty) return null;
+  final verb = names.length == 1 ? 'is' : 'are';
+  return '${namesList(names)} got it wrong and $verb locked out.';
+}
+
 /// The line under a final question: who is answering, or how it ended.
 String finalStatusLine(RoomState room) {
   if (room.question?.correctIndex != null) {
@@ -114,7 +135,9 @@ String finalStatusLine(RoomState room) {
     return winner == null ? 'Nobody got it' : '$winner got it! +1000';
   }
   final holder = nicknameOf(room, room.buzzerHolderId);
-  return holder == null ? 'Buzz to answer!' : '$holder is answering…';
+  if (holder != null) return '$holder is answering…';
+  final missed = lockoutLine(room);
+  return missed == null ? 'Buzz to answer!' : '$missed Buzz to answer!';
 }
 
 /// A finalist's state on the current final question.

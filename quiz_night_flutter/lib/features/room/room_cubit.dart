@@ -383,6 +383,12 @@ class RoomCubit extends Cubit<RoomViewState> {
   // ---- seat
 
   Future<void> leave() async {
+    // Best effort: offline, the game simply stops hearing from them.
+    if (!state.seat.isHost) {
+      try {
+        await _game.leaveRoom(state.seat);
+      } catch (_) {}
+    }
     await _seats.clear();
     emit(state.copyWith(left: true));
   }
