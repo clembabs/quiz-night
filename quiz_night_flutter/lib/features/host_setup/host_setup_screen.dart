@@ -389,6 +389,11 @@ class _Form extends StatelessWidget {
                 selected: state.secondsPerQuestion,
                 onPick: cubit.setSecondsPerQuestion,
               ),
+              _Toggle(
+                label: 'Lock when it starts',
+                value: state.lockOnStart,
+                onChanged: cubit.setLockOnStart,
+              ),
               // Remote games always show it: there may be no big screen.
               if (!state.remote)
                 _Toggle(

@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../../../widgets/qn/host_stage.dart';
 import '../round/host_step_button.dart';
+import 'remove_player.dart';
 import '../round_logic.dart';
 import '../standings_logic.dart';
 
@@ -77,6 +78,7 @@ class HostStandings extends StatelessWidget {
               score: rows[i].score,
               move: rankMoves[rows[i].id],
               belowLine: ranks[rows[i].id]! > line,
+              onRemove: () => confirmRemovePlayer(context, rows[i]),
             ),
           ),
           SizedBox(height: 10 * rowScale),

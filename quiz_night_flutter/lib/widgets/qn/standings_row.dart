@@ -25,6 +25,9 @@ class StandingsRow extends StatelessWidget {
   final bool isYou;
   final double scale;
 
+  /// Host only: a small ✕ to remove this player.
+  final VoidCallback? onRemove;
+
   const StandingsRow({
     super.key,
     required this.rank,
@@ -34,6 +37,7 @@ class StandingsRow extends StatelessWidget {
     this.belowLine = false,
     this.isYou = false,
     this.scale = 1,
+    this.onRemove,
   });
 
   @override
@@ -111,6 +115,27 @@ class StandingsRow extends StatelessWidget {
               ),
             ),
           ),
+          if (onRemove != null)
+            Semantics(
+              button: true,
+              label: 'Remove $nickname',
+              excludeSemantics: true,
+              child: InkResponse(
+                key: Key('standings.remove.$nickname'),
+                onTap: onRemove,
+                radius: 28 * s,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16 * s),
+                  child: Text(
+                    '✕',
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 26 * s,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
