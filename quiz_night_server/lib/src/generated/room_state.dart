@@ -36,6 +36,7 @@ abstract class RoomState
     this.sessionEndsAt,
     this.endReason,
     this.question,
+    this.questionStartsAt,
     this.questionEndsAt,
     required this.serverTime,
     required this.players,
@@ -63,6 +64,7 @@ abstract class RoomState
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     required DateTime serverTime,
     required List<_ijz1mobl.PlayerView> players,
@@ -108,6 +110,11 @@ abstract class RoomState
           ? null
           : _izn0xfae.Protocol().deserialize<_irhyxwad.QuestionView>(
               jsonSerialization['question'],
+            ),
+      questionStartsAt: jsonSerialization['questionStartsAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['questionStartsAt'],
             ),
       questionEndsAt: jsonSerialization['questionEndsAt'] == null
           ? null
@@ -168,6 +175,9 @@ abstract class RoomState
 
   _irhyxwad.QuestionView? question;
 
+  /// When answers open (after the 3-2-1); null when no question is open.
+  DateTime? questionStartsAt;
+
   DateTime? questionEndsAt;
 
   DateTime serverTime;
@@ -207,6 +217,7 @@ abstract class RoomState
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     DateTime? serverTime,
     List<_ijz1mobl.PlayerView>? players,
@@ -234,6 +245,8 @@ abstract class RoomState
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJson(),
+      if (questionStartsAt != null)
+        'questionStartsAt': questionStartsAt?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
       'players': players.toJson(valueToJson: (v) => v.toJson()),
@@ -263,6 +276,8 @@ abstract class RoomState
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (question != null) 'question': question?.toJsonForProtocol(),
+      if (questionStartsAt != null)
+        'questionStartsAt': questionStartsAt?.toJson(),
       if (questionEndsAt != null) 'questionEndsAt': questionEndsAt?.toJson(),
       'serverTime': serverTime.toJson(),
       'players': players.toJson(valueToJson: (v) => v.toJsonForProtocol()),
@@ -299,6 +314,7 @@ class _RoomStateImpl extends RoomState {
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
     _irhyxwad.QuestionView? question,
+    DateTime? questionStartsAt,
     DateTime? questionEndsAt,
     required DateTime serverTime,
     required List<_ijz1mobl.PlayerView> players,
@@ -322,6 +338,7 @@ class _RoomStateImpl extends RoomState {
          sessionEndsAt: sessionEndsAt,
          endReason: endReason,
          question: question,
+         questionStartsAt: questionStartsAt,
          questionEndsAt: questionEndsAt,
          serverTime: serverTime,
          players: players,
@@ -351,6 +368,7 @@ class _RoomStateImpl extends RoomState {
     Object? sessionEndsAt = _Undefined,
     Object? endReason = _Undefined,
     Object? question = _Undefined,
+    Object? questionStartsAt = _Undefined,
     Object? questionEndsAt = _Undefined,
     DateTime? serverTime,
     List<_ijz1mobl.PlayerView>? players,
@@ -381,6 +399,9 @@ class _RoomStateImpl extends RoomState {
       question: question is _irhyxwad.QuestionView?
           ? question
           : this.question?.copyWith(),
+      questionStartsAt: questionStartsAt is DateTime?
+          ? questionStartsAt
+          : this.questionStartsAt,
       questionEndsAt: questionEndsAt is DateTime?
           ? questionEndsAt
           : this.questionEndsAt,
