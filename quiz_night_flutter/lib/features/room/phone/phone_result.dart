@@ -185,6 +185,76 @@ class _PhoneResultState extends State<PhoneResult> {
             const SizedBox(height: 12),
             DangerIndicator(status: danger),
           ],
+          // No shared leaderboard on a call: the top of it comes here.
+          if (room.remote) ...[
+            const SizedBox(height: 12),
+            TopThree(room: room, meId: me?.id),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The top three right now, for remote games with no big screen.
+class TopThree extends StatelessWidget {
+  final RoomState room;
+  final int? meId;
+
+  const TopThree({super.key, required this.room, this.meId});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = leaderboard(room).take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    return Container(
+      key: const Key('result.topThree'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'TOP 3',
+            style: AppTextStyles.label.copyWith(
+              color: AppColors.muted,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 6),
+          for (final (i, p) in top.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      '${i + 1}',
+                      style: AppTextStyles.numeric.copyWith(fontSize: 18),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      p.id == meId ? '${p.nickname} (you)' : p.nickname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.chip.copyWith(
+                        fontSize: 15,
+                        color: p.id == meId ? AppColors.gold : null,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    formatScore(p.score),
+                    style: AppTextStyles.numeric.copyWith(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

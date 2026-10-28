@@ -153,6 +153,11 @@ class PhonePlacement extends StatelessWidget {
                             style: AppTextStyles.bodySoft,
                           ),
                         ),
+                        // No podium on a shared screen: the top three here.
+                        if (room.remote) ...[
+                          const SizedBox(height: 20),
+                          _FinalTop(room: room, meId: me.id),
+                        ],
                       ],
                     ),
                   ),
@@ -181,6 +186,64 @@ class PhonePlacement extends StatelessWidget {
               child: const Text('Done'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The final's top three with their final points, for remote games.
+class _FinalTop extends StatelessWidget {
+  final RoomState room;
+  final int meId;
+
+  const _FinalTop({required this.room, required this.meId});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = finalStandings(room).take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    const medals = ['1st', '2nd', '3rd'];
+    return Container(
+      key: const Key('placement.finalTop'),
+      width: 300,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          for (final (i, p) in top.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 44,
+                    child: Text(
+                      medals[i],
+                      style: AppTextStyles.numeric.copyWith(
+                        fontSize: 18,
+                        color: i == 0 ? AppColors.gold : null,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      p.id == meId ? '${p.nickname} (you)' : p.nickname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.chip.copyWith(fontSize: 16),
+                    ),
+                  ),
+                  Text(
+                    formatScore(p.finalScore),
+                    style: AppTextStyles.numeric.copyWith(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

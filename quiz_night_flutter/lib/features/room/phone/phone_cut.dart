@@ -14,6 +14,7 @@ import '../../../widgets/qn/loaders.dart';
 import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../cut_reveal/cut_reveal_scope.dart';
+import '../host/host_cut.dart' show CutSounds;
 import '../cut_reveal/reveal_sequence_cubit.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
@@ -69,8 +70,19 @@ class PhoneCut extends StatelessWidget {
           fateKnown: known,
           keepWatching: keepWatching,
         );
+        final ids = event?.eliminatedPlayerIds ?? const <int>[];
         final Widget body;
-        if (!known) {
+        if (room.remote &&
+            !seq.isDone &&
+            (!known || outcome == CutOutcome.alreadyOut)) {
+          // No big screen to watch: the phone runs the reveal itself.
+          body = CutSounds(
+            sequence: seq,
+            anyoneOut: ids.isNotEmpty,
+            finalists: event?.finalistsDecided ?? false,
+            child: _RemoteReveal(room: room, sequence: seq),
+          );
+        } else if (!known) {
           body = _Suspense(sequence: seq);
         } else if (outcome == CutOutcome.survived ||
             outcome == CutOutcome.finalist) {
@@ -143,6 +155,122 @@ class _FateHapticState extends State<_FateHaptic> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// The cut on a remote player's phone: names drop one at a time, each
+/// stamped OUT with the host's line, the rest still hidden.
+class _RemoteReveal extends StatelessWidget {
+  final RoomState room;
+  final RevealSequenceState sequence;
+
+  const _RemoteReveal({required this.room, required this.sequence});
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = room.lastElimination?.eliminatedPlayerIds ?? const <int>[];
+    final byId = {for (final p in room.players) p.id: p};
+    final title = switch (sequence) {
+      _ when ids.isEmpty => 'IS ANYONE GOING HOME?',
+      RevealSequenceState(waitingForLast: true) => 'AND THE LAST ONE…',
+      RevealSequenceState(phase: RevealPhase.intro) => 'WHO’S GOING HOME?',
+      _ => 'GOING HOME…',
+    };
+    return ListView(
+      key: const Key('cut.remoteReveal'),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.displayL.copyWith(fontSize: 34),
+        ),
+        const SizedBox(height: 20),
+        for (final (i, id) in ids.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              child: i < sequence.revealed
+                  ? _RevealedRow(key: ValueKey('out-$id'), player: byId[id])
+                  : const _HiddenRow(key: ValueKey('hidden')),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HiddenRow extends StatelessWidget {
+  const _HiddenRow({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 64,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.line),
+    ),
+    child: Text(
+      '?',
+      style: AppTextStyles.displayL.copyWith(
+        fontSize: 32,
+        color: AppColors.chalk.withValues(alpha: 0.25),
+      ),
+    ),
+  );
+}
+
+class _RevealedRow extends StatelessWidget {
+  final PlayerView? player;
+
+  const _RevealedRow({super.key, required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = player;
+    if (p == null) return const SizedBox(height: 64);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: AppColors.maroonDarkest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.maroon, width: 2),
+      ),
+      child: Row(
+        children: [
+          InitialBadge(nickname: p.nickname, size: 40, eliminated: true),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.chip.copyWith(
+                    fontSize: 17,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: AppColors.wrong,
+                  ),
+                ),
+                HostLine(
+                  line: p.exitLine,
+                  fontSize: 13,
+                  maxLines: 2,
+                  textAlign: TextAlign.start,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const OutStamp(fontSize: 16, tilt: -10),
+        ],
+      ),
+    );
+  }
 }
 
 /// "Are you safe?", with a buzz each time a name drops on the big screen.

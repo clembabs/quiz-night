@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:quiz_night_client/quiz_night_client.dart';
@@ -9,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../widgets/qn/host_stage.dart';
 import '../../../widgets/qn/loaders.dart';
+import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/player_chip.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
@@ -61,6 +63,19 @@ class HostLobby extends StatelessWidget {
         const SizedBox(height: 12),
         if (scaleDown) FittedBox(fit: BoxFit.scaleDown, child: code) else code,
       ],
+    );
+  }
+
+  /// The join link on the clipboard, to paste into a call's chat.
+  Future<void> _copyLink(BuildContext context) async {
+    await Clipboard.setData(
+      ClipboardData(text: joinUrl(appUrl, room.code).toString()),
+    );
+    if (!context.mounted) return;
+    showToast(
+      context,
+      'Join link copied. Paste it in the chat.',
+      kind: ToastKind.success,
     );
   }
 
@@ -131,7 +146,9 @@ class HostLobby extends StatelessWidget {
           children: [
             Text.rich(
               TextSpan(
-                text: 'Scan, or go to ',
+                text: room.remote
+                    ? 'Share the link, or go to '
+                    : 'Scan, or go to ',
                 children: [
                   TextSpan(
                     text: shortAddress(appUrl),
@@ -255,7 +272,7 @@ class HostLobby extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(height: 24),
+          SizedBox(height: portrait ? 12 : 24),
           // Lock stops strangers using the code on screen; Start stays main.
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -269,12 +286,19 @@ class HostLobby extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   HostTextButton(
+                    key: const Key('lobby.copyLink'),
+                    label: 'Copy join link',
+                    onPressed: () => _copyLink(context),
+                  ),
+                  HostTextButton(
                     key: const Key('lobby.lock'),
                     label: room.locked ? 'Unlock room' : 'Lock room',
                     onPressed: () =>
                         context.read<RoomCubit>().setLocked(!room.locked),
                   ),
-                  if (room.locked)
+                  // "Unlock room" already says it on a phone; room to spare
+                  // on the projector for the why.
+                  if (room.locked && !portrait)
                     Text(
                       'No new players can join',
                       style: AppProjectorText.bodySoft.copyWith(fontSize: 28),
