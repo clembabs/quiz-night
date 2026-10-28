@@ -33,7 +33,7 @@ void main() {
 
   group('Given a finished game', () {
     test('when the winner looks then Champion, first of six, every round '
-        'survived, final points', () {
+        'survived, round and final points', () {
       final r = resultFor(finished(), finished().players[1]);
       expect(r.place, 1);
       expect(r.playerCount, 6);
@@ -41,7 +41,8 @@ void main() {
       expect(r.champion, isTrue);
       expect(r.finalist, isTrue);
       expect(r.roundsSurvived, 2);
-      expect(r.points, 2000);
+      expect(r.points, 1000);
+      expect(r.finalPoints, 2000);
       expect(r.backedWinner, isNull);
       expect(r.hostLine, isNull);
     });
@@ -58,6 +59,7 @@ void main() {
       final r = resultFor(finished(), finished().players[3]);
       expect(r.title, 'Out in round 2');
       expect(r.finalist, isFalse);
+      expect(r.finalPoints, isNull);
       expect(r.roundsSurvived, 1);
       expect(r.points, 800);
       expect(r.backedWinner, isTrue);
