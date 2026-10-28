@@ -365,13 +365,12 @@ void main() {
       verify(() => join.join('4821', 'Ọlá')).called(1);
     });
 
-    testWidgets('when letters are typed into the code then only digits stay', (
-      tester,
-    ) async {
+    testWidgets('when a code is typed in lower case with a dash then it '
+        'shows in capitals, letters and digits only', (tester) async {
       await pump(tester, const JoinState());
-      await tester.enterText(find.byKey(const Key('join.code')), '48ab21');
+      await tester.enterText(find.byKey(const Key('join.code')), 'k7-qm');
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
-      expect(code.controller!.text, '4821');
+      expect(code.controller!.text, 'K7QM');
     });
 
     testWidgets('when the room is not found then the error sits under the '

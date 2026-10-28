@@ -21,6 +21,9 @@ class GetReady extends StatefulWidget {
   /// Called on each number (a buzz on phones).
   final VoidCallback? onTick;
 
+  /// The local time; replaceable in tests.
+  final DateTime Function() clock;
+
   const GetReady({
     super.key,
     required this.startsAt,
@@ -28,6 +31,7 @@ class GetReady extends StatefulWidget {
     required this.child,
     this.large = false,
     this.onTick,
+    this.clock = DateTime.now,
   });
 
   /// Whole seconds left before [startsAt], 0 once it has passed.
@@ -47,7 +51,7 @@ class _GetReadyState extends State<GetReady> {
   int _left = 0;
 
   int get _now =>
-      GetReady.secondsLeft(widget.startsAt, widget.clockOffset, DateTime.now());
+      GetReady.secondsLeft(widget.startsAt, widget.clockOffset, widget.clock());
 
   @override
   void initState() {

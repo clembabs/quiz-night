@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/room_code.dart';
+
 /// Whose walkthrough the "How it works" section shows.
 enum WalkthroughTab { players, hosts }
 
@@ -23,8 +25,8 @@ class LandingState extends Equatable {
     this.code = '',
   });
 
-  /// Room codes are four digits.
-  bool get codeComplete => RegExp(r'^\d{4}$').hasMatch(code);
+  /// Long enough to try joining with (four letters and digits).
+  bool get codeComplete => RoomCode.isComplete(code);
 
   LandingState copyWith({
     WalkthroughTab? tab,
@@ -60,11 +62,6 @@ class LandingCubit extends Cubit<LandingState> {
     if (state.menuOpen) emit(state.copyWith(menuOpen: false));
   }
 
-  /// Keeps digits only, at most four.
-  void setCode(String text) {
-    final digits = text.replaceAll(RegExp(r'\D'), '');
-    emit(
-      state.copyWith(code: digits.length > 4 ? digits.substring(0, 4) : digits),
-    );
-  }
+  /// Keeps letters and digits, in capitals.
+  void setCode(String text) => emit(state.copyWith(code: RoomCode.clean(text)));
 }

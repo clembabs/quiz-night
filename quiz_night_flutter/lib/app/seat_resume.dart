@@ -20,7 +20,9 @@ class SeatResume {
     if (saved == null) return null;
     // A QR for a different room wins over an old seat.
     final code = uri.queryParameters['code'];
-    if (code != null && code.isNotEmpty && code != saved.code) return null;
+    if (code != null && code.isNotEmpty && code.toUpperCase() != saved.code) {
+      return null;
+    }
     if (!await _lobby.isSeatLive(saved)) {
       await _seats.clear();
       return null;

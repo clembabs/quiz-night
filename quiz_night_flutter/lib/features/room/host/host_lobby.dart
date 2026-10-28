@@ -14,6 +14,7 @@ import '../../../widgets/qn/notices.dart';
 import '../../../widgets/qn/player_chip.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
+import 'remove_player.dart';
 import '../round_logic.dart';
 
 /// The projector lobby: code + QR on the left, players arriving on the right.
@@ -77,40 +78,6 @@ class HostLobby extends StatelessWidget {
       'Join link copied. Paste it in the chat.',
       kind: ToastKind.success,
     );
-  }
-
-  /// Asks before removing [player] (a joke nickname, a duplicate phone).
-  static Future<void> _confirmRemove(
-    BuildContext context,
-    PlayerView player,
-  ) async {
-    final cubit = context.read<RoomCubit>();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${player.nickname}?'.toUpperCase()),
-        content: const Text(
-          'Their phone will show that they were removed. They can join again '
-          'with the room code.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
-          ),
-          FilledButton(
-            key: const Key('remove.confirm'),
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.maroon,
-              foregroundColor: AppColors.white,
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) await cubit.removePlayer(player.id);
   }
 
   @override
@@ -262,7 +229,7 @@ class HostLobby extends StatelessWidget {
                           child: PlayerChip(
                             nickname: p.nickname,
                             height: 80,
-                            onRemove: () => _confirmRemove(context, p),
+                            onRemove: () => confirmRemovePlayer(context, p),
                           ),
                         ),
                       ),

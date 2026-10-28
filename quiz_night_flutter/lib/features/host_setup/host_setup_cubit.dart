@@ -32,6 +32,9 @@ class HostSetupState extends Equatable {
 
   /// Players are not in one room (a call): their screens show everything.
   final bool remote;
+
+  /// No new players once the host presses Start.
+  final bool lockOnStart;
   final bool submitting;
   final String? error;
 
@@ -46,6 +49,7 @@ class HostSetupState extends Equatable {
     this.secondsPerQuestion = 20,
     this.showQuestionOnPhones = true,
     this.remote = false,
+    this.lockOnStart = false,
     this.submitting = false,
     this.error,
     this.seat,
@@ -59,6 +63,7 @@ class HostSetupState extends Equatable {
     int? secondsPerQuestion,
     bool? showQuestionOnPhones,
     bool? remote,
+    bool? lockOnStart,
   }) => HostSetupState(
     rule: rule ?? this.rule,
     questionsPerRound: questionsPerRound ?? this.questionsPerRound,
@@ -67,6 +72,7 @@ class HostSetupState extends Equatable {
     secondsPerQuestion: secondsPerQuestion ?? this.secondsPerQuestion,
     showQuestionOnPhones: showQuestionOnPhones ?? this.showQuestionOnPhones,
     remote: remote ?? this.remote,
+    lockOnStart: lockOnStart ?? this.lockOnStart,
   );
 
   HostSetupState withStatus({
@@ -81,6 +87,7 @@ class HostSetupState extends Equatable {
     secondsPerQuestion: secondsPerQuestion,
     showQuestionOnPhones: showQuestionOnPhones,
     remote: remote,
+    lockOnStart: lockOnStart,
     submitting: submitting,
     error: error,
     seat: seat,
@@ -96,6 +103,7 @@ class HostSetupState extends Equatable {
     timeLimitSeconds: secondsPerQuestion,
     showQuestionOnPhones: remote || showQuestionOnPhones,
     remote: remote,
+    lockOnStart: lockOnStart,
   );
 
   @override
@@ -107,6 +115,7 @@ class HostSetupState extends Equatable {
     secondsPerQuestion,
     showQuestionOnPhones,
     remote,
+    lockOnStart,
     submitting,
     error,
     seat,
@@ -156,6 +165,8 @@ class HostSetupCubit extends Cubit<HostSetupState> {
       emit(state.copyWith(showQuestionOnPhones: show));
 
   void setRemote(bool remote) => emit(state.copyWith(remote: remote));
+
+  void setLockOnStart(bool lock) => emit(state.copyWith(lockOnStart: lock));
 
   /// What each choice means for the game, for the summary panel.
   List<SummaryItem> get summary {
@@ -209,6 +220,16 @@ class HostSetupCubit extends Cubit<HostSetupState> {
                 'Question on the big screen only',
                 'Phones show just the answer buttons, so everyone looks up.',
               ),
+      s.lockOnStart
+          ? const SummaryItem(
+              'Locked once it starts',
+              'Nobody new can join after you press Start.',
+            )
+          : const SummaryItem(
+              'Latecomers welcome',
+              'They play until the first cut, then watch. Lock the room any '
+                  'time.',
+            ),
       const SummaryItem(
         'Knocked out? Keep playing',
         'They answer for a shadow score and back a finalist.',

@@ -325,7 +325,7 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
-  /// Removes a player from the lobby, before the game starts.
+  /// Removes a player at any point; their answers go with them.
   _ida.Future<void> removePlayer(
     String code,
     String hostToken,
