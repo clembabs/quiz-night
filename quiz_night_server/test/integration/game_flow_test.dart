@@ -232,12 +232,23 @@ void main() {
       );
     });
 
-    test('when someone tries to join then it is rejected', () async {
-      await expectLater(
-        endpoints.room.joinRoom(sb, g.code, 'Late'),
-        throwsQuiz(QuizErrorCode.invalidState),
-      );
+    test('when someone joins before the first cut then they play', () async {
+      final late = await endpoints.room.joinRoom(sb, g.code, 'Late');
+      final p = await playerOf(sb, late);
+      expect(p.status, PlayerStatus.active);
+      expect(p.eliminatedInRound, isNull);
     });
+
+    test(
+      'when the host has locked the room then late joiners are refused',
+      () async {
+        await endpoints.room.setLocked(sb, g.code, g.hostToken, true);
+        await expectLater(
+          endpoints.room.joinRoom(sb, g.code, 'Late'),
+          throwsQuiz(QuizErrorCode.roomLocked),
+        );
+      },
+    );
   });
 
   withServerpod('Given a round has been revealed', (sb, endpoints) {
