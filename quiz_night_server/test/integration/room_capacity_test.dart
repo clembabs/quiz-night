@@ -60,21 +60,27 @@ void main() {
       );
     });
 
-    test('when the game has started then players can no longer be '
-        'removed', () async {
+    test('when the game has started then the host can still remove a '
+        'player, and the question stops waiting for them', () async {
       final room = await endpoints.room.createRoom(sb, RoomConfig());
       final ada = await endpoints.room.joinRoom(sb, room.roomCode, 'Ada');
-      await endpoints.room.joinRoom(sb, room.roomCode, 'Bo');
+      final bo = await endpoints.room.joinRoom(sb, room.roomCode, 'Bo');
+      final cy = await endpoints.room.joinRoom(sb, room.roomCode, 'Cy');
       await endpoints.room.startGame(sb, room.roomCode, room.hostToken);
-      await expectLater(
-        endpoints.room.removePlayer(
-          sb,
-          room.roomCode,
-          room.hostToken,
-          ada.playerId,
-        ),
-        throwsQuiz(QuizErrorCode.invalidState),
+      final open = await endpoints.room.watchRoom(sb, room.roomCode).first;
+      final q = open.question!;
+      for (final p in [ada, bo]) {
+        await endpoints.answer.submitAnswer(sb, p.playerToken, q.id, 0);
+      }
+      await endpoints.room.removePlayer(
+        sb,
+        room.roomCode,
+        room.hostToken,
+        cy.playerId,
       );
+      final after = await endpoints.room.watchRoom(sb, room.roomCode).first;
+      expect(after.players.map((p) => p.id), isNot(contains(cy.playerId)));
+      expect(after.status, RoomStatus.reveal);
     });
 
     test('when the host removes a player from another room then it is '

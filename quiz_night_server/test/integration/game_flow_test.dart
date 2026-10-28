@@ -414,12 +414,44 @@ void main() {
       },
     );
 
-    test('when created then the code is 4 digits', () async {
-      for (var i = 0; i < 5; i++) {
+    test('when created then the code is 4 letters and digits, without '
+        'look-alikes', () async {
+      for (var i = 0; i < 20; i++) {
         final created = await endpoints.room.createRoom(sb, RoomConfig());
-        expect(created.roomCode, matches(RegExp(r'^\d{4}$')));
+        expect(created.roomCode, matches(RegExp(r'^[A-HJ-KM-NP-Z2-9]{4}$')));
+        expect(created.roomCode, isNot(matches(RegExp('[01ILO]'))));
       }
     });
+
+    test('when the host chose to lock on start then nobody joins after '
+        'Start', () async {
+      final g = await setUpGame(
+        sb,
+        endpoints,
+        players: 2,
+        config: RoomConfig(lockOnStart: true),
+      );
+      await endpoints.room.joinRoom(sb, g.code, 'Early');
+      await endpoints.room.startGame(sb, g.code, g.hostToken);
+      expect((await roomOf(sb, g.code)).locked, isTrue);
+      await expectLater(
+        endpoints.room.joinRoom(sb, g.code, 'Late'),
+        throwsQuiz(QuizErrorCode.roomLocked),
+      );
+    });
+
+    test(
+      'when someone types the code in lower case then they still join',
+      () async {
+        final created = await endpoints.room.createRoom(sb, RoomConfig());
+        final joined = await endpoints.room.joinRoom(
+          sb,
+          created.roomCode.toLowerCase(),
+          'Ada',
+        );
+        expect(joined.roomCode, created.roomCode);
+      },
+    );
 
     test(
       'when the host hides questions on phones then the state says so',
