@@ -84,7 +84,7 @@ class RoomEndpoint extends Endpoint {
     return RoomService.setLocked(session, code, hostToken, locked);
   }
 
-  /// Removes a player from the lobby, before the game starts.
+  /// Removes a player at any point; their answers go with them.
   Future<void> removePlayer(
     Session session,
     String code,

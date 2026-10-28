@@ -31,7 +31,7 @@ abstract interface class GameRepository {
   /// Rescues one eliminated player; once per game, before the final.
   Future<void> useWildcard(Seat host, int playerId);
 
-  /// Removes a player from the lobby, before the game starts.
+  /// Removes a player at any point; their answers go with them.
   Future<void> removePlayer(Seat host, int playerId);
 
   /// Stops (or allows again) new players joining.

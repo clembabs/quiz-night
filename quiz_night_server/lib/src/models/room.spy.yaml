@@ -19,6 +19,8 @@ fields:
   showQuestionOnPhones: bool, default=true
   ### Players join from wherever they are; phones show the whole game.
   remote: bool, default=false
+  ### Lock to new players when the host presses Start.
+  lockOnStart: bool, default=false
   wildcardUsed: bool, default=false
   ### Host has closed the room to new players.
   locked: bool, default=false

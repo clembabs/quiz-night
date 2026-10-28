@@ -96,11 +96,10 @@ class HostReveal extends StatelessWidget {
 
   static List<Widget> _strip(RoomState room) {
     final board = leaderboard(room);
-    if (board.isEmpty) return const [];
-    final top = [
-      for (final (i, p) in board.take(3).indexed)
-        '${i + 1} ${p.nickname} ${formatScore(p.score)}',
-    ].join('  ·  ');
+    // Until someone has points, a leaderboard says nothing.
+    if (board.isEmpty || board.first.score == 0) return const [];
+    final top =
+        'Leading: ${[for (final p in board.take(3)) '${p.nickname} ${formatScore(p.score)}'].join('  ·  ')}';
     final line = room.projectedSurvivors;
     final danger = line == null || line >= board.length
         ? const <String>[]

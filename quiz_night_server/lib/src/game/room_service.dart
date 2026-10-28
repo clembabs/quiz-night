@@ -20,8 +20,9 @@ const buzzAnswerWindow = Duration(seconds: 8);
 /// Points for a correct buzzer-final answer.
 const finalPointsPerQuestion = 1000;
 
-/// Digits only: phones open the number keypad, and codes read well projected.
-const _codeAlphabet = '0123456789';
+/// Letters and digits without look-alikes (0/O, 1/I/L): 31^4, about 920,000
+/// four-character codes, so live rooms are hard to guess.
+const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 final _random = Random.secure();
 
 String _randomToken() =>
@@ -144,6 +145,7 @@ class RoomService {
           // With no shared screen, the phone is where the question is.
           showQuestionOnPhones: config.remote || config.showQuestionOnPhones,
           remote: config.remote,
+          lockOnStart: config.lockOnStart,
           packId: packId,
         ),
       );
@@ -332,6 +334,7 @@ class RoomService {
         startingPlayerCount: count,
         currentRound: 1,
         startedAt: DateTime.now().toUtc(),
+        locked: room.locked || room.lockOnStart,
       );
       return _startQuestion(session, tx, room, isFinal: false);
     });
@@ -628,7 +631,7 @@ class RoomService {
     String hostToken,
     int playerId,
   ) async {
-    final roomId = await session.db.transaction((tx) async {
+    final room = await session.db.transaction((tx) async {
       final room = await _hostRoom(
         session,
         code,
@@ -636,12 +639,6 @@ class RoomService {
         tx: tx,
         lock: true,
       );
-      if (room.status != RoomStatus.lobby) {
-        throw _error(
-          QuizErrorCode.invalidState,
-          'Players can only be removed before the game starts',
-        );
-      }
       final player = await Player.db.findById(
         session,
         playerId,
@@ -650,10 +647,22 @@ class RoomService {
       if (player == null || player.roomId != room.id) {
         throw _error(QuizErrorCode.playerNotFound, 'Player not found');
       }
+      // At any point: their answers and buzzes go with them.
       await Player.db.deleteRow(session, player, transaction: tx);
-      return room.id!;
+      if (room.buzzerHolderId == player.id) {
+        await Room.db.updateRow(
+          session,
+          room.copyWith(buzzerHolderId: null),
+          transaction: tx,
+        );
+      }
+      return room;
     });
-    await _broadcast(session, roomId);
+    await _broadcast(session, room.id!);
+    // They may have been the last answer the question waited for.
+    if (room.status == RoomStatus.question && room.currentQuestionId != null) {
+      await _revealIfAllAnswered(session, room.id!, room.currentQuestionId!);
+    }
   }
 
   // --------------------------------------------------------------- players

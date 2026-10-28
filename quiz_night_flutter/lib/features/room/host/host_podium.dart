@@ -10,6 +10,7 @@ import '../../../widgets/qn/player_chip.dart';
 import '../../../widgets/qn/standings_row.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// The projector podium: blocks rise 3rd → 2nd → 1st, then the backers.
 class HostPodium extends StatelessWidget {
@@ -123,7 +124,7 @@ class HostPodium extends StatelessWidget {
               const SizedBox(height: 28),
               Flexible(
                 fit: portrait ? FlexFit.loose : FlexFit.tight,
-                child: SingleChildScrollView(
+                child: AppScroll(
                   child: Wrap(
                     spacing: 12,
                     runSpacing: 12,

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/room_code.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -89,14 +89,14 @@ class _JoinFormState extends State<JoinForm> {
               controller: _code,
               focusNode: _codeFocus,
               autofocus: widget.initialCode == null,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(4),
-              ],
+              keyboardType: TextInputType.visiblePassword,
+              textCapitalization: TextCapitalization.characters,
+              autocorrect: false,
+              enableSuggestions: false,
+              inputFormatters: RoomCode.formatters,
               style: AppTextStyles.codeInput,
               decoration: InputDecoration(
-                hintText: '0000',
+                hintText: RoomCode.example,
                 hintStyle: AppTextStyles.codeInput.copyWith(
                   color: AppColors.faint,
                 ),

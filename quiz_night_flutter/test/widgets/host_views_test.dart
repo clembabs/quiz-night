@@ -111,8 +111,14 @@ void main() {
       verify(() => setup.setQuestionsPerRound(8)).called(1);
       await t.tap(find.byKey(const Key('pick.Finalists.4')));
       verify(() => setup.setFinalists(4)).called(1);
+      await t.ensureVisible(
+        find.byKey(const Key('pick.Question on phones.off')),
+      );
       await t.tap(find.byKey(const Key('pick.Question on phones.off')));
       verify(() => setup.setShowQuestionOnPhones(false)).called(1);
+      await t.tap(find.byKey(const Key('pick.Lock when it starts.on')));
+      verify(() => setup.setLockOnStart(true)).called(1);
+      await t.ensureVisible(find.byKey(const Key('setup.where.remote')));
       await t.tap(find.byKey(const Key('setup.where.remote')));
       verify(() => setup.setRemote(true)).called(1);
     });
@@ -414,7 +420,7 @@ void main() {
       await t.pump(const Duration(seconds: 2));
       expect(
         t.widget<Text>(find.byKey(const Key('reveal.top'))).data,
-        '1 Ada 3,000  ·  2 Bo 2,000  ·  3 Cy 1,000',
+        'Leading: Ada 3,000  ·  Bo 2,000  ·  Cy 1,000',
       );
       expect(
         t.widget<Text>(find.byKey(const Key('reveal.danger'))).data,
@@ -595,6 +601,28 @@ void main() {
         expect(line.bottom, lessThan(survive.top), reason: 'Player $id');
         expect(find.text('Player $id'), findsOneWidget);
       }
+    });
+
+    testWidgets('when the host removes a player from the leaderboard mid-game '
+        'then it asks first, then removes them', (t) async {
+      when(() => cubit.removePlayer(any())).thenAnswer((_) async {});
+      final room = roomState(
+        status: RoomStatus.reveal,
+        round: 1,
+        players: [player(1, 'Ada', score: 900), player(2, 'Bot', score: 0)],
+        question: question(revealed: true),
+      );
+      when(
+        () => cubit.state,
+      ).thenReturn(RoomViewState(seat: hostSeat, room: room));
+      await pump(t, HostStandings(room: room, rankMoves: const {}));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('standings.remove.Bot')));
+      await t.pumpAndSettle();
+      expect(find.text('REMOVE BOT?'), findsOneWidget);
+      await t.tap(find.byKey(const Key('remove.confirm')));
+      await t.pumpAndSettle();
+      verify(() => cubit.removePlayer(2)).called(1);
     });
 
     testWidgets('when a full column has the danger line then every row fits '

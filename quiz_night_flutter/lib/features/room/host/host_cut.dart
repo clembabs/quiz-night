@@ -19,6 +19,7 @@ import '../cut_reveal/reveal_sequence_cubit.dart';
 import '../final/final_logic.dart';
 import '../room_cubit.dart';
 import '../round/host_step_button.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// The projector cut as a show: face-down cards flip to names stamped OUT.
 class HostCut extends StatelessWidget {
@@ -223,7 +224,7 @@ class _Cards extends StatelessWidget {
             ? (c.maxHeight - gap * (rows - 1)) / rows
             : height;
         final cardHeight = min(height, max(fit, _OutCard.minHeight));
-        return SingleChildScrollView(
+        return AppScroll(
           child: Wrap(
             alignment: WrapAlignment.center,
             spacing: gap,

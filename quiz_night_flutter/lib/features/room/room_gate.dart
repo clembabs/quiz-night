@@ -37,7 +37,7 @@ class RoomGateCubit extends Cubit<RoomGateState> {
   Future<void> load() async {
     final saved = await _seats.load();
     emit(
-      saved != null && saved.code == code
+      saved != null && saved.code == code.toUpperCase()
           ? RoomGateState.ready(saved)
           : const RoomGateState.noSeat(),
     );

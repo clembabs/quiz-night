@@ -13,6 +13,7 @@ import '../../../widgets/qn/notices.dart';
 import '../room_cubit.dart';
 import '../round/question_header.dart';
 import '../round_logic.dart';
+import '../../../widgets/layout/app_scroll.dart';
 
 /// An open round question on a phone: answer, locked in, or too late.
 class PhoneQuestion extends StatelessWidget {
@@ -129,66 +130,64 @@ class _Answer extends StatelessWidget {
                 ],
               );
         // Answers fill what the question leaves; scrolls only if nothing fits.
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: c.maxHeight),
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (frame != null) CountdownBar(frame: frame),
-                    if (spectator && me != null) ...[
-                      const SizedBox(height: 12),
-                      QnBanner(
-                        kind: BannerKind.eliminated,
-                        text:
-                            '${joinedLate(me) ? 'Joined late' : 'Eliminated in '
-                                      'Round ${me!.eliminatedInRound ?? room.round}'}'
-                            ' · answers count for a shadow score',
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            QuestionHeader.textFor(room),
-                            style: AppTextStyles.eyebrow,
-                          ),
-                        ),
-                        if (frame != null) CountdownSeconds(frame: frame),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      showText ? q.text : 'Question is on the big screen',
-                      style: showText
-                          ? AppTextStyles.title.copyWith(fontSize: 19)
-                          : AppTextStyles.body.copyWith(
-                              color: AppColors.muted,
-                              fontSize: 15,
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Spare room goes above buttons, keeping them in reach.
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: landscape
-                                ? 2 * _maxAnswer + 10
-                                : options.length * _maxAnswer +
-                                      (options.length - 1) * 10,
-                          ),
-                          child: answers,
-                        ),
-                      ),
+        return AppScroll(
+          fillViewport: true,
+          child: IntrinsicHeight(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (frame != null) CountdownBar(frame: frame),
+                  if (spectator && me != null) ...[
+                    const SizedBox(height: 12),
+                    QnBanner(
+                      kind: BannerKind.eliminated,
+                      text:
+                          '${joinedLate(me) ? 'Joined late' : 'Eliminated in '
+                                    'Round ${me!.eliminatedInRound ?? room.round}'}'
+                          ' · answers count for a shadow score',
                     ),
                   ],
-                ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          QuestionHeader.textFor(room),
+                          style: AppTextStyles.eyebrow,
+                        ),
+                      ),
+                      if (frame != null) CountdownSeconds(frame: frame),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    showText ? q.text : 'Question is on the big screen',
+                    style: showText
+                        ? AppTextStyles.title.copyWith(fontSize: 19)
+                        : AppTextStyles.body.copyWith(
+                            color: AppColors.muted,
+                            fontSize: 15,
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Spare room goes above buttons, keeping them in reach.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: landscape
+                              ? 2 * _maxAnswer + 10
+                              : options.length * _maxAnswer +
+                                    (options.length - 1) * 10,
+                        ),
+                        child: answers,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
