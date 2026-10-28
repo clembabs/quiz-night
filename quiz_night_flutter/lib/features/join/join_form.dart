@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,16 +21,46 @@ class JoinForm extends StatefulWidget {
   State<JoinForm> createState() => _JoinFormState();
 }
 
-/// Stateful only to own the text controllers.
+/// Stateful to own the text controllers and the fields' focus.
 class _JoinFormState extends State<JoinForm> {
   late final _code = TextEditingController(text: widget.initialCode ?? '');
   final _name = TextEditingController();
+  final _codeFocus = FocusNode();
+  final _nameFocus = FocusNode();
+  final _submitArea = GlobalKey();
+  Timer? _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _codeFocus.addListener(_keepJoinVisible);
+    _nameFocus.addListener(_keepJoinVisible);
+  }
 
   @override
   void dispose() {
     _code.dispose();
     _name.dispose();
+    _codeFocus.dispose();
+    _nameFocus.dispose();
+    _scroll?.cancel();
     super.dispose();
+  }
+
+  /// Phone keyboards cover the bottom of the page; once one has opened,
+  /// scroll so JOIN GAME sits just above it.
+  void _keepJoinVisible() {
+    if (!_codeFocus.hasFocus && !_nameFocus.hasFocus) return;
+    _scroll?.cancel();
+    _scroll = Timer(const Duration(milliseconds: 350), () {
+      final target = _submitArea.currentContext;
+      if (target == null || !target.mounted) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 200),
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    });
   }
 
   void _submit() => context.read<JoinCubit>().join(_code.text, _name.text);
@@ -55,6 +87,7 @@ class _JoinFormState extends State<JoinForm> {
             TextField(
               key: const Key('join.code'),
               controller: _code,
+              focusNode: _codeFocus,
               autofocus: widget.initialCode == null,
               keyboardType: TextInputType.number,
               inputFormatters: [
@@ -92,6 +125,7 @@ class _JoinFormState extends State<JoinForm> {
             TextField(
               key: const Key('join.nickname'),
               controller: _name,
+              focusNode: _nameFocus,
               autofocus: widget.initialCode != null,
               maxLength: 20,
               textInputAction: TextInputAction.go,
@@ -109,6 +143,7 @@ class _JoinFormState extends State<JoinForm> {
               ),
             const SizedBox(height: 20),
             SizedBox(
+              key: _submitArea,
               height: 60,
               child: FilledButton(
                 key: const Key('join.submit'),

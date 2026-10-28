@@ -60,18 +60,26 @@ class PhonePlacement extends StatelessWidget {
         : '${winner.nickname} wins Quiz Night with '
               '${formatScore(winner.finalScore)} final points.';
     if (me.status == PlayerStatus.finalist) {
+      final yours =
+          '${formatScore(me.score)} round points, '
+          '${formatScore(me.finalScore)} in the final.';
       return me.id == winner?.id
-          ? 'You win Quiz Night with ${formatScore(me.finalScore)} final points.'
-          : winLine;
+          ? 'You win Quiz Night! $yours'
+          : '$winLine You: $yours';
     }
-    final shadow = 'Shadow score ${formatScore(me.shadowScore)}.';
+    // Round points always; a shadow score only once one was earned (a 0
+    // reads like a bug).
+    final points = [
+      '${formatScore(me.score)} points',
+      if (me.shadowScore > 0) 'shadow score ${formatScore(me.shadowScore)}',
+    ].join(', ');
     final backed = me.backedPlayerId;
-    if (backed == null) return '$shadow Back a finalist next time.';
+    if (backed == null) return '$points. Back a finalist next time.';
     if (backed == winner?.id) {
-      return 'You backed the winner, ${winner!.nickname}. $shadow';
+      return 'You backed the winner, ${winner!.nickname}. $points.';
     }
     return 'You backed ${nicknameOf(room, backed)}. '
-        '${winner?.nickname ?? 'Someone else'} won. $shadow';
+        '${winner?.nickname ?? 'Someone else'} won. $points.';
   }
 
   @override

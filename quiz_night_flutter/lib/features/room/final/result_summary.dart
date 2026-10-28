@@ -18,7 +18,12 @@ class ResultSummary extends Equatable {
   /// Made the buzzer final (the champion too).
   final bool finalist;
   final int roundsSurvived;
+
+  /// Points from the rounds (what the cuts ranked on).
   final int points;
+
+  /// Points from the buzzer final; null unless they reached it.
+  final int? finalPoints;
 
   /// Null when they backed nobody (finalists never back anyone).
   final bool? backedWinner;
@@ -35,6 +40,7 @@ class ResultSummary extends Equatable {
     this.finalist = false,
     required this.roundsSurvived,
     required this.points,
+    this.finalPoints,
     this.backedWinner,
     this.hostLine,
   });
@@ -49,6 +55,7 @@ class ResultSummary extends Equatable {
     finalist,
     roundsSurvived,
     points,
+    finalPoints,
     backedWinner,
     hostLine,
   ];
@@ -82,7 +89,8 @@ ResultSummary resultFor(RoomState room, PlayerView me) {
       _ when out => (me.eliminatedInRound ?? room.round) - 1,
       _ => room.round > 0 ? room.round - 1 : 0,
     },
-    points: finalist ? me.finalScore : me.score,
+    points: me.score,
+    finalPoints: finalist ? me.finalScore : null,
     backedWinner: out && me.backedPlayerId != null
         ? me.backedPlayerId == winner?.id
         : null,
