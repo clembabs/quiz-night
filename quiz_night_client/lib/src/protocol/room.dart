@@ -50,6 +50,7 @@ abstract class Room
     DateTime? createdAt,
     this.startedAt,
     DateTime? lastActivityAt,
+    this.hostAwaySince,
     this.endReason,
     this.packId,
   }) : status = status ?? _ilj1at52.RoomStatus.lobby,
@@ -95,6 +96,7 @@ abstract class Room
     DateTime? createdAt,
     DateTime? startedAt,
     DateTime? lastActivityAt,
+    DateTime? hostAwaySince,
     _i1z47hfo.RoomEndReason? endReason,
     int? packId,
   }) = _RoomImpl;
@@ -170,6 +172,11 @@ abstract class Room
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
               jsonSerialization['lastActivityAt'],
+            ),
+      hostAwaySince: jsonSerialization['hostAwaySince'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['hostAwaySince'],
             ),
       endReason: jsonSerialization['endReason'] == null
           ? null
@@ -248,6 +255,9 @@ abstract class Room
   /// Last change (join, answer, host action); rooms idle 30 minutes close.
   DateTime lastActivityAt;
 
+  /// When the host's last screen disconnected; null while one is connected.
+  DateTime? hostAwaySince;
+
   /// Set when the game ends.
   _i1z47hfo.RoomEndReason? endReason;
 
@@ -287,6 +297,7 @@ abstract class Room
     DateTime? createdAt,
     DateTime? startedAt,
     DateTime? lastActivityAt,
+    DateTime? hostAwaySince,
     _i1z47hfo.RoomEndReason? endReason,
     int? packId,
   });
@@ -325,6 +336,7 @@ abstract class Room
       'createdAt': createdAt.toJson(),
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
       'lastActivityAt': lastActivityAt.toJson(),
+      if (hostAwaySince != null) 'hostAwaySince': hostAwaySince?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (packId != null) 'packId': packId,
     };
@@ -366,6 +378,7 @@ abstract class Room
       'createdAt': createdAt.toJson(),
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
       'lastActivityAt': lastActivityAt.toJson(),
+      if (hostAwaySince != null) 'hostAwaySince': hostAwaySince?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
       if (packId != null) 'packId': packId,
     };
@@ -410,6 +423,7 @@ class _RoomImpl extends Room {
     DateTime? createdAt,
     DateTime? startedAt,
     DateTime? lastActivityAt,
+    DateTime? hostAwaySince,
     _i1z47hfo.RoomEndReason? endReason,
     int? packId,
   }) : super._(
@@ -442,6 +456,7 @@ class _RoomImpl extends Room {
          createdAt: createdAt,
          startedAt: startedAt,
          lastActivityAt: lastActivityAt,
+         hostAwaySince: hostAwaySince,
          endReason: endReason,
          packId: packId,
        );
@@ -480,6 +495,7 @@ class _RoomImpl extends Room {
     DateTime? createdAt,
     Object? startedAt = _Undefined,
     DateTime? lastActivityAt,
+    Object? hostAwaySince = _Undefined,
     Object? endReason = _Undefined,
     Object? packId = _Undefined,
   }) {
@@ -525,6 +541,9 @@ class _RoomImpl extends Room {
       createdAt: createdAt ?? this.createdAt,
       startedAt: startedAt is DateTime? ? startedAt : this.startedAt,
       lastActivityAt: lastActivityAt ?? this.lastActivityAt,
+      hostAwaySince: hostAwaySince is DateTime?
+          ? hostAwaySince
+          : this.hostAwaySince,
       endReason: endReason is _i1z47hfo.RoomEndReason?
           ? endReason
           : this.endReason,

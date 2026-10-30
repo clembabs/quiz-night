@@ -42,6 +42,12 @@ class RoomEndpoint extends Endpoint {
     return RoomService.leaveRoom(session, code, playerToken);
   }
 
+  /// The host tapped Stop hosting: the game ends for everyone now.
+  Future<void> endGame(Session session, String code, String hostToken) {
+    Guard.check(session, Limits.hostAction, key: hostToken);
+    return RoomService.endGame(session, code, hostToken);
+  }
+
   Future<void> startGame(Session session, String code, String hostToken) {
     Guard.check(session, Limits.hostAction, key: hostToken);
     return RoomService.startGame(session, code, hostToken);
@@ -101,6 +107,22 @@ class RoomEndpoint extends Endpoint {
     final release = Guard.openStream(session);
     try {
       yield* RoomService.watchRoom(session, code);
+    } finally {
+      release();
+    }
+  }
+
+  /// The host's live updates. Also tells the room whether the host is here:
+  /// when this closes, players wait [RoomService.hostGrace] for them.
+  Stream<RoomState> watchRoomAsHost(
+    Session session,
+    String code,
+    String hostToken,
+  ) async* {
+    Guard.check(session, Limits.watch);
+    final release = Guard.openStream(session);
+    try {
+      yield* RoomService.watchRoomAsHost(session, code, hostToken);
     } finally {
       release();
     }

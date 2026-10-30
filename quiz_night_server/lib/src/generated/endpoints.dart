@@ -394,6 +394,30 @@ class Endpoints extends _is.EndpointDispatch {
                     params['playerToken'],
                   ),
         ),
+        'endGame': _is.MethodConnector(
+          name: 'endGame',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hostToken': _is.ParameterDescription(
+              name: 'hostToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['room'] as _io7erjyw.RoomEndpoint).endGame(
+                session,
+                params['code'],
+                params['hostToken'],
+              ),
+        ),
         'startGame': _is.MethodConnector(
           name: 'startGame',
           params: {
@@ -605,6 +629,34 @@ class Endpoints extends _is.EndpointDispatch {
                 session,
                 params['code'],
               ),
+        ),
+        'watchRoomAsHost': _is.MethodStreamConnector(
+          name: 'watchRoomAsHost',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hostToken': _is.ParameterDescription(
+              name: 'hostToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) =>
+                  (endpoints['room'] as _io7erjyw.RoomEndpoint).watchRoomAsHost(
+                    session,
+                    params['code'],
+                    params['hostToken'],
+                  ),
         ),
       },
     );

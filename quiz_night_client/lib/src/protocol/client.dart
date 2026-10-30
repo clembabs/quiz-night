@@ -247,6 +247,19 @@ class EndpointRoom extends _isc.EndpointRef {
     },
   );
 
+  /// The host tapped Stop hosting: the game ends for everyone now.
+  _ida.Future<void> endGame(
+    String code,
+    String hostToken,
+  ) => caller.callServerEndpoint<void>(
+    'room',
+    'endGame',
+    {
+      'code': code,
+      'hostToken': hostToken,
+    },
+  );
+
   _ida.Future<void> startGame(
     String code,
     String hostToken,
@@ -349,6 +362,25 @@ class EndpointRoom extends _isc.EndpointRef {
         'room',
         'watchRoom',
         {'code': code},
+        {},
+      );
+
+  /// The host's live updates. Also tells the room whether the host is here:
+  /// when this closes, players wait [RoomService.hostGrace] for them.
+  _ida.Stream<_inkt92gq.RoomState> watchRoomAsHost(
+    String code,
+    String hostToken,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_inkt92gq.RoomState>,
+        _inkt92gq.RoomState
+      >(
+        'room',
+        'watchRoomAsHost',
+        {
+          'code': code,
+          'hostToken': hostToken,
+        },
         {},
       );
 }

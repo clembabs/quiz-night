@@ -17,8 +17,12 @@ abstract interface class LobbyRepository {
 
 /// Playing in a room: the live state stream and actions.
 abstract interface class GameRepository {
-  /// Live room state. The first event is always a full snapshot.
-  Stream<RoomState> watchRoom(String code);
+  /// Live room state. The first event is always a full snapshot. With the
+  /// [hostToken], the server also counts the host as present while it's open.
+  Stream<RoomState> watchRoom(String code, {String? hostToken});
+
+  /// The host tapped Stop hosting: the game ends for everyone.
+  Future<void> endGame(Seat host);
 
   // Host actions; [host] must be the host's seat.
   Future<void> startGame(Seat host);
@@ -106,11 +110,17 @@ class ServerpodRoomRepository implements LobbyRepository, GameRepository {
   }
 
   @override
-  Stream<RoomState> watchRoom(String code) => _client.room
-      .watchRoom(code)
-      .handleError(
-        (Object e) => throw toFailure(e),
-      );
+  Stream<RoomState> watchRoom(String code, {String? hostToken}) =>
+      (hostToken == null
+              ? _client.room.watchRoom(code)
+              : _client.room.watchRoomAsHost(code, hostToken))
+          .handleError(
+            (Object e) => throw toFailure(e),
+          );
+
+  @override
+  Future<void> endGame(Seat host) =>
+      _guard(() => _client.room.endGame(host.code, host.token));
 
   @override
   Future<void> startGame(Seat host) =>

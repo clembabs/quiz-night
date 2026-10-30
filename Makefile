@@ -5,7 +5,7 @@ FLUTTER := quiz_night_flutter
 export PATH := $(PATH):$(HOME)/.pub-cache/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup start phone phone-build build-web test test-server \
+.PHONY: help setup start phone phone-build build-web test test-server demo-players \
         test-flutter analyze format check generate migration icons fonts shots \
         deploy-login deploy-launch deploy clean
 
@@ -68,6 +68,9 @@ shots: ## Re-render the README screenshots into docs/screenshots
 	mkdir -p docs/screenshots/.landing
 	cd $(FLUTTER) && SHOT_DIR=$(CURDIR)/docs/screenshots/.landing flutter test test/widgets/landing_test.dart --plain-name "home page on a desktop"
 	mv docs/screenshots/.landing/home_desktop_0.png docs/screenshots/landing.png && rm -rf docs/screenshots/.landing
+
+demo-players: ## Fill a room with guessing demo players: make demo-players CODE=K7QM [COUNT=8] [API=url]
+	cd $(FLUTTER) && dart run tool/demo_players.dart --code "$(CODE)" --count "$(or $(COUNT),8)" $(if $(API),--server "$(API)")
 
 fonts: ## Rebuild the bundled font subsets (needs fonttools; see tool/make_fonts.py)
 	@echo "Download the source fonts listed in $(FLUTTER)/tool/make_fonts.py into SRC, then:"
