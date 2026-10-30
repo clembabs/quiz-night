@@ -27,6 +27,9 @@ class PhoneFrame extends StatelessWidget {
   /// Time left in the game, in a slim row under the header.
   final Widget? clock;
 
+  /// A card over the screen that blocks it, e.g. the host disconnected.
+  final Widget? notice;
+
   const PhoneFrame({
     super.key,
     required this.child,
@@ -36,6 +39,7 @@ class PhoneFrame extends StatelessWidget {
     this.reconnecting = false,
     this.onLeave,
     this.clock,
+    this.notice,
   });
 
   @override
@@ -82,6 +86,14 @@ class PhoneFrame extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 64),
                       child: const ReconnectingPill(),
                     ),
+                  ),
+                )
+              else if (notice != null)
+                Positioned.fill(
+                  child: Container(
+                    color: AppColors.scrim,
+                    alignment: Alignment.center,
+                    child: notice,
                   ),
                 ),
             ],

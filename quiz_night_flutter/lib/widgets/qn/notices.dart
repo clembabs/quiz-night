@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -209,4 +211,100 @@ void showToast(
         ),
       ),
     );
+}
+
+/// The host's screen dropped: players wait, with the seconds until the game
+/// ends unless the host comes back. [until] is server time.
+class HostAwayCard extends StatefulWidget {
+  final DateTime until;
+
+  /// Server minus local time.
+  final Duration clockOffset;
+
+  /// The local time; replaceable in tests.
+  final DateTime Function() clock;
+
+  const HostAwayCard({
+    super.key,
+    required this.until,
+    required this.clockOffset,
+    this.clock = DateTime.now,
+  });
+
+  /// Whole seconds left, 0 once passed.
+  static int secondsLeft(DateTime until, Duration offset, DateTime now) {
+    final left = until.difference(now.toUtc().add(offset));
+    return left.isNegative ? 0 : (left.inMilliseconds / 1000).ceil();
+  }
+
+  @override
+  State<HostAwayCard> createState() => _HostAwayCardState();
+}
+
+class _HostAwayCardState extends State<HostAwayCard> {
+  late final Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final left = HostAwayCard.secondsLeft(
+      widget.until,
+      widget.clockOffset,
+      widget.clock(),
+    );
+    return Container(
+      key: const Key('hostAway'),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const PulsingDots(size: 8),
+          const SizedBox(height: 12),
+          Text(
+            'THE HOST DISCONNECTED',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.label.copyWith(
+              color: AppColors.gold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            left > 0
+                ? 'Waiting for them to reconnect… $left s'
+                : 'Ending the game…',
+            key: const Key('hostAway.count'),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.title.copyWith(fontSize: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "If they don't come back, the game ends and the scores stand.",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySoft.copyWith(fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
 }
