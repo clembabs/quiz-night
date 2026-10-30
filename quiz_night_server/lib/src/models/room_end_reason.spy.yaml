@@ -7,3 +7,5 @@ values:
   - timeUp
   ### Nothing happened in the room for 30 minutes.
   - inactive
+  ### The host's screen went away and didn't come back within the grace period.
+  - hostLeft
