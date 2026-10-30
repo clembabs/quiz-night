@@ -224,7 +224,9 @@ void main() {
       final live = StreamController<RoomState>()
         ..add(roomState(players: [player(1, 'Ada')]));
       addTearDown(live.close);
-      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      when(
+        () => game.watchRoom('ABCD', hostToken: any(named: 'hostToken')),
+      ).thenAnswer((_) => live.stream);
       await tester.pumpWidget(
         QuizNightApp(
           lobby: lobby,
@@ -257,7 +259,9 @@ void main() {
 
       final code = tester.widget<TextField>(find.byKey(const Key('join.code')));
       expect(code.controller!.text, '4821');
-      verifyNever(() => game.watchRoom(any()));
+      verifyNever(
+        () => game.watchRoom(any(), hostToken: any(named: 'hostToken')),
+      );
     });
 
     testWidgets('when a room address is reloaded with this device\'s seat '
@@ -267,7 +271,9 @@ void main() {
       final live = StreamController<RoomState>()
         ..add(roomState(players: [player(1, 'Ada')]));
       addTearDown(live.close);
-      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      when(
+        () => game.watchRoom('ABCD', hostToken: any(named: 'hostToken')),
+      ).thenAnswer((_) => live.stream);
       await tester.pumpWidget(
         QuizNightApp(
           lobby: lobby,
@@ -310,7 +316,9 @@ void main() {
       final live = StreamController<RoomState>()
         ..add(roomState(players: [player(1, 'Ada')]));
       addTearDown(live.close);
-      when(() => game.watchRoom('ABCD')).thenAnswer((_) => live.stream);
+      when(
+        () => game.watchRoom('ABCD', hostToken: any(named: 'hostToken')),
+      ).thenAnswer((_) => live.stream);
       final wakeLock = CountingWakeLock();
       await tester.pumpWidget(
         QuizNightApp(
@@ -445,7 +453,9 @@ void main() {
         final live = StreamController<RoomState>()
           ..add(roomState(players: [player(1, 'Opera')]));
         addTearDown(live.close);
-        when(() => game.watchRoom(any())).thenAnswer((_) => live.stream);
+        when(
+          () => game.watchRoom(any(), hostToken: any(named: 'hostToken')),
+        ).thenAnswer((_) => live.stream);
 
         await tester.pumpWidget(
           QuizNightApp(lobby: lobby, game: game, seats: seats),

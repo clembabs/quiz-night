@@ -849,6 +849,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'now',
         ),
         _isp.ColumnDefinition(
+          name: 'hostAwaySince',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
           name: 'endReason',
           columnType: _isp.ColumnType.text,
           isNullable: true,

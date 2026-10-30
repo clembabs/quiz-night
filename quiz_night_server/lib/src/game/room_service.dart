@@ -57,6 +57,17 @@ class RoomService {
   /// A room with no activity for this long is closed.
   static const idleLimit = Duration(minutes: 30);
 
+  /// How long players wait for a disconnected host before the game ends.
+  static const hostGrace = Duration(seconds: 30);
+
+  /// Act on the host's stream closing: start the countdown, then end the
+  /// game on a timer. Enabled in `server.dart`; tests call the steps directly.
+  static bool hostPresenceEnabled = false;
+
+  /// Open host streams per room: a reload's new stream may open before the
+  /// old one closes, so the host is only away when the count reaches 0.
+  static final _hostStreams = <int, int>{};
+
   // ---------------------------------------------------------------- lookup
 
   static Future<Room> _roomByCode(
@@ -310,6 +321,36 @@ class RoomService {
     }
   }
 
+  /// The host tapped Stop hosting: no one is coming back, so end it now.
+  static Future<void> endGame(
+    Session session,
+    String code,
+    String hostToken,
+  ) async {
+    final roomId = await session.db.transaction((tx) async {
+      final room = await _hostRoom(
+        session,
+        code,
+        hostToken,
+        tx: tx,
+        lock: true,
+      );
+      if (room.status == RoomStatus.finished) return null;
+      await Room.db.updateRow(session, _ended(room), transaction: tx);
+      return room.id;
+    });
+    if (roomId != null) await _broadcast(session, roomId);
+  }
+
+  /// [room] finished because its host left; scores stay for the results.
+  static Room _ended(Room room) => room.copyWith(
+    status: RoomStatus.finished,
+    endReason: RoomEndReason.hostLeft,
+    hostAwaySince: null,
+    questionEndsAt: null,
+    buzzerHolderId: null,
+  );
+
   // ------------------------------------------------------------ host flow
 
   static Future<void> startGame(
@@ -561,7 +602,8 @@ class RoomService {
       where: (t) =>
           t.status.notEquals(RoomStatus.finished) &
           ((t.startedAt < at.subtract(sessionLength)) |
-              (t.lastActivityAt < at.subtract(idleLimit))),
+              (t.lastActivityAt < at.subtract(idleLimit)) |
+              (t.hostAwaySince < at.subtract(hostGrace))),
     );
     var ended = 0;
     for (final candidate in due) {
@@ -577,15 +619,21 @@ class RoomService {
             room.startedAt != null &&
             !room.startedAt!.isAfter(at.subtract(sessionLength));
         final idle = !room.lastActivityAt.isAfter(at.subtract(idleLimit));
-        if (!timeUp && !idle) return null;
+        final away = room.hostAwaySince;
+        final hostGone = away != null && !away.isAfter(at.subtract(hostGrace));
+        if (!timeUp && !idle && !hostGone) return null;
         await Room.db.updateRow(
           session,
-          room.copyWith(
-            status: RoomStatus.finished,
-            endReason: timeUp ? RoomEndReason.timeUp : RoomEndReason.inactive,
-            questionEndsAt: null,
-            buzzerHolderId: null,
-          ),
+          hostGone
+              ? _ended(room)
+              : room.copyWith(
+                  status: RoomStatus.finished,
+                  endReason: timeUp
+                      ? RoomEndReason.timeUp
+                      : RoomEndReason.inactive,
+                  questionEndsAt: null,
+                  buzzerHolderId: null,
+                ),
           transaction: tx,
         );
         return room.id;
@@ -1389,6 +1437,9 @@ class RoomService {
           ? null
           : room.startedAt?.add(sessionLength),
       endReason: room.endReason,
+      hostAwayUntil: room.status == RoomStatus.finished
+          ? null
+          : room.hostAwaySince?.add(hostGrace),
       showQuestionOnPhones: room.showQuestionOnPhones,
       remote: room.remote,
       projectedSurvivors: _projectedSurvivors(room, question, players),
@@ -1466,5 +1517,131 @@ class RoomService {
     );
     yield await buildState(session, room);
     yield* updates;
+  }
+
+  // ------------------------------------------------------------ host presence
+
+  /// The host's live view. While one is open the host counts as present;
+  /// when the last closes, players get [hostGrace] to see them come back.
+  static Stream<RoomState> watchRoomAsHost(
+    Session session,
+    String code,
+    String hostToken,
+  ) async* {
+    final room = await _hostRoom(session, code, hostToken);
+    final roomId = room.id!;
+    _hostStreams[roomId] = (_hostStreams[roomId] ?? 0) + 1;
+    try {
+      await hostConnected(session, roomId);
+      yield* watchRoom(session, code);
+    } finally {
+      final left = (_hostStreams[roomId] ?? 1) - 1;
+      if (left > 0) {
+        _hostStreams[roomId] = left;
+      } else {
+        _hostStreams.remove(roomId);
+        // This session is closing with the stream; mark it in a new one.
+        if (hostPresenceEnabled) unawaited(_onHostGone(roomId));
+      }
+    }
+  }
+
+  /// The host is back (or never left): clears the countdown for everyone.
+  static Future<void> hostConnected(Session session, int roomId) async {
+    final room = await Room.db.findById(session, roomId);
+    if (room == null || room.hostAwaySince == null) return;
+    await Room.db.updateRow(
+      session,
+      room.copyWith(hostAwaySince: null),
+      columns: (t) => [t.hostAwaySince],
+    );
+    await _broadcast(session, roomId);
+  }
+
+  /// The host's last screen closed: start the countdown. Returns its start.
+  static Future<DateTime?> hostDisconnected(
+    Session session,
+    int roomId, {
+    DateTime? now,
+  }) async {
+    final room = await Room.db.findById(session, roomId);
+    if (room == null ||
+        room.status == RoomStatus.finished ||
+        room.hostAwaySince != null) {
+      return null;
+    }
+    final since = now ?? DateTime.now().toUtc();
+    await Room.db.updateRow(
+      session,
+      room.copyWith(hostAwaySince: since),
+      columns: (t) => [t.hostAwaySince],
+    );
+    await _broadcast(session, roomId);
+    return since;
+  }
+
+  /// Ends the game if the host who left at [since] hasn't come back within
+  /// [hostGrace]. Returns whether it ended.
+  static Future<bool> endIfHostGone(
+    Session session,
+    int roomId,
+    DateTime since, {
+    DateTime? now,
+  }) async {
+    final at = now ?? DateTime.now().toUtc();
+    final ended = await session.db.transaction((tx) async {
+      final room = await Room.db.findById(
+        session,
+        roomId,
+        transaction: tx,
+        lockMode: LockMode.forUpdate,
+      );
+      // Back again, or gone and back again since: a newer countdown decides.
+      if (room == null ||
+          room.status == RoomStatus.finished ||
+          room.hostAwaySince != since ||
+          at.isBefore(since.add(hostGrace))) {
+        return false;
+      }
+      await Room.db.updateRow(session, _ended(room), transaction: tx);
+      return true;
+    });
+    if (ended) await _broadcast(session, roomId);
+    return ended;
+  }
+
+  static Future<void> _onHostGone(int roomId) async {
+    final session = await Serverpod.instance.createSession(
+      enableLogging: false,
+    );
+    try {
+      // A reload reconnects within moments; don't flash the countdown.
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if ((_hostStreams[roomId] ?? 0) > 0) return;
+      final since = await hostDisconnected(session, roomId);
+      if (since == null) return;
+      Timer(hostGrace + const Duration(milliseconds: 500), () async {
+        final s = await Serverpod.instance.createSession(enableLogging: false);
+        try {
+          await endIfHostGone(s, roomId, since);
+        } catch (e, st) {
+          s.log(
+            'Ending a host-less game failed: $e',
+            level: LogLevel.error,
+            stackTrace: st,
+          );
+        } finally {
+          await s.close();
+        }
+      });
+    } catch (e, st) {
+      session.log(
+        'Marking the host away failed: $e',
+        level: LogLevel.error,
+        stackTrace: st,
+      );
+    } finally {
+      await session.close();
+    }
   }
 }

@@ -16,6 +16,8 @@ fields:
   sessionEndsAt: DateTime?
   ### Why the game ended, once it has.
   endReason: RoomEndReason?
+  ### Host disconnected: when the game ends unless they come back (server clock).
+  hostAwayUntil: DateTime?
   question: QuestionView?
   ### When answers open (after the 3-2-1); null when no question is open.
   questionStartsAt: DateTime?

@@ -93,6 +93,11 @@ Run `make` to list them all. The main ones:
 | `make migration` | Create a database migration after changing a model with a table |
 | `make build-web` | Build the web app into the server, as deploys do |
 | `make shots` | Re-render the README screenshots |
+| `make demo-players CODE=K7QM` | Fill a room with demo players, for rehearsals and demo videos |
+
+### Demo players
+
+`make demo-players CODE=K7QM COUNT=8` joins up to 15 players to a room on the live site (add `API=http://localhost:8080` for a local server). They run on your machine and use the public API like phones do: no server change, no special mode. They never see the right answer, so they guess, at a random point in each countdown; in the final some buzz, and the knocked-out ones back a finalist. Ctrl+C makes them leave; after the podium they stay.
 
 ### Tests
 

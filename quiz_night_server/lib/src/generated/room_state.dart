@@ -35,6 +35,7 @@ abstract class RoomState
     bool? locked,
     this.sessionEndsAt,
     this.endReason,
+    this.hostAwayUntil,
     this.question,
     this.questionStartsAt,
     this.questionEndsAt,
@@ -63,6 +64,7 @@ abstract class RoomState
     bool? locked,
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
+    DateTime? hostAwayUntil,
     _irhyxwad.QuestionView? question,
     DateTime? questionStartsAt,
     DateTime? questionEndsAt,
@@ -105,6 +107,11 @@ abstract class RoomState
           ? null
           : _i1z47hfo.RoomEndReason.fromJson(
               (jsonSerialization['endReason'] as String),
+            ),
+      hostAwayUntil: jsonSerialization['hostAwayUntil'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['hostAwayUntil'],
             ),
       question: jsonSerialization['question'] == null
           ? null
@@ -173,6 +180,9 @@ abstract class RoomState
   /// Why the game ended, once it has.
   _i1z47hfo.RoomEndReason? endReason;
 
+  /// Host disconnected: when the game ends unless they come back (server clock).
+  DateTime? hostAwayUntil;
+
   _irhyxwad.QuestionView? question;
 
   /// When answers open (after the 3-2-1); null when no question is open.
@@ -216,6 +226,7 @@ abstract class RoomState
     bool? locked,
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
+    DateTime? hostAwayUntil,
     _irhyxwad.QuestionView? question,
     DateTime? questionStartsAt,
     DateTime? questionEndsAt,
@@ -244,6 +255,7 @@ abstract class RoomState
       'locked': locked,
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
+      if (hostAwayUntil != null) 'hostAwayUntil': hostAwayUntil?.toJson(),
       if (question != null) 'question': question?.toJson(),
       if (questionStartsAt != null)
         'questionStartsAt': questionStartsAt?.toJson(),
@@ -275,6 +287,7 @@ abstract class RoomState
       'locked': locked,
       if (sessionEndsAt != null) 'sessionEndsAt': sessionEndsAt?.toJson(),
       if (endReason != null) 'endReason': endReason?.toJson(),
+      if (hostAwayUntil != null) 'hostAwayUntil': hostAwayUntil?.toJson(),
       if (question != null) 'question': question?.toJsonForProtocol(),
       if (questionStartsAt != null)
         'questionStartsAt': questionStartsAt?.toJson(),
@@ -313,6 +326,7 @@ class _RoomStateImpl extends RoomState {
     bool? locked,
     DateTime? sessionEndsAt,
     _i1z47hfo.RoomEndReason? endReason,
+    DateTime? hostAwayUntil,
     _irhyxwad.QuestionView? question,
     DateTime? questionStartsAt,
     DateTime? questionEndsAt,
@@ -337,6 +351,7 @@ class _RoomStateImpl extends RoomState {
          locked: locked,
          sessionEndsAt: sessionEndsAt,
          endReason: endReason,
+         hostAwayUntil: hostAwayUntil,
          question: question,
          questionStartsAt: questionStartsAt,
          questionEndsAt: questionEndsAt,
@@ -367,6 +382,7 @@ class _RoomStateImpl extends RoomState {
     bool? locked,
     Object? sessionEndsAt = _Undefined,
     Object? endReason = _Undefined,
+    Object? hostAwayUntil = _Undefined,
     Object? question = _Undefined,
     Object? questionStartsAt = _Undefined,
     Object? questionEndsAt = _Undefined,
@@ -396,6 +412,9 @@ class _RoomStateImpl extends RoomState {
       endReason: endReason is _i1z47hfo.RoomEndReason?
           ? endReason
           : this.endReason,
+      hostAwayUntil: hostAwayUntil is DateTime?
+          ? hostAwayUntil
+          : this.hostAwayUntil,
       question: question is _irhyxwad.QuestionView?
           ? question
           : this.question?.copyWith(),

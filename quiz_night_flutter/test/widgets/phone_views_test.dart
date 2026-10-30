@@ -545,16 +545,19 @@ void main() {
       expect(find.text('CHAMPION'), findsOneWidget);
     });
 
-    testWidgets('when a spectator looks then their place and Done leaves', (
-      t,
-    ) async {
-      await pump(t, PhonePlacement(room: room, me: room.players[2]));
-      await t.pump(const Duration(seconds: 1));
-      expect(find.text('3rd'), findsOneWidget);
-      expect(find.text('ELIMINATED · ROUND 1'), findsOneWidget);
-      await t.tap(find.text('Done'));
-      verify(() => cubit.leave()).called(1);
-    });
+    testWidgets(
+      'when a spectator looks then their place and Back home leaves',
+      (
+        t,
+      ) async {
+        await pump(t, PhonePlacement(room: room, me: room.players[2]));
+        await t.pump(const Duration(seconds: 1));
+        expect(find.text('3rd'), findsOneWidget);
+        expect(find.text('ELIMINATED · ROUND 1'), findsOneWidget);
+        await t.tap(find.text('Back home'));
+        verify(() => cubit.leave()).called(1);
+      },
+    );
 
     testWidgets('when sharing the result then the card goes to the share sheet '
         'as a full-size PNG, with the brag text', (t) async {
