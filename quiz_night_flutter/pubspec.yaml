@@ -19,14 +19,14 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_web_plugins:
     sdk: flutter
-  go_router: ^18.1.1
+  go_router: ^18.1.2
   qr_flutter: ^4.1.0
   quiz_night_client:
     path: ../quiz_night_client
   serverpod_auth_idp_flutter: 4.0.4
   serverpod_flutter: 4.0.4
   shared_preferences: ^2.5.6
-  web: ^1.1.1
+  web: ^1.1.2
 
 dev_dependencies:
   bloc_test: ^10.0.0
