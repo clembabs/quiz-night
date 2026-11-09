@@ -4,6 +4,8 @@
 
 [![Release](https://img.shields.io/github/v/release/clembabs/quiz-night)](https://github.com/clembabs/quiz-night/releases)
 
+🥉 **3rd place, FlutterBytes × Serverpod Hackathon 2026.**
+
 **Play it:** <https://quiznight.serverpod.space/>. Open it on a laptop to host, then scan the QR code on your phone to join. No app or account needed.
 
 ![The Quiz Night website](docs/screenshots/landing.png)
