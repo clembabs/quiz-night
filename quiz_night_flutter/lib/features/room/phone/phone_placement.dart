@@ -35,9 +35,11 @@ class PhonePlacement extends StatelessWidget {
   static String titleFor(RoomState room, PlayerView me) {
     // Still in when the game stopped early.
     if (me.status == PlayerStatus.active && endedEarly(room)) {
-      return room.endReason == RoomEndReason.timeUp
-          ? "Time's up"
-          : 'Room closed';
+      return switch (room.endReason) {
+        RoomEndReason.timeUp => "Time's up",
+        RoomEndReason.hostLeft => 'The host left',
+        _ => 'Room closed',
+      };
     }
     if (me.status == PlayerStatus.finalist) {
       return finalPlaceOf(room, me.id) == 1 ? 'Champion' : 'Finalist';
@@ -184,8 +186,9 @@ class PhonePlacement extends StatelessWidget {
           SizedBox(
             height: 48,
             child: OutlinedButton(
+              key: const Key('placement.home'),
               onPressed: context.read<RoomCubit>().leave,
-              child: const Text('Done'),
+              child: const Text('Back home'),
             ),
           ),
         ],

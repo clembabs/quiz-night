@@ -15,6 +15,7 @@ room:
   - joinRoom:
   - rejoin:
   - leaveRoom:
+  - endGame:
   - startGame:
   - nextQuestion:
   - reveal:
@@ -23,3 +24,4 @@ room:
   - setLocked:
   - removePlayer:
   - watchRoom:
+  - watchRoomAsHost:

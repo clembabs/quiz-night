@@ -28,14 +28,18 @@ PlayerView? winnerOf(RoomState room) => finalStandings(room).firstOrNull;
 int podiumScore(PlayerView p) =>
     p.status == PlayerStatus.finalist ? p.finalScore : p.score;
 
-/// Stopped before the podium: time ran out, or 30 minutes of inactivity.
+/// Stopped before the podium: time ran out, 30 idle minutes, or the host left.
 bool endedEarly(RoomState room) =>
     room.endReason == RoomEndReason.timeUp ||
-    room.endReason == RoomEndReason.inactive;
+    room.endReason == RoomEndReason.inactive ||
+    room.endReason == RoomEndReason.hostLeft;
 
-/// The room closed before its game ever started (idle lobby).
+/// The room closed before its game ever started (idle lobby, or the host
+/// left the lobby).
 bool closedBeforeStart(RoomState room) =>
-    room.endReason == RoomEndReason.inactive && room.round == 0;
+    (room.endReason == RoomEndReason.inactive ||
+        room.endReason == RoomEndReason.hostLeft) &&
+    room.round == 0;
 
 /// Why the results are "so far", for the podium and phones.
 String? endNoticeFor(RoomState room) => switch (room.endReason) {
@@ -44,6 +48,9 @@ String? endNoticeFor(RoomState room) => switch (room.endReason) {
         'These are the scores when the clock stopped.',
   RoomEndReason.inactive =>
     'This room closed after 30 minutes without activity. '
+        'These are the scores when it stopped.',
+  RoomEndReason.hostLeft =>
+    'The host left, so the game ended. '
         'These are the scores when it stopped.',
   _ => null,
 };

@@ -94,6 +94,9 @@ void run(List<String> args) async {
   // Reveal questions server-side when their deadline passes.
   RoomService.autoRevealEnabled = true;
 
+  // End a game whose host disconnected and didn't return within 30 s.
+  RoomService.hostPresenceEnabled = true;
+
   // A 3-2-1 before each question, so everyone starts together.
   RoomService.getReady = const Duration(seconds: 3);
 

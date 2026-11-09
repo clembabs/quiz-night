@@ -673,6 +673,41 @@ class _RoomEndpoint {
     });
   }
 
+  _ida.Future<void> endGame(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+    String hostToken,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'room',
+            method: 'endGame',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'room',
+          methodName: 'endGame',
+          parameters: _ist.testObjectToJson({
+            'code': code,
+            'hostToken': hostToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<void> startGame(
     _ist.TestSessionBuilder sessionBuilder,
     String code,
@@ -942,6 +977,42 @@ class _RoomEndpoint {
               endpointPath: 'room',
               methodName: 'watchRoom',
               arguments: {'code': code},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Stream<_ivgph652.RoomState> watchRoomAsHost(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+    String hostToken,
+  ) {
+    var _localTestStreamManager = _ist.TestStreamManager<_ivgph652.RoomState>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'room',
+              method: 'watchRoomAsHost',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'room',
+              methodName: 'watchRoomAsHost',
+              arguments: {
+                'code': code,
+                'hostToken': hostToken,
+              },
               requestedInputStreams: [],
               serializationManager: _serializationManager,
             );

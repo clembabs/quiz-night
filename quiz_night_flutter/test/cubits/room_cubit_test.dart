@@ -21,7 +21,9 @@ void main() {
     seats = MockSeatRepository();
     streams = [];
     // Every subscribe gets its own stream, like a fresh WebSocket.
-    when(() => game.watchRoom('ABCD')).thenAnswer((_) {
+    when(
+      () => game.watchRoom('ABCD', hostToken: any(named: 'hostToken')),
+    ).thenAnswer((_) {
       final c = StreamController<RoomState>();
       streams.add(c);
       return c.stream;
@@ -147,17 +149,50 @@ void main() {
 
   group('Given the user leaves', () {
     blocTest<RoomCubit, RoomViewState>(
-      'when leaving then the saved seat is cleared',
-      setUp: () => when(() => seats.clear()).thenAnswer((_) async {}),
+      'when the host stops hosting then the game ends for everyone and the '
+      'seat is cleared',
+      setUp: () {
+        when(() => seats.clear()).thenAnswer((_) async {});
+        when(() => game.endGame(hostSeat)).thenAnswer((_) async {});
+      },
       build: build,
       act: (c) => c.leave(),
       expect: () => [isA<RoomViewState>().having((s) => s.left, 'left', true)],
       verify: (_) {
         verify(() => seats.clear()).called(1);
-        // The host only runs the game: nothing to tell the server.
+        verify(() => game.endGame(hostSeat)).called(1);
         verifyNever(() => game.leaveRoom(any()));
       },
     );
+
+    test(
+      'when the host leaves a finished game then nothing is ended',
+      () async {
+        when(() => seats.clear()).thenAnswer((_) async {});
+        final cubit = build()..start();
+        streams.last.add(roomState(status: RoomStatus.finished));
+        await pumpEventQueue();
+        await cubit.leave();
+        verifyNever(() => game.endGame(any()));
+        expect(cubit.state.left, isTrue);
+        await cubit.close();
+      },
+    );
+
+    test('when the host is watching then it opens the host stream, so the '
+        'server knows the host is there', () async {
+      final cubit = build()..start();
+      await pumpEventQueue();
+      verify(() => game.watchRoom('ABCD', hostToken: 'host-token')).called(1);
+      await cubit.close();
+    });
+
+    test('when a player is watching then it opens the plain stream', () async {
+      final cubit = RoomCubit(game, seats, playerSeat)..start();
+      await pumpEventQueue();
+      verify(() => game.watchRoom('ABCD', hostToken: null)).called(1);
+      await cubit.close();
+    });
 
     blocTest<RoomCubit, RoomViewState>(
       'when a player leaves then the server is told, and they leave even '

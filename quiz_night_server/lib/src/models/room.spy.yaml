@@ -37,6 +37,8 @@ fields:
   startedAt: DateTime?
   ### Last change (join, answer, host action); rooms idle 30 minutes close.
   lastActivityAt: DateTime, default=now
+  ### When the host's last screen disconnected; null while one is connected.
+  hostAwaySince: DateTime?
   ### Set when the game ends.
   endReason: RoomEndReason?
   ### AI-written questions played before the built-in bank.

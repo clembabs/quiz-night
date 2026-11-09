@@ -178,7 +178,10 @@ class RoomCubit extends Cubit<RoomViewState> {
     _retry?.cancel();
     _sub?.cancel();
     _sub = _game
-        .watchRoom(state.seat.code)
+        .watchRoom(
+          state.seat.code,
+          hostToken: state.seat.isHost ? state.seat.token : null,
+        )
         .listen(
           _onSnapshot,
           onError: _onStreamError,
@@ -383,12 +386,17 @@ class RoomCubit extends Cubit<RoomViewState> {
   // ---- seat
 
   Future<void> leave() async {
-    // Best effort: offline, the game simply stops hearing from them.
-    if (!state.seat.isHost) {
-      try {
+    // Best effort: offline, the game stops hearing from them (and a host's
+    // players get the 30-second countdown instead).
+    try {
+      if (state.seat.isHost) {
+        if (state.room?.status != RoomStatus.finished) {
+          await _game.endGame(state.seat);
+        }
+      } else {
         await _game.leaveRoom(state.seat);
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
     await _seats.clear();
     emit(state.copyWith(left: true));
   }

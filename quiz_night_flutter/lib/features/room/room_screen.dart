@@ -175,7 +175,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         large: true,
         child: HostFinal(room: room, clockOffset: state.clockOffset),
       ),
-      RoomStatus.finished when closedBeforeStart(room) => const _Closed(
+      RoomStatus.finished when closedBeforeStart(room) => _Closed(
+        reason: room.endReason,
         large: true,
       ),
       RoomStatus.finished => HostPodium(room: room),
@@ -195,6 +196,13 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       reconnecting: _reconnecting(state),
       onLeave: () => _confirmLeave(context),
       clock: _clock(room, state),
+      notice: switch (room?.hostAwayUntil) {
+        final until? when room!.status != RoomStatus.finished => HostAwayCard(
+          until: until,
+          clockOffset: state.clockOffset,
+        ),
+        _ => null,
+      },
       child: _phoneBody(room, state),
     );
   }
@@ -256,7 +264,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 myBackedId: state.myBackedId,
               ),
       ),
-      RoomStatus.finished when closedBeforeStart(room) => const _Closed(),
+      RoomStatus.finished when closedBeforeStart(room) => _Closed(
+        reason: room.endReason,
+      ),
       RoomStatus.finished => PhonePlacement(room: room, me: me),
       _ => const _Waiting(),
     };
@@ -317,18 +327,55 @@ class _Gone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(
-      'This room no longer exists.',
-      style: large ? AppProjectorText.title : AppTextStyles.title,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'This room no longer exists.',
+          textAlign: TextAlign.center,
+          style: large ? AppProjectorText.title : AppTextStyles.title,
+        ),
+        SizedBox(height: large ? 48 : 24),
+        _HomeButton(large: large),
+      ],
     ),
   );
 }
 
-/// A lobby closed after 30 idle minutes: just why the room is gone.
-class _Closed extends StatelessWidget {
+/// The way out of a room that's over: clears the seat and goes home.
+class _HomeButton extends StatelessWidget {
   final bool large;
 
-  const _Closed({this.large = false});
+  const _HomeButton({this.large = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final leave = context.read<RoomCubit>().leave;
+    if (large) {
+      return HostButton(
+        label: 'Back home',
+        buttonKey: const Key('room.home'),
+        onPressed: leave,
+      );
+    }
+    return SizedBox(
+      height: 52,
+      child: FilledButton(
+        key: const Key('room.home'),
+        onPressed: leave,
+        child: const Text('Back home'),
+      ),
+    );
+  }
+}
+
+/// A lobby that ended before the game started: idle 30 minutes, or the
+/// host left. Says why, and offers the way home.
+class _Closed extends StatelessWidget {
+  final RoomEndReason? reason;
+  final bool large;
+
+  const _Closed({required this.reason, this.large = false});
 
   @override
   Widget build(BuildContext context) => Center(
@@ -338,18 +385,23 @@ class _Closed extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'ROOM CLOSED',
+            reason == RoomEndReason.hostLeft ? 'THE HOST LEFT' : 'ROOM CLOSED',
             textAlign: TextAlign.center,
             style: large ? AppProjectorText.displayL : AppTextStyles.displayL,
           ),
           const SizedBox(height: 12),
           Text(
-            'Nothing happened here for 30 minutes, so the room closed. '
-            'Start a new one any time.',
+            reason == RoomEndReason.hostLeft
+                ? 'The host left before the game started, so the room '
+                      'closed. Start a new one any time.'
+                : 'Nothing happened here for 30 minutes, so the room closed. '
+                      'Start a new one any time.',
             key: const Key('room.closed'),
             textAlign: TextAlign.center,
             style: large ? AppProjectorText.bodySoft : AppTextStyles.bodySoft,
           ),
+          SizedBox(height: large ? 48 : 24),
+          _HomeButton(large: large),
         ],
       ),
     ),

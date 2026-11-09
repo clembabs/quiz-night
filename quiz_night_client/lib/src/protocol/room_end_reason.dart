@@ -21,7 +21,10 @@ enum RoomEndReason implements _isc.SerializableModel {
   timeUp,
 
   /// Nothing happened in the room for 30 minutes.
-  inactive;
+  inactive,
+
+  /// The host's screen went away and didn't come back within the grace period.
+  hostLeft;
 
   static RoomEndReason fromJson(String name) {
     switch (name) {
@@ -31,6 +34,8 @@ enum RoomEndReason implements _isc.SerializableModel {
         return RoomEndReason.timeUp;
       case 'inactive':
         return RoomEndReason.inactive;
+      case 'hostLeft':
+        return RoomEndReason.hostLeft;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "RoomEndReason"',

@@ -77,10 +77,11 @@ ResultSummary resultFor(RoomState room, PlayerView me) {
     title: switch (me) {
       _ when champion => 'Champion',
       _ when finalist => 'Finalist',
-      _ when stillIn =>
-        room.endReason == RoomEndReason.timeUp
-            ? "Still in at time's up"
-            : 'Still in when it closed',
+      _ when stillIn => switch (room.endReason) {
+        RoomEndReason.timeUp => "Still in at time's up",
+        RoomEndReason.hostLeft => 'Still in when the host left',
+        _ => 'Still in when it closed',
+      },
       _ when me.eliminatedInRound == 0 => 'Joined late',
       _ => 'Out in round ${me.eliminatedInRound ?? room.round}',
     },
